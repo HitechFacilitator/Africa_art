@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, Sparkles, Building2, Award } from "lucide-react";
+import { Lock, Sparkles, Building2, Award, ExternalLink } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ProvenanceModal from "@/components/home/ProvenanceModal";
@@ -297,6 +297,55 @@ export default function HomePage() {
               )}
             </motion.div>
           </motion.div>
+        </motion.section>
+
+        {/* Press Links Section */}
+        <motion.section
+          className="bg-parchment-ivory/40 border-t border-b border-on-surface/5 py-12 md:py-16"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20">
+            <motion.div
+              className="text-center mb-10"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="label-caps text-gold-leaf mb-2 block">In the Press</span>
+              <h2 className="font-headline-md text-ebony-deep">Featured Coverage</h2>
+              <div className="w-16 h-[1.5px] bg-gold-leaf mt-4 mx-auto" />
+            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { title: "The Art Newspaper", subtitle: "African Art Market Surge", url: "#" },
+                { title: "Financial Times", subtitle: "Heritage Asset Portfolio", url: "#" },
+                { title: "Sotheby's Magazine", subtitle: "Provenance & Trust", url: "#" },
+                { title: "Christie's Review", subtitle: "Investment-Grade Antiquities", url: "#" },
+              ].map((press, i) => (
+                <motion.a
+                  key={press.title}
+                  href={press.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  className="bg-surface-container-low border border-on-surface/5 p-5 flex flex-col gap-2 hover:border-gold-leaf/30 hover:shadow-level-1 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-serif text-sm font-medium text-ebony-deep group-hover:text-gold-leaf transition-colors">{press.title}</span>
+                    <ExternalLink size={12} className="text-on-surface-variant/40 group-hover:text-gold-leaf transition-colors" />
+                  </div>
+                  <p className="font-sans text-[10px] text-on-surface-variant/60 uppercase tracking-wider">{press.subtitle}</p>
+                </motion.a>
+              ))}
+            </div>
+          </div>
         </motion.section>
       </main>
       <Footer />

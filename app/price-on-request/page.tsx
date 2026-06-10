@@ -23,11 +23,14 @@ export default function PriceOnRequestPage() {
   const router = useRouter();
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
-  const [inquiryName, setInquiryName] = useState("");
+  const [inquiryFirstName, setInquiryFirstName] = useState("");
+  const [inquiryLastName, setInquiryLastName] = useState("");
   const [inquiryEmail, setInquiryEmail] = useState("");
-  const [clientStatus, setClientStatus] = useState("Private Family Office");
+  const [inquiryPhone, setInquiryPhone] = useState("");
+  const [clientProfile, setClientProfile] = useState("Private Collector");
   const [budgetRange, setBudgetRange] = useState("€1M – €5M");
   const [inquiryNotes, setInquiryNotes] = useState("");
+  const [gdprConsent, setGdprConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [filterMaterial, setFilterMaterial] = useState("All");
@@ -52,7 +55,7 @@ export default function PriceOnRequestPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inquiryName || !inquiryEmail) return;
+    if (!inquiryFirstName || !inquiryLastName || !inquiryEmail || !gdprConsent) return;
     setSubmitting(true);
     setTimeout(() => {
       setSubmitting(false);
@@ -64,9 +67,14 @@ export default function PriceOnRequestPage() {
     setShowInquiryModal(false);
     setSelectedArtwork(null);
     setSubmitted(false);
-    setInquiryName("");
+    setInquiryFirstName("");
+    setInquiryLastName("");
     setInquiryEmail("");
+    setInquiryPhone("");
+    setClientProfile("Private Collector");
+    setBudgetRange("€1M – €5M");
     setInquiryNotes("");
+    setGdprConsent(false);
   };
 
   return (
@@ -253,26 +261,50 @@ export default function PriceOnRequestPage() {
                     <p className="text-xs text-on-surface-variant mt-1">For: {selectedArtwork?.title}</p>
                   </div>
                   <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Full Name *</label>
-                      <input type="text" required value={inquiryName} onChange={(e) => setInquiryName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian Doe" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">First Name *</label>
+                        <input type="text" required value={inquiryFirstName} onChange={(e) => setInquiryFirstName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Last Name *</label>
+                        <input type="text" required value={inquiryLastName} onChange={(e) => setInquiryLastName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Doe" />
+                      </div>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Email *</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Professional Email *</label>
                       <input type="email" required value={inquiryEmail} onChange={(e) => setInquiryEmail(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="collector@institution.com" />
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Client Status</label>
-                      <select value={clientStatus} onChange={(e) => setClientStatus(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
-                        <option>Private Family Office</option>
-                        <option>Museum / Institution</option>
-                        <option>Sovereign Wealth Fund</option>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">International Phone</label>
+                      <div className="flex">
+                        <select className="border border-ebony-deep/15 border-r-0 p-3 text-xs focus:border-gold-leaf focus:outline-none bg-surface-container-low w-24 shrink-0">
+                          <option>+44</option>
+                          <option>+1</option>
+                          <option>+33</option>
+                          <option>+49</option>
+                          <option>+41</option>
+                          <option>+234</option>
+                          <option>+27</option>
+                          <option>+254</option>
+                        </select>
+                        <input type="tel" value={inquiryPhone} onChange={(e) => setInquiryPhone(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="7700 900000" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Profile *</label>
+                      <select value={clientProfile} onChange={(e) => setClientProfile(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
                         <option>Private Collector</option>
+                        <option>Institution / Museum</option>
+                        <option>Auction House</option>
+                        <option>Investor</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Indicative Budget Range</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Indicative Budget</label>
                       <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
+                        <option>€100K – €500K</option>
+                        <option>€500K – €1M</option>
                         <option>€1M – €5M</option>
                         <option>€5M – €10M</option>
                         <option>€10M – €25M</option>
@@ -280,12 +312,25 @@ export default function PriceOnRequestPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Notes</label>
-                      <textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none resize-none" />
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message</label>
+                      <textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none resize-none" placeholder="Interest, timeline, special conditions..." />
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="gdpr-consent"
+                        required
+                        checked={gdprConsent}
+                        onChange={(e) => setGdprConsent(e.target.checked)}
+                        className="mt-1 accent-gold-leaf"
+                      />
+                      <label htmlFor="gdpr-consent" className="text-[10px] text-on-surface-variant leading-relaxed">
+                        I consent to the processing of my personal data in accordance with the <span className="text-gold-leaf font-semibold">Privacy Policy</span> and <span className="text-gold-leaf font-semibold">GDPR regulations</span>. I understand my data will be used to respond to this inquiry. *
+                      </label>
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-ebony-deep/5">
                       <button type="button" onClick={resetModal} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Cancel</button>
-                      <button type="submit" disabled={submitting} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center gap-2">
+                      <button type="submit" disabled={submitting || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center gap-2">
                         {submitting ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Submitting...</>) : "Submit Inquiry"}
                       </button>
                     </div>

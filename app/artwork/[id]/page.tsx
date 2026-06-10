@@ -35,10 +35,17 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
 
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
-  const [inquiryName, setInquiryName] = useState("");
+  const [showReserveModal, setShowReserveModal] = useState(false);
+  const [reserveLoading, setReserveLoading] = useState(false);
+  const [reserveConfirmed, setReserveConfirmed] = useState(false);
+  const [inquiryFirstName, setInquiryFirstName] = useState("");
+  const [inquiryLastName, setInquiryLastName] = useState("");
   const [inquiryEmail, setInquiryEmail] = useState("");
-  const [clientStatus, setClientStatus] = useState("Private Family Office");
+  const [inquiryPhone, setInquiryPhone] = useState("");
+  const [clientStatus, setClientStatus] = useState("Private Collector");
+  const [budgetRange, setBudgetRange] = useState("€1M – €5M");
   const [inquiryNotes, setInquiryNotes] = useState("");
+  const [gdprConsent, setGdprConsent] = useState(false);
   const [submittingInquiry, setSubmittingInquiry] = useState(false);
   const [inquiryResult, setInquiryResult] = useState<string | null>(null);
   const [curatorQuestion, setCuratorQuestion] = useState("");
@@ -50,13 +57,13 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
 
   const handleAcquisitionSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inquiryName || !inquiryEmail) {
-      alert("Please provide credentials before requesting allocation.");
+    if (!inquiryFirstName || !inquiryLastName || !inquiryEmail || !gdprConsent) {
+      alert("Please fill in all required fields and accept the privacy policy.");
       return;
     }
     setSubmittingInquiry(true);
     setTimeout(() => {
-      setInquiryResult(`Dear ${inquiryName},\n\nYour application regarding the potential allocation of "${artwork.title}" has been securely logged with our advisory council in London.\n\nOur representatives will verify your credentials and dispatch the hardcopy Authentication Dossier to the primary advisor email: ${inquiryEmail}.\n\nWarm regards,\nPrivate Placement Desk, Aduna Gallery`);
+      setInquiryResult(`Dear ${inquiryFirstName} ${inquiryLastName},\n\nYour application regarding the potential allocation of "${artwork.title}" has been securely logged with our advisory council in London.\n\nOur representatives will verify your credentials and dispatch the hardcopy Authentication Dossier to the primary advisor email: ${inquiryEmail}.\n\nWarm regards,\nPrivate Placement Desk, Aduna Gallery`);
       setSubmittingInquiry(false);
     }, 1500);
   };
@@ -226,6 +233,9 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                     Acquire Now
                   </a>
                 </div>
+                <button onClick={() => setShowReserveModal(true)} className="w-full mt-3 border border-ebony-deep/20 text-ebony-deep bg-transparent font-sans text-xs font-semibold py-3 px-6 uppercase tracking-wider hover:border-gold-leaf hover:text-gold-leaf transition-colors">
+                  Reserve for 48 Hours
+                </button>
               </div>
 
               {/* Curator AI Chat */}
@@ -352,20 +362,76 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-xs text-on-surface-variant mt-1">For: {artwork.title}</p>
                   </div>
                   <form onSubmit={handleAcquisitionSubmit} className="space-y-4">
-                    <div><label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Full Name *</label><input type="text" required value={inquiryName} onChange={(e) => setInquiryName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian Doe" /></div>
-                    <div><label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Email *</label><input type="email" required value={inquiryEmail} onChange={(e) => setInquiryEmail(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="collector@institution.com" /></div>
-                    <div><label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Client Status</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">First Name *</label>
+                        <input type="text" required value={inquiryFirstName} onChange={(e) => setInquiryFirstName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Last Name *</label>
+                        <input type="text" required value={inquiryLastName} onChange={(e) => setInquiryLastName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Doe" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Professional Email *</label>
+                      <input type="email" required value={inquiryEmail} onChange={(e) => setInquiryEmail(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="collector@institution.com" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">International Phone</label>
+                      <div className="flex">
+                        <select className="border border-ebony-deep/15 border-r-0 p-3 text-xs focus:border-gold-leaf focus:outline-none bg-surface-container-low w-24 shrink-0">
+                          <option>+44</option>
+                          <option>+1</option>
+                          <option>+33</option>
+                          <option>+49</option>
+                          <option>+41</option>
+                          <option>+234</option>
+                          <option>+27</option>
+                          <option>+254</option>
+                        </select>
+                        <input type="tel" value={inquiryPhone} onChange={(e) => setInquiryPhone(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="7700 900000" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Profile *</label>
                       <select value={clientStatus} onChange={(e) => setClientStatus(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
-                        <option>Private Family Office</option>
-                        <option>Museum / Institution</option>
-                        <option>Sovereign Wealth Fund</option>
                         <option>Private Collector</option>
+                        <option>Institution / Museum</option>
+                        <option>Auction House</option>
+                        <option>Investor</option>
                       </select>
                     </div>
-                    <div><label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Notes</label><textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" /></div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Indicative Budget</label>
+                      <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
+                        <option>€100K – €500K</option>
+                        <option>€500K – €1M</option>
+                        <option>€1M – €5M</option>
+                        <option>€5M – €10M</option>
+                        <option>€10M – €25M</option>
+                        <option>€25M+</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message</label>
+                      <textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Interest, timeline, special conditions..." />
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        id="gdpr-consent-detail"
+                        required
+                        checked={gdprConsent}
+                        onChange={(e) => setGdprConsent(e.target.checked)}
+                        className="mt-1 accent-gold-leaf"
+                      />
+                      <label htmlFor="gdpr-consent-detail" className="text-[10px] text-on-surface-variant leading-relaxed">
+                        I consent to the processing of my personal data in accordance with the <span className="text-gold-leaf font-semibold">Privacy Policy</span> and <span className="text-gold-leaf font-semibold">GDPR regulations</span>. *
+                      </label>
+                    </div>
                     <div className="flex justify-end gap-4 pt-4 border-t border-ebony-deep/5">
-                      <button type="button" onClick={() => setShowInquiryModal(false)} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">Cancel</button>
-                      <button type="submit" disabled={submittingInquiry} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2">
+                      <button type="button" onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">Cancel</button>
+                      <button type="submit" disabled={submittingInquiry || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2">
                         {submittingInquiry ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Submitting...</>) : "Submit Inquiry"}
                       </button>
                     </div>
@@ -396,6 +462,75 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">The complete provenance dossier including historical documentation, authentication certificates, and scientific analysis reports will be prepared by our curatorial team and dispatched to your registered advisor email within 48 hours.</p>
               <button onClick={() => { alert("Provenance dossier request logged. Our team will prepare and dispatch the complete documentation within 48 hours."); setShowDossierModal(false); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 transition-opacity">Request Dossier Preparation</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 48h Reservation Modal */}
+      <AnimatePresence>
+        {showReserveModal && (
+          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+              <button onClick={() => { setShowReserveModal(false); setReserveConfirmed(false); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
+              {reserveConfirmed ? (
+                <div className="text-center">
+                  <Clock className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
+                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">48-Hour Reservation Active</h3>
+                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                    <strong>{artwork.title}</strong> has been reserved in your name for the next 48 hours.
+                    A confirmation email has been sent with your reservation details and timer information.
+                  </p>
+                  <div className="bg-surface-container-low border border-ebony-deep/5 p-6 mb-6">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">Reservation Timer</p>
+                    <div className="font-mono text-2xl text-ebony-deep font-bold tracking-wider">48:00:00</div>
+                    <p className="text-[10px] text-on-surface-variant/60 mt-2">Expires automatically. You will receive reminder emails at 24h and 1h before expiry.</p>
+                  </div>
+                  <div className="flex gap-3 justify-center">
+                    <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
+                      Go to Dashboard
+                    </a>
+                    <a href={`/acquisition?artwork=${artwork.id}`} className="border border-gold-leaf text-gold-leaf px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors inline-block">
+                      Proceed to Purchase
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <Clock className="w-12 h-12 text-gold-leaf mx-auto mb-3" />
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">Reserve for 48 Hours</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">Hold this artwork before it sells</p>
+                  </div>
+                  <div className="bg-surface-container-low border border-ebony-deep/5 p-4 mb-6 text-xs space-y-2">
+                    <div className="flex justify-between"><span className="text-on-surface-variant">Artwork</span><span className="font-medium">{artwork.title}</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">Origin</span><span className="font-medium">{artwork.origin}</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">Period</span><span className="font-medium">{artwork.period}</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">Reservation Period</span><span className="font-medium text-gold-leaf font-semibold">48 Hours</span></div>
+                  </div>
+                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                    By confirming, you agree to hold this artwork exclusively for 48 hours. During this period, the artwork will be locked from public sale. You will receive email notifications at 24 hours and 1 hour before expiry.
+                  </p>
+                  <div className="flex gap-3">
+                    <button onClick={() => { setShowReserveModal(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        setReserveLoading(true);
+                        setTimeout(() => {
+                          setReserveLoading(false);
+                          setReserveConfirmed(true);
+                        }, 1500);
+                      }}
+                      disabled={reserveLoading}
+                      className="flex-1 bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center justify-center gap-2"
+                    >
+                      {reserveLoading ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Reserving...</>) : "Confirm Reservation"}
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         )}

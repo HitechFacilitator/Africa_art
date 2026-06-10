@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, Menu, X, Lock, User, ShieldCheck } from "lucide-react";
 
 const NAV_LINKS = [
@@ -15,6 +15,7 @@ const NAV_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,8 +38,7 @@ export default function Navbar() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // In a full implementation this would navigate to /catalogue?q=...
-      alert(`Searching registry for: "${searchQuery}"`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
     setSearchOpen(false);
     setSearchQuery("");
@@ -242,11 +242,11 @@ export default function Navbar() {
 
             <div className="mb-5">
               <h2 className="font-serif text-xl text-ebony-deep mb-1">
-                Verify Artifact Registry
+                Search the Collection
               </h2>
               <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                Enter a Certificate ID or provenance tracking label to load the
-                cryptographic provenance record (e.g., ADUNA-OWO-1897).
+                Explore our curated catalogue of museum-grade African artworks.
+                Search by title, origin, tribe, or material.
               </p>
             </div>
 
@@ -255,10 +255,10 @@ export default function Navbar() {
                 type="text"
                 autoFocus
                 required
-                placeholder="e.g. ADUNA-OWO-1897, 0x8fae3199…"
+                placeholder="e.g. Benin Bronze, Ife Terracotta, Fang Guardian..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-surface-container-low border-b border-ebony-deep/20 focus:border-gold-leaf px-2 py-3 placeholder:text-on-surface-variant/40 text-ebony-deep font-mono text-sm leading-none focus:outline-none rounded-none transition-colors"
+                className="w-full bg-surface-container-low border-b border-ebony-deep/20 focus:border-gold-leaf px-2 py-3 placeholder:text-on-surface-variant/40 text-ebony-deep font-sans text-sm leading-none focus:outline-none rounded-none transition-colors"
               />
               <div className="flex justify-end space-x-3 pt-1">
                 <button
@@ -272,7 +272,7 @@ export default function Navbar() {
                   type="submit"
                   className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300 cursor-pointer"
                 >
-                  Verify Key
+                  Search Collection
                 </button>
               </div>
             </form>

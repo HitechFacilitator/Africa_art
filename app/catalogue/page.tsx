@@ -10,6 +10,7 @@ import {
   Compass,
   Lock,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -306,6 +307,26 @@ export default function CataloguePage() {
           )}
         </div>
       </main>
+
+      {/* Consultation CTA Banner */}
+      <section className="bg-ebony-deep py-10 md:py-14 border-t border-gold-leaf/20">
+        <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <Calendar size={24} className="text-gold-leaf shrink-0" />
+            <div>
+              <h3 className="font-serif text-lg text-parchment-ivory">Need Help Finding the Right Piece?</h3>
+              <p className="font-sans text-xs text-parchment-ivory/60 mt-1">Our specialists can assist with acquisitions, valuations, and bespoke searches.</p>
+            </div>
+          </div>
+          <a
+            href="/booking"
+            className="bg-gold-leaf text-ebony-deep font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 hover:bg-parchment-ivory transition-colors whitespace-nowrap"
+          >
+            Book a Consultation
+          </a>
+        </div>
+      </section>
+
       <Footer />
 
       {/* Artifact Detail Drawer */}
