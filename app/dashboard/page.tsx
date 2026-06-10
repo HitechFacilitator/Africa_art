@@ -30,7 +30,6 @@ export default function DashboardPage() {
   const [security, setSecurity] = useState<SecurityRecord[]>(INITIAL_SECURITY);
   const [profile, setProfile] = useState<CollectorProfile>(INITIAL_PROFILE);
 
-  // Remove the useEffect that was setting selectedAcquisition
   const handleToggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };

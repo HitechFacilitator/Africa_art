@@ -31,16 +31,23 @@ interface Certificate {
   blockchainHash: string;
 }
 
-const CERTIFICATES: Certificate[] = ARTWORKS.slice(0, 4).map((art, i) => ({
+const CERTIFICATE_STATUSES: Certificate["status"][] = ["VALID", "VALID", "RENEWAL DUE", "VALID", "VALID", "VALID", "RENEWAL DUE", "VALID", "VALID", "VALID"];
+const CERTIFICATE_ISSUE_DATES = ["2024-03-15", "2023-11-22", "2024-06-08", "2025-01-10", "2023-09-05", "2024-04-12", "2024-01-20", "2023-07-18", "2024-08-30", "2025-02-14"];
+const CERTIFICATE_LEVELS = ["Level IV — Full Scientific", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific", "Level IV — Full Scientific", "Level III — Provenance Verified"];
+const CERTIFICATE_VERIFIED = ["2026-05-20", "2026-04-15", "2026-03-10", "2026-06-01", "2026-05-05", "2026-04-28", "2026-06-08", "2026-05-12", "2026-06-10", "2026-06-02"];
+
+const CERTIFICATES: Certificate[] = ARTWORKS.map((art, i) => ({
   id: `cert-${i}`,
   artwork: art,
-  certificateNumber: `ADUNA-COA-${String(2024 + i)}-${art.id.substring(0, 4).toUpperCase()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-  issueDate: ["2024-03-15", "2023-11-22", "2024-06-08", "2025-01-10"][i],
-  expiryDate: ["2029-03-15", "2028-11-22", "2024-06-08", "2030-01-10"][i],
-  status: ["VALID", "VALID", "RENEWAL DUE", "VALID"][i] as Certificate["status"],
+  certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${art.id.substring(0, 6).toUpperCase()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+  issueDate: CERTIFICATE_ISSUE_DATES[i] || "2024-06-01",
+  expiryDate: CERTIFICATE_ISSUE_DATES[i]
+    ? `${Number(CERTIFICATE_ISSUE_DATES[i].substring(0, 4)) + 5}${CERTIFICATE_ISSUE_DATES[i].substring(4)}`
+    : "2029-06-01",
+  status: CERTIFICATE_STATUSES[i] || "VALID",
   issuer: "Aduna Gallery Authentication Division",
-  authenticationLevel: ["Level IV — Full Scientific", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific"][i],
-  lastVerified: ["2026-05-20", "2026-04-15", "2026-03-10", "2026-06-01"][i],
+  authenticationLevel: CERTIFICATE_LEVELS[i] || "Level IV — Full Scientific",
+  lastVerified: CERTIFICATE_VERIFIED[i] || "2026-06-01",
   blockchainHash: `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`,
 }));
 

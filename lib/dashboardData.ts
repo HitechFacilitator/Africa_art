@@ -71,7 +71,43 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
       'Professor Charles Meyer Field Collection, Basel (1954)',
       'Acquired by Julian Doe (May 03, 2024)'
     ]
-  }
+  },
+  {
+    id: 'acq_5',
+    title: 'Nok Terracotta Figure',
+    era: '500 BC - 200 AD',
+    culture: 'Nok Culture',
+    acquisitionDate: 'Mar 20, 2025',
+    status: AcquisitionStatus.Certified,
+    imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80',
+    estimatedValueEur: 6500000,
+    description: 'A classic Nok sculpture showing large elliptical eyes and a sophisticated, hollow-fired clay body of an aristocratic seated dignitary.',
+    provenance: [
+      'Archaeological Site, Kaduna State, Nigeria',
+      'Private Collection, Lagos (1970 - 2005)',
+      'Christie\'s London (2005)',
+      'Aduna Gallery (2022)',
+      'Acquired by Julian Doe (Mar 20, 2025)'
+    ]
+  },
+  {
+    id: 'acq_6',
+    title: 'Luba Ancestor Staff',
+    era: '19th Century',
+    culture: 'Luba Peoples',
+    acquisitionDate: 'Jan 08, 2026',
+    status: AcquisitionStatus.InTransit,
+    imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80',
+    estimatedValueEur: 2900000,
+    description: 'A carved wooden staff of office displaying a dual-faced female ancestor with intricate geometric scarification and high-sheen black oil finish.',
+    provenance: [
+      'Luba Royal Court, Katanga Province (until 1910)',
+      'Belgian Colonial Collection (1910 - 1965)',
+      'Private Collection, Brussels (1965 - 2019)',
+      'Aduna Gallery (2019)',
+      'Acquired by Julian Doe (Jan 08, 2026)'
+    ]
+  },
 ];
 
 export const INITIAL_INQUIRIES: Inquiry[] = [
@@ -99,7 +135,22 @@ export const INITIAL_INQUIRIES: Inquiry[] = [
         timestamp: 'Jun 09, 2026, 09:12 AM'
       }
     ]
-  }
+  },
+  {
+    id: 'inq_2',
+    artworkTitle: 'Kuba Ndop Board',
+    artworkYear: '18th Century',
+    imageUrl: 'https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&q=80',
+    status: 'Received',
+    date: 'Jun 08, 2026',
+    messages: [
+      {
+        sender: 'collector',
+        text: 'I would like to express interest in the Kuba Ndop board. Could you provide the full provenance dossier and current condition report?',
+        timestamp: 'Jun 08, 2026, 03:42 PM'
+      }
+    ]
+  },
 ];
 
 export const INITIAL_CONSULTATIONS: Consultation[] = [
@@ -124,7 +175,18 @@ export const INITIAL_CONSULTATIONS: Consultation[] = [
     topic: 'Bronze Conservation Strategy (Verdigris Management)',
     status: 'Pending',
     notes: 'A standard structural ultrasound audit will be run on the Benin Bronze Head to verify core micro-fissure stability.'
-  }
+  },
+  {
+    id: 'cons_3',
+    expertName: 'Dr. Amara Diop',
+    expertTitle: 'Director of West African Antiquities',
+    expertAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150&h=150',
+    date: 'Jul 03, 2026',
+    timeSlot: '10:00 - 11:00 GMT',
+    topic: 'Investment Portfolio Review — Q3 2026',
+    status: 'Confirmed',
+    notes: 'Annual portfolio performance review with updated CAGR projections for West African antiquities.'
+  },
 ];
 
 export const INITIAL_LOGISTICS: LogisticsShipment[] = [
@@ -156,7 +218,30 @@ export const INITIAL_LOGISTICS: LogisticsShipment[] = [
         description: 'Cratered in triple-walled museum-grade moisture-seal crates with dual accelerometers attached.'
       }
     ]
-  }
+  },
+  {
+    id: 'ship_2',
+    artworkTitle: 'Luba Ancestor Staff',
+    carrier: 'Malca-Amit Premium Art Courier',
+    status: 'International Transit',
+    estimatedDeliveryDate: 'Jun 25, 2026',
+    securityTier: 'Level 4 Secure Transport',
+    insuranceCoverage: '€3,500,000 Swiss Re Art Policy',
+    updates: [
+      {
+        date: 'Jun 09, 2026',
+        status: 'In Transit',
+        location: 'Brussels Cargo Hub, Belgium',
+        description: 'Departed origin warehouse under armored escort. Temperature-controlled container confirmed stable at 20.5°C.'
+      },
+      {
+        date: 'Jun 07, 2026',
+        status: 'Origin Hub Secured',
+        location: 'Fine Art Terminal, Kinshasa',
+        description: 'Item certified, packaged in museum-grade shock-absorbent crate. Dual accelerometers activated.'
+      }
+    ]
+  },
 ];
 
 export const INITIAL_SECURITY: SecurityRecord[] = [
@@ -179,7 +264,17 @@ export const INITIAL_SECURITY: SecurityRecord[] = [
     lastInspectionDate: 'Jun 01, 2026',
     temperatureHumidity: '21.0°C / 45.0% RH (Stabilized)',
     insurancePolicyNumber: 'AXA-MUSEUM-99120-K'
-  }
+  },
+  {
+    id: 'sec_3',
+    artworkTitle: 'Nok Terracotta Figure',
+    vaultLocation: 'Private Vault Sector A-2, Geneva FreePort',
+    fingerprintId: 'FP-NOK-5521-N',
+    smartContractAddress: '0x4A8b...11Ef (Aduna Registry V2)',
+    lastInspectionDate: 'Jun 05, 2026',
+    temperatureHumidity: '20.0°C / 47.2% RH (Optimal)',
+    insurancePolicyNumber: 'AXA-MUSEUM-99120-L'
+  },
 ];
 
 export const INITIAL_PROFILE: CollectorProfile = {
@@ -215,5 +310,13 @@ export const ARTWORK_OPTIONS = [
     value: 2900000,
     imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80',
     description: 'A carved wooden staff of office displaying a dual-faced female ancestor with intricate geometric scarification and high-sheen black oil finish.'
-  }
+  },
+  {
+    title: 'Chokwe Divination Pendant',
+    era: '19th Century',
+    culture: 'Chokwe Peoples',
+    value: 195000,
+    imageUrl: 'https://images.unsplash.com/photo-1569172119333-df9a4a4299b0?auto=format&fit=crop&q=80',
+    description: 'A copper-inlaid divination pendant worn by Chokwe spiritual leaders, depicting mythological figures from oral tradition.'
+  },
 ];
