@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Lock,
   Eye,
@@ -12,6 +12,12 @@ import {
   Droplets,
   FileCheck,
   AlertTriangle,
+  Send,
+  X,
+  CheckCircle,
+  ShieldCheck,
+  Shield,
+  AlertCircle,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -28,6 +34,7 @@ interface VaultHolding {
   acquisitionDate: string;
   condition: "Pristine" | "Excellent" | "Good" | "Restoration Pending";
   certStatus: "Valid" | "Renewal Due" | "Pending";
+  isPublic: boolean;
 }
 
 const VAULT_HOLDINGS: VaultHolding[] = ARTWORKS.slice(0, 4).map((art, i) => ({
@@ -40,6 +47,7 @@ const VAULT_HOLDINGS: VaultHolding[] = ARTWORKS.slice(0, 4).map((art, i) => ({
   acquisitionDate: ["2023-06-15", "2024-01-22", "2023-11-08", "2025-02-10"][i],
   condition: ["Pristine", "Excellent", "Excellent", "Pristine"][i] as VaultHolding["condition"],
   certStatus: ["Valid", "Valid", "Renewal Due", "Valid"][i] as VaultHolding["certStatus"],
+  isPublic: i < 2,
 }));
 
 const CONDITION_COLORS = {
@@ -49,10 +57,44 @@ const CONDITION_COLORS = {
   "Restoration Pending": "text-red-600 bg-red-50",
 };
 
+const PRIVATE_CATALOGUES = [
+  { id: "cat-1", name: "West African Masterworks", count: 3, lastUpdated: "2026-05-10", accessLevel: "Confidential" },
+  { id: "cat-2", name: "East African Sculptural", count: 5, lastUpdated: "2026-04-22", accessLevel: "Confidential" },
+  { id: "cat-3", name: "Central African Power Objects", count: 2, lastUpdated: "2026-03-15", accessLevel: "Top Secret" },
+];
+
 export default function PrivateCataloguePage() {
   const router = useRouter();
   const [selectedHolding, setSelectedHolding] = useState<VaultHolding | null>(VAULT_HOLDINGS[0]);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [activeTab, setActiveTab] = useState<"holdings" | "catalogues">("holdings");
+  const [showPORExpress, setShowPORExpress] = useState(false);
+  const [porArtwork, setPorArtwork] = useState<string>("");
+  const [porMessage, setPorMessage] = useState("");
+  const [porSubmitted, setPorSubmitted] = useState(false);
+  const [showAccessDenied, setShowAccessDenied] = useState(false);
+  const [deniedArtwork, setDeniedArtwork] = useState<string>("");
+
+  const handleExpressInterest = (artworkTitle: string) => {
+    setPorArtwork(artworkTitle);
+    setShowPORExpress(true);
+    setPorSubmitted(false);
+    setPorMessage("");
+  };
+
+  const resetPORExpress = () => {
+    setShowPORExpress(false);
+    setPorSubmitted(false);
+    setPorMessage("");
+  };
+
+  const handleAccessDenied = (artworkTitle: string) => {
+    setDeniedArtwork(artworkTitle);
+    setShowAccessDenied(true);
+  };
+
+  const confidentialHoldings = VAULT_HOLDINGS.filter(h => !h.isPublic);
+  const publicHoldings = VAULT_HOLDINGS.filter(h => h.isPublic);
 
   return (
     <>
@@ -93,169 +135,379 @@ export default function PrivateCataloguePage() {
           </div>
         </section>
 
-        {/* Content */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* Holdings List */}
-            <div className="lg:col-span-5">
-              {viewMode === "grid" ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {VAULT_HOLDINGS.map((h, idx) => (
-                    <motion.div key={h.artwork.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
-                    <button
-                      onClick={() => setSelectedHolding(h)}
-                      className={`text-left border p-3 transition-all cursor-pointer bg-transparent ${
-                        selectedHolding?.artwork.id === h.artwork.id
-                          ? "border-gold-leaf bg-surface-container-low shadow-sm"
-                          : "border-on-surface/10 hover:border-gold-leaf/50"
-                      }`}
-                    >
-                      <div className="aspect-square bg-ebony-deep overflow-hidden mb-2 relative">
-                        <img src={h.artwork.imageUrl} alt={h.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        <div className="absolute top-1.5 right-1.5">
-                          {h.certStatus === "Renewal Due" && (
-                            <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold uppercase tracking-wider">Renewal</span>
-                          )}
-                        </div>
-                      </div>
-                      <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold truncate">{h.artwork.period}</p>
-                      <p className="text-[11px] font-bold text-ebony-deep truncate">{h.artwork.title}</p>
-                      <p className="text-[9px] text-on-surface-variant mt-0.5">{h.vaultLocation}</p>
-                    </button>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {VAULT_HOLDINGS.map((h, idx) => (
-                    <motion.div key={h.artwork.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
-                    <button
-                      onClick={() => setSelectedHolding(h)}
-                      className={`w-full text-left flex items-center gap-3 p-3 border transition-all cursor-pointer bg-transparent ${
-                        selectedHolding?.artwork.id === h.artwork.id
-                          ? "border-gold-leaf bg-surface-container-low"
-                          : "border-on-surface/10 hover:border-gold-leaf/50"
-                      }`}
-                    >
-                      <div className="w-12 h-12 bg-ebony-deep overflow-hidden shrink-0">
-                        <img src={h.artwork.imageUrl} alt={h.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-bold text-ebony-deep truncate">{h.artwork.title}</p>
-                        <p className="text-[9px] text-on-surface-variant">{h.artwork.origin} · {h.artwork.material}</p>
-                      </div>
-                      <span className={`text-[9px] px-2 py-0.5 font-bold uppercase tracking-wider ${CONDITION_COLORS[h.condition]}`}>{h.condition}</span>
-                    </button>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Detail View */}
-            <div className="lg:col-span-7">
-              {selectedHolding ? (
-                <motion.div key={selectedHolding.artwork.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div className="aspect-[4/5] bg-ebony-deep overflow-hidden relative">
-                      <img src={selectedHolding.artwork.imageUrl} alt={selectedHolding.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      <div className="absolute top-3 left-3 bg-ebony-deep/80 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5 border border-gold-leaf/20">
-                        <Lock size={9} className="text-gold-leaf" />
-                        <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">Private Holding</span>
-                      </div>
-                    </div>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf mb-1">{selectedHolding.artwork.period}</p>
-                        <h2 className="font-serif text-2xl text-ebony-deep">{selectedHolding.artwork.title}</h2>
-                        <p className="text-xs text-on-surface-variant mt-1">{selectedHolding.artwork.origin} · {selectedHolding.artwork.material}</p>
-                      </div>
-                      <div className="space-y-2.5 border-t border-on-surface/5 pt-4">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Dimensions</span>
-                          <span className="text-ebony-deep font-medium">{selectedHolding.artwork.dimensions}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Estimated Value</span>
-                          <span className="text-ebony-deep font-semibold">{selectedHolding.insuranceValue}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Acquisition Date</span>
-                          <span className="text-ebony-deep font-medium">{selectedHolding.acquisitionDate}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Condition</span>
-                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${CONDITION_COLORS[selectedHolding.condition]}`}>{selectedHolding.condition}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Certificate Status</span>
-                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${selectedHolding.certStatus === "Valid" ? "text-emerald-600 bg-emerald-50" : "text-amber-600 bg-amber-50"}`}>{selectedHolding.certStatus}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <button onClick={() => router.push(`/artwork/${selectedHolding.artwork.id}`)} className="flex-1 bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center justify-center gap-1.5">
-                          <Eye size={10} /> Full Details
-                        </button>
-                        <button className="flex-1 border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center justify-center gap-1.5">
-                          <Download size={10} /> Dossier
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Vault Status */}
-                  <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                    <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">Vault Storage Status</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-surface p-3 border border-on-surface/5">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <MapPin size={11} className="text-gold-leaf" />
-                          <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Location</span>
-                        </div>
-                        <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.vaultLocation}</p>
-                      </div>
-                      <div className="bg-surface p-3 border border-on-surface/5">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Thermometer size={11} className="text-gold-leaf" />
-                          <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Temperature</span>
-                        </div>
-                        <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.temperature}</p>
-                      </div>
-                      <div className="bg-surface p-3 border border-on-surface/5">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Droplets size={11} className="text-gold-leaf" />
-                          <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Humidity</span>
-                        </div>
-                        <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.humidity}</p>
-                      </div>
-                      <div className="bg-surface p-3 border border-on-surface/5">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <FileCheck size={11} className="text-gold-leaf" />
-                          <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Last Inspection</span>
-                        </div>
-                        <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.lastInspection}</p>
-                      </div>
-                    </div>
-                    {selectedHolding.certStatus === "Renewal Due" && (
-                      <div className="mt-4 bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
-                        <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-xs font-bold text-amber-800">Certificate Renewal Required</p>
-                          <p className="text-[11px] text-amber-700 mt-0.5">Your certificate of authenticity for this piece is due for renewal. Contact our curatorial team to initiate the renewal process.</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              ) : (
-                <div className="flex items-center justify-center h-64 border border-dashed border-on-surface/10">
-                  <p className="text-xs text-on-surface-variant/40 uppercase tracking-widest">Select a holding to view details</p>
-                </div>
-              )}
+        {/* Tab Navigation */}
+        <div className="border-b border-on-surface/5">
+          <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20">
+            <div className="flex gap-6">
+              <button
+                onClick={() => setActiveTab("holdings")}
+                className={`pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors cursor-pointer bg-transparent ${
+                  activeTab === "holdings"
+                    ? "text-ebony-deep border-gold-leaf"
+                    : "text-on-surface-variant border-transparent hover:text-ebony-deep"
+                }`}
+              >
+                Vault Holdings
+              </button>
+              <button
+                onClick={() => setActiveTab("catalogues")}
+                className={`pb-3 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors cursor-pointer bg-transparent ${
+                  activeTab === "catalogues"
+                    ? "text-ebony-deep border-gold-leaf"
+                    : "text-on-surface-variant border-transparent hover:text-ebony-deep"
+                }`}
+              >
+                Private Catalogues
+              </button>
             </div>
           </div>
+        </div>
+
+        {/* Content */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12">
+          {activeTab === "holdings" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+              {/* Holdings List */}
+              <div className="lg:col-span-5">
+                {viewMode === "grid" ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    {VAULT_HOLDINGS.map((h, idx) => (
+                      <motion.div key={h.artwork.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
+                      <button
+                        onClick={() => {
+                          if (h.isPublic) {
+                            setSelectedHolding(h);
+                          } else {
+                            handleAccessDenied(h.artwork.title);
+                          }
+                        }}
+                        className={`text-left border p-3 transition-all cursor-pointer bg-transparent ${
+                          selectedHolding?.artwork.id === h.artwork.id
+                            ? "border-gold-leaf bg-surface-container-low shadow-sm"
+                            : "border-on-surface/10 hover:border-gold-leaf/50"
+                        }`}
+                      >
+                        <div className="aspect-square bg-ebony-deep overflow-hidden mb-2 relative">
+                          <img src={h.artwork.imageUrl} alt={h.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          {!h.isPublic && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-ebony-deep/60">
+                              <Lock size={20} className="text-gold-leaf" />
+                            </div>
+                          )}
+                          <div className="absolute top-1.5 right-1.5">
+                            {h.certStatus === "Renewal Due" && (
+                              <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold uppercase tracking-wider">Renewal</span>
+                            )}
+                          </div>
+                          {!h.isPublic && (
+                            <div className="absolute bottom-1.5 left-1.5">
+                              <span className="px-1.5 py-0.5 bg-terracotta-earth text-white text-[8px] font-bold uppercase tracking-wider">Confidential</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold truncate">{h.artwork.period}</p>
+                        <p className="text-[11px] font-bold text-ebony-deep truncate">{h.artwork.title}</p>
+                        <p className="text-[9px] text-on-surface-variant mt-0.5">{h.vaultLocation}</p>
+                      </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {VAULT_HOLDINGS.map((h, idx) => (
+                      <motion.div key={h.artwork.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
+                      <button
+                        onClick={() => {
+                          if (h.isPublic) {
+                            setSelectedHolding(h);
+                          } else {
+                            handleAccessDenied(h.artwork.title);
+                          }
+                        }}
+                        className={`w-full text-left flex items-center gap-3 p-3 border transition-all cursor-pointer bg-transparent ${
+                          selectedHolding?.artwork.id === h.artwork.id
+                            ? "border-gold-leaf bg-surface-container-low"
+                            : "border-on-surface/10 hover:border-gold-leaf/50"
+                        }`}
+                      >
+                        <div className="w-12 h-12 bg-ebony-deep overflow-hidden shrink-0 relative">
+                          <img src={h.artwork.imageUrl} alt={h.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          {!h.isPublic && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-ebony-deep/60">
+                              <Lock size={12} className="text-gold-leaf" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[11px] font-bold text-ebony-deep truncate">{h.artwork.title}</p>
+                            {!h.isPublic && (
+                              <span className="px-1 py-0.5 bg-terracotta-earth text-white text-[7px] font-bold uppercase tracking-wider shrink-0">Confidential</span>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-on-surface-variant">{h.artwork.origin} · {h.artwork.material}</p>
+                        </div>
+                        <span className={`text-[9px] px-2 py-0.5 font-bold uppercase tracking-wider ${CONDITION_COLORS[h.condition]}`}>{h.condition}</span>
+                      </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Detail View */}
+              <div className="lg:col-span-7">
+                {selectedHolding ? (
+                  <motion.div key={selectedHolding.artwork.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      <div className="aspect-[4/5] bg-ebony-deep overflow-hidden relative">
+                        <img src={selectedHolding.artwork.imageUrl} alt={selectedHolding.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <div className="absolute top-3 left-3 bg-ebony-deep/80 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5 border border-gold-leaf/20">
+                          <Lock size={9} className="text-gold-leaf" />
+                          <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">Private Holding</span>
+                        </div>
+                        {!selectedHolding.isPublic && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-parchment-ivory/10 font-serif text-5xl font-bold uppercase rotate-[-30deg] tracking-widest select-none">
+                              CONFIDENTIAL
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf mb-1">{selectedHolding.artwork.period}</p>
+                          <h2 className="font-serif text-2xl text-ebony-deep">{selectedHolding.artwork.title}</h2>
+                          <p className="text-xs text-on-surface-variant mt-1">{selectedHolding.artwork.origin} · {selectedHolding.artwork.material}</p>
+                        </div>
+                        <div className="space-y-2.5 border-t border-on-surface/5 pt-4">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant">Dimensions</span>
+                            <span className="text-ebony-deep font-medium">{selectedHolding.artwork.dimensions}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant">Estimated Value</span>
+                            <span className="text-ebony-deep font-semibold">{selectedHolding.insuranceValue}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant">Acquisition Date</span>
+                            <span className="text-ebony-deep font-medium">{selectedHolding.acquisitionDate}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant">Condition</span>
+                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${CONDITION_COLORS[selectedHolding.condition]}`}>{selectedHolding.condition}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-on-surface-variant">Certificate Status</span>
+                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${selectedHolding.certStatus === "Valid" ? "text-emerald-600 bg-emerald-50" : "text-amber-600 bg-amber-50"}`}>{selectedHolding.certStatus}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <button onClick={() => router.push(`/artwork/${selectedHolding.artwork.id}`)} className="flex-1 bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center justify-center gap-1.5">
+                            <Eye size={10} /> Full Details
+                          </button>
+                          <button
+                            onClick={() => handleExpressInterest(selectedHolding.artwork.title)}
+                            className="flex-1 border border-gold-leaf text-gold-leaf px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors cursor-pointer bg-transparent flex items-center justify-center gap-1.5"
+                          >
+                            <Send size={10} /> Express Interest
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Vault Status */}
+                    <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                      <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">Vault Storage Status</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-surface p-3 border border-on-surface/5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <MapPin size={11} className="text-gold-leaf" />
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Location</span>
+                          </div>
+                          <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.vaultLocation}</p>
+                        </div>
+                        <div className="bg-surface p-3 border border-on-surface/5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Thermometer size={11} className="text-gold-leaf" />
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Temperature</span>
+                          </div>
+                          <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.temperature}</p>
+                        </div>
+                        <div className="bg-surface p-3 border border-on-surface/5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Droplets size={11} className="text-gold-leaf" />
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Humidity</span>
+                          </div>
+                          <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.humidity}</p>
+                        </div>
+                        <div className="bg-surface p-3 border border-on-surface/5">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <FileCheck size={11} className="text-gold-leaf" />
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Last Inspection</span>
+                          </div>
+                          <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.lastInspection}</p>
+                        </div>
+                      </div>
+                      {selectedHolding.certStatus === "Renewal Due" && (
+                        <div className="mt-4 bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
+                          <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-amber-800">Certificate Renewal Required</p>
+                            <p className="text-[11px] text-amber-700 mt-0.5">Your certificate of authenticity for this piece is due for renewal. Contact our curatorial team to initiate the renewal process.</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="flex items-center justify-center h-64 border border-dashed border-on-surface/10">
+                    <p className="text-xs text-on-surface-variant/40 uppercase tracking-widest">Select a holding to view details</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* Private Catalogues Tab */
+            <div className="max-w-3xl">
+              <div className="mb-8">
+                <h2 className="font-serif text-2xl text-ebony-deep mb-2">Private Catalogues</h2>
+                <p className="font-sans text-sm text-on-surface-variant">
+                  Access your exclusive curated catalogues. Each catalogue contains privately held artworks
+                  with access restricted to authenticated VIP members.
+                </p>
+              </div>
+              <div className="space-y-4">
+                {PRIVATE_CATALOGUES.map((cat, idx) => (
+                  <motion.div
+                    key={cat.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="border border-on-surface/10 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-gold-leaf/50 transition-colors"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-ebony-deep flex items-center justify-center shrink-0">
+                        <Lock size={16} className="text-gold-leaf" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif text-lg text-ebony-deep">{cat.name}</h3>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">{cat.count} Artworks</span>
+                          <span className="text-[9px] text-on-surface-variant/40">·</span>
+                          <span className="text-[9px] text-on-surface-variant">Updated {cat.lastUpdated}</span>
+                          <span className="text-[9px] text-on-surface-variant/40">·</span>
+                          <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${cat.accessLevel === "Top Secret" ? "bg-terracotta-earth text-white" : "bg-ebony-deep text-parchment-ivory"}`}>{cat.accessLevel}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button className="border border-gold-leaf text-gold-leaf px-4 py-2 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
+                      <Eye size={10} /> View Catalogue
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
       </main>
+
+      {/* Express Interest POR Modal */}
+      <AnimatePresence>
+        {showPORExpress && (
+          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+              <button onClick={resetPORExpress} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-6 h-6" /></button>
+              {porSubmitted ? (
+                <div className="text-center">
+                  <CheckCircle className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
+                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Interest Registered</h3>
+                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                    Your express interest for <strong>{porArtwork}</strong> has been registered.
+                    Our curatorial team will contact you within 24 hours to discuss acquisition options.
+                  </p>
+                  <button onClick={resetPORExpress} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">Close</button>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <Send className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">Express Interest</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">For: {porArtwork}</p>
+                  </div>
+                  <form onSubmit={(e) => { e.preventDefault(); if (!porMessage.trim()) return; setPorSubmitted(true); }} className="space-y-4">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message / Conditions</label>
+                      <textarea
+                        rows={4}
+                        required
+                        value={porMessage}
+                        onChange={(e) => setPorMessage(e.target.value)}
+                        className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none resize-none"
+                        placeholder="Express your interest, budget range, timeline, or specific conditions..."
+                      />
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <input type="checkbox" id="gdpr-private" required className="mt-1 accent-gold-leaf" />
+                      <label htmlFor="gdpr-private" className="text-[10px] text-on-surface-variant leading-relaxed">
+                        I consent to the processing of my personal data in accordance with <span className="text-gold-leaf font-semibold">GDPR regulations</span>. *
+                      </label>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-ebony-deep/5">
+                      <button type="button" onClick={resetPORExpress} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Cancel</button>
+                      <button type="submit" disabled={!porMessage.trim()} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0">
+                        Submit Interest
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Access Denied Modal */}
+      <AnimatePresence>
+        {showAccessDenied && (
+          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+              <button onClick={() => setShowAccessDenied(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-6 h-6" /></button>
+              <div className="text-center">
+                <Shield className="w-14 h-14 text-terracotta-earth mx-auto mb-4" />
+                <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Access Restricted</h3>
+                <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
+                  <strong>{deniedArtwork}</strong> is a confidential acquisition not yet available for public viewing.
+                </p>
+                <div className="bg-surface-container-low border border-on-surface/5 p-4 mb-6 text-left">
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-2">To access this artwork:</p>
+                  <ul className="text-xs text-on-surface-variant space-y-1.5">
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold-leaf mt-0.5">1.</span>
+                      <span>Contact our curatorial team to request VIP access clearance</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold-leaf mt-0.5">2.</span>
+                      <span>Complete enhanced KYC verification for confidential holdings</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-gold-leaf mt-0.5">3.</span>
+                      <span>Sign a Non-Disclosure Agreement (NDA) for private collection data</span>
+                    </li>
+                  </ul>
+                </div>
+                <div className="flex gap-3 justify-center">
+                  <button onClick={() => setShowAccessDenied(false)} className="border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Close</button>
+                  <a href="mailto:vip@adunagallery.com?subject=VIP%20Access%20Request" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
+                    <ShieldCheck size={12} /> Request VIP Access
+                  </a>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <Footer />
     </>
   );

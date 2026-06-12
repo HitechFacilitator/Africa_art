@@ -4,8 +4,13 @@ import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
 import {
   LayoutDashboard,
   Landmark,
+  Award,
   ScrollText,
   Gavel,
+  BookLock,
+  Bell,
+  TrendingUp,
+  Eye,
   Truck,
   ShieldCheck,
   Settings,
@@ -33,9 +38,14 @@ export default function Sidebar({
 }: SidebarProps) {
   const navItems = [
     { id: ActiveTab.Dashboard, label: 'Dashboard', icon: LayoutDashboard },
-    { id: ActiveTab.Portfolio, label: 'Portfolio', icon: Landmark },
+    { id: ActiveTab.Portfolio, label: 'My Acquisitions', icon: Landmark },
+    { id: ActiveTab.Certificates, label: 'Certificates', icon: Award },
     { id: ActiveTab.Inquiries, label: 'Inquiries', icon: ScrollText },
     { id: ActiveTab.Consultations, label: 'Consultations', icon: Gavel },
+    { id: ActiveTab.PrivateCatalogues, label: 'Private Catalogues', icon: BookLock },
+    { id: ActiveTab.AlertsAuctions, label: 'Alerts & Auctions', icon: Bell },
+    { id: ActiveTab.Investment, label: 'Investment', icon: TrendingUp },
+    { id: ActiveTab.Previews, label: 'Exclusive Previews', icon: Eye },
     { id: ActiveTab.Logistics, label: 'Logistics', icon: Truck },
     { id: ActiveTab.Security, label: 'Security', icon: ShieldCheck },
   ];

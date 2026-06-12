@@ -2,6 +2,7 @@
 
 import { useState, use } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowLeft,
@@ -18,10 +19,13 @@ import {
   Sparkles,
   Clock,
   Briefcase,
+  ChevronDown,
+  ShoppingCart,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
+import type { Artwork } from "@/lib/types";
 
 interface ChatMessage {
   sender: "user" | "curator";
@@ -33,6 +37,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const artwork = ARTWORKS.find((a) => a.id === id) || ARTWORKS[0];
 
+  const [showExhibitionRooms, setShowExhibitionRooms] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [showDossierModal, setShowDossierModal] = useState(false);
   const [showReserveModal, setShowReserveModal] = useState(false);
@@ -51,6 +56,8 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   const [curatorQuestion, setCuratorQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [curatorLoading, setCuratorLoading] = useState(false);
+
+  const isPor = typeof artwork.label === "string";
 
   const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -100,6 +107,11 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
     "ade-crown": "border-l-4 border-[#2A2A2A]",
   };
 
+  const formatPrice = (label: Artwork["label"]) => {
+    if (typeof label === "number") return `€${label.toLocaleString()}`;
+    return String(label);
+  };
+
   return (
     <>
       <Navbar />
@@ -109,32 +121,58 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
           <ArrowLeft className="w-4 h-4" /> Back to Collection
         </button>
 
-        {/* Curated Sub-Selector */}
+        {/* Exhibition Rooms — Collapsible Rollup */}
         <div className="mb-12 border-b border-ebony-deep/10 pb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-4">
+          <button
+            onClick={() => setShowExhibitionRooms(!showExhibitionRooms)}
+            className="flex items-center justify-between w-full text-left group"
+          >
             <div>
               <h3 className="text-xs uppercase tracking-[0.2em] font-bold text-gold-leaf font-sans">Current Exhibition Rooms</h3>
-              <p className="text-sm font-sans text-on-surface-variant">Explore authentic African ancestral assets from the ADUNA treasury.</p>
+              <p className="text-sm font-sans text-on-surface-variant mt-0.5">Browse other artifacts in the collection</p>
             </div>
-          </div>
-          <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-            {ARTWORKS.map((m) => {
-              const isActive = m.id === artwork.id;
-              return (
-                <motion.div key={m.id} variants={fadeUp}>
-                  <button onClick={() => router.push(`/artwork/${m.id}`)} className={`group uppercase text-left border p-3 flex items-start space-x-3 transition-all duration-300 w-full ${isActive ? "bg-ebony-deep border-ebony-deep text-parchment-ivory" : "bg-surface-container-low border-ebony-deep/5 text-ebony-deep hover:bg-surface-container-high"}`}>
-                    <div className="w-12 h-12 bg-gray-200 overflow-hidden shrink-0 flex items-center border border-ebony-deep/5">
-                      <img src={m.imageUrl} alt={m.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    </div>
-                    <div className="overflow-hidden">
-                      <p className={`text-[9px] tracking-widest font-bold ${isActive ? "text-gold-leaf" : "text-on-surface-variant"}`}>{m.period}</p>
-                      <h4 className="text-[11px] font-bold line-clamp-2 leading-tight tracking-tight pt-1 font-sans">{m.title}</h4>
-                    </div>
-                  </button>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-sans text-on-surface-variant uppercase tracking-wider">
+                {showExhibitionRooms ? "Hide" : "View"} Collection
+              </span>
+              <ChevronDown className={`w-4 h-4 text-on-surface-variant transition-transform duration-300 ${showExhibitionRooms ? "rotate-180" : ""}`} />
+            </div>
+          </button>
+
+          <AnimatePresence>
+            {showExhibitionRooms && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] as const }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
+                  {ARTWORKS.map((m) => {
+                    const isActive = m.id === artwork.id;
+                    return (
+                      <Link
+                        key={m.id}
+                        href={`/artwork/${m.id}`}
+                        className={`group uppercase text-left border p-2.5 flex items-start space-x-2.5 transition-all duration-300 ${
+                          isActive ? "bg-ebony-deep border-ebony-deep text-parchment-ivory" : "bg-surface-container-low border-ebony-deep/5 text-ebony-deep hover:bg-surface-container-high"
+                        }`}
+                      >
+                        <div className="w-10 h-10 bg-gray-200 overflow-hidden shrink-0 border border-ebony-deep/5">
+                          <img src={m.imageUrl} alt={m.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        </div>
+                        <div className="overflow-hidden min-w-0">
+                          <p className={`text-[9px] tracking-widest font-bold ${isActive ? "text-gold-leaf" : "text-on-surface-variant"}`}>{m.period}</p>
+                          <h4 className="text-[10px] font-bold line-clamp-2 leading-tight tracking-tight pt-0.5 font-sans">{m.title}</h4>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ARTWORK DETAIL GRID */}
@@ -143,7 +181,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
           <div className="lg:col-span-7 flex flex-col justify-between">
             <div>
               <div className="relative w-full aspect-[4/5] sm:aspect-square bg-surface-container-high overflow-hidden border border-ebony-deep/5 group">
-                <img src={artwork.imageUrl} alt={artwork.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
+                <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
                 <div className="absolute top-4 left-4 bg-ebony-deep/80 backdrop-blur-md px-3 py-1 border border-gold-leaf/20">
                   <p className="text-[10px] text-gold-leaf tracking-widest uppercase font-semibold">AUTHENTICATED SECURED ASSET</p>
                 </div>
@@ -218,25 +256,56 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
 
               <p className="font-sans text-sm text-on-surface-variant leading-relaxed">{artwork.historicalStory}</p>
 
-              {/* Exclusivity & Inquiry Block */}
-              <div className="bg-surface-container-high p-5 border border-ebony-deep/5 mt-6">
-                <p className="text-[10px] uppercase font-bold text-gold-leaf tracking-widest mb-1">Institutional Offering</p>
-                <div className="flex justify-between items-baseline mb-4">
-                  <span className="text-xs text-on-surface-variant">Pricing Classification</span>
-                  <span className="font-serif text-lg font-bold text-ebony-deep">Price on Request</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms and transport insurance parameters for ${artwork.title}.`); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors">
-                    Inquire Confidentially
+              {/* Pricing / Action Block */}
+              {isPor ? (
+                /* POR Section */
+                <div className="bg-surface-container-high p-5 border border-ebony-deep/5 mt-6">
+                  <p className="text-[10px] uppercase font-bold text-gold-leaf tracking-widest mb-1">Institutional Offering</p>
+                  <div className="flex justify-between items-baseline mb-4">
+                    <span className="text-xs text-on-surface-variant">Pricing Classification</span>
+                    <span className="font-serif text-lg font-bold text-ebony-deep">Price on Request</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms and transport insurance parameters for ${artwork.title}.`); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors">
+                      Inquire Confidentially
+                    </button>
+                    <a href={`/acquisition?artwork=${artwork.id}`} className="w-full border border-gold-leaf text-gold-leaf bg-transparent font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf/10 transition-colors text-center">
+                      Acquire Now
+                    </a>
+                  </div>
+                  <button onClick={() => setShowReserveModal(true)} className="w-full mt-3 border border-ebony-deep/20 text-ebony-deep bg-transparent font-sans text-xs font-semibold py-3 px-6 uppercase tracking-wider hover:border-gold-leaf hover:text-gold-leaf transition-colors">
+                    Reserve for 48 Hours
                   </button>
-                  <a href={`/acquisition?artwork=${artwork.id}`} className="w-full border border-gold-leaf text-gold-leaf bg-transparent font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf/10 transition-colors text-center">
-                    Acquire Now
-                  </a>
                 </div>
-                <button onClick={() => setShowReserveModal(true)} className="w-full mt-3 border border-ebony-deep/20 text-ebony-deep bg-transparent font-sans text-xs font-semibold py-3 px-6 uppercase tracking-wider hover:border-gold-leaf hover:text-gold-leaf transition-colors">
-                  Reserve for 48 Hours
-                </button>
-              </div>
+              ) : (
+                /* Fixed Price Section */
+                <div className="bg-surface-container-high p-5 border border-ebony-deep/5 mt-6">
+                  <p className="text-[10px] uppercase font-bold text-gold-leaf tracking-widest mb-1">Available for Acquisition</p>
+                  <div className="flex justify-between items-baseline mb-4">
+                    <span className="text-xs text-on-surface-variant">Asking Price</span>
+                    <span className="font-serif text-lg font-bold text-ebony-deep">{formatPrice(artwork.label)}</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <Link
+                      href={`/acquisition?artwork=${artwork.id}`}
+                      className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors text-center flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart className="w-3.5 h-3.5" />
+                      Purchase Now
+                    </Link>
+                    <Link
+                      href="/login"
+                      className="w-full border border-gold-leaf text-gold-leaf bg-transparent font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf/10 transition-colors text-center flex items-center justify-center gap-2"
+                    >
+                      <Lock className="w-3 h-3" />
+                      Login to Reserve
+                    </Link>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant/60 mt-3 font-sans">
+                    48-hour reservation available for registered members. <Link href="/register" className="text-gold-leaf hover:underline">Create an account</Link> to access exclusive reservation and acquisition features.
+                  </p>
+                </div>
+              )}
 
               {/* Curator AI Chat */}
               <div className="mt-8 border border-ebony-deep/15 bg-surface p-[18px]">
@@ -323,125 +392,128 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
         </section>
       </main>
 
-      {/* Floating POR Bar */}
+      {/* Floating Bottom Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-ebony-deep text-parchment-ivory py-3 px-6 z-40 border-t border-gold-leaf/20">
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
           <div className="flex items-center gap-4">
             <Lock className="w-4 h-4 text-gold-leaf" />
             <span className="font-sans text-[11px] uppercase tracking-wider font-semibold">{artwork.title}</span>
             <span className="text-gold-leaf">•</span>
-            <span className="font-sans text-xs text-parchment-ivory/60">Price on Request</span>
+            <span className="font-sans text-xs text-parchment-ivory/60">{isPor ? "Price on Request" : formatPrice(artwork.label)}</span>
           </div>
-          <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms for ${artwork.title}.`); }} className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:block">
-            Inquire Now
-          </button>
-          <a href={`/acquisition?artwork=${artwork.id}`} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-colors">
-            Acquire
-          </a>
+          {isPor ? (
+            <div className="flex items-center gap-2">
+              <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms for ${artwork.title}.`); }} className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:block">
+                Inquire Now
+              </button>
+              <a href={`/acquisition?artwork=${artwork.id}`} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-colors border border-gold-leaf">
+                Acquire
+              </a>
+            </div>
+          ) : (
+            <Link href="/login" className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity flex items-center gap-2">
+              <Lock className="w-3 h-3" /> Login to Purchase
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Inquiry Modal */}
-      <AnimatePresence>
-        {showInquiryModal && (
-          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
-              <button onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
-              {inquiryResult ? (
-                <div className="text-center">
-                  <ShieldCheck className="w-12 h-12 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep mb-3">Inquiry Submitted Successfully</h3>
-                  <pre className="text-xs text-on-surface-variant whitespace-pre-wrap text-left bg-surface-container-low p-4 border border-ebony-deep/5 mb-6">{inquiryResult}</pre>
-                  <button onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-3 hover:opacity-90 transition-opacity">Close</button>
-                </div>
-              ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <Sparkles className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
-                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">Confidential Acquisition Inquiry</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">For: {artwork.title}</p>
+      {/* Inquiry Modal (POR only) */}
+      {isPor && (
+        <AnimatePresence>
+          {showInquiryModal && (
+            <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+                <button onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
+                {inquiryResult ? (
+                  <div className="text-center">
+                    <ShieldCheck className="w-12 h-12 text-gold-leaf mx-auto mb-4" />
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep mb-3">Inquiry Submitted Successfully</h3>
+                    <pre className="text-xs text-on-surface-variant whitespace-pre-wrap text-left bg-surface-container-low p-4 border border-ebony-deep/5 mb-6">{inquiryResult}</pre>
+                    <button onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-3 hover:opacity-90 transition-opacity">Close</button>
                   </div>
-                  <form onSubmit={handleAcquisitionSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">First Name *</label>
-                        <input type="text" required value={inquiryFirstName} onChange={(e) => setInquiryFirstName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian" />
+                ) : (
+                  <>
+                    <div className="text-center mb-6">
+                      <Sparkles className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
+                      <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">Confidential Acquisition Inquiry</h3>
+                      <p className="text-xs text-on-surface-variant mt-1">For: {artwork.title}</p>
+                    </div>
+                    <form onSubmit={handleAcquisitionSubmit} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">First Name *</label>
+                          <input type="text" required value={inquiryFirstName} onChange={(e) => setInquiryFirstName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Last Name *</label>
+                          <input type="text" required value={inquiryLastName} onChange={(e) => setInquiryLastName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Doe" />
+                        </div>
                       </div>
                       <div>
-                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Last Name *</label>
-                        <input type="text" required value={inquiryLastName} onChange={(e) => setInquiryLastName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Doe" />
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Professional Email *</label>
+                        <input type="email" required value={inquiryEmail} onChange={(e) => setInquiryEmail(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="collector@institution.com" />
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Professional Email *</label>
-                      <input type="email" required value={inquiryEmail} onChange={(e) => setInquiryEmail(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="collector@institution.com" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">International Phone</label>
-                      <div className="flex">
-                        <select className="border border-ebony-deep/15 border-r-0 p-3 text-xs focus:border-gold-leaf focus:outline-none bg-surface-container-low w-24 shrink-0">
-                          <option>+44</option>
-                          <option>+1</option>
-                          <option>+33</option>
-                          <option>+49</option>
-                          <option>+41</option>
-                          <option>+234</option>
-                          <option>+27</option>
-                          <option>+254</option>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">International Phone</label>
+                        <div className="flex">
+                          <select className="border border-ebony-deep/15 border-r-0 p-3 text-xs focus:border-gold-leaf focus:outline-none bg-surface-container-low w-24 shrink-0">
+                            <option>+44</option>
+                            <option>+1</option>
+                            <option>+33</option>
+                            <option>+49</option>
+                            <option>+41</option>
+                            <option>+234</option>
+                            <option>+27</option>
+                            <option>+254</option>
+                          </select>
+                          <input type="tel" value={inquiryPhone} onChange={(e) => setInquiryPhone(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="7700 900000" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Profile *</label>
+                        <select value={clientStatus} onChange={(e) => setClientStatus(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
+                          <option>Private Collector</option>
+                          <option>Institution / Museum</option>
+                          <option>Auction House</option>
+                          <option>Investor</option>
                         </select>
-                        <input type="tel" value={inquiryPhone} onChange={(e) => setInquiryPhone(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="7700 900000" />
                       </div>
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Profile *</label>
-                      <select value={clientStatus} onChange={(e) => setClientStatus(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
-                        <option>Private Collector</option>
-                        <option>Institution / Museum</option>
-                        <option>Auction House</option>
-                        <option>Investor</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Indicative Budget</label>
-                      <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
-                        <option>€100K – €500K</option>
-                        <option>€500K – €1M</option>
-                        <option>€1M – €5M</option>
-                        <option>€5M – €10M</option>
-                        <option>€10M – €25M</option>
-                        <option>€25M+</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message</label>
-                      <textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Interest, timeline, special conditions..." />
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <input
-                        type="checkbox"
-                        id="gdpr-consent-detail"
-                        required
-                        checked={gdprConsent}
-                        onChange={(e) => setGdprConsent(e.target.checked)}
-                        className="mt-1 accent-gold-leaf"
-                      />
-                      <label htmlFor="gdpr-consent-detail" className="text-[10px] text-on-surface-variant leading-relaxed">
-                        I consent to the processing of my personal data in accordance with the <span className="text-gold-leaf font-semibold">Privacy Policy</span> and <span className="text-gold-leaf font-semibold">GDPR regulations</span>. *
-                      </label>
-                    </div>
-                    <div className="flex justify-end gap-4 pt-4 border-t border-ebony-deep/5">
-                      <button type="button" onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">Cancel</button>
-                      <button type="submit" disabled={submittingInquiry || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2">
-                        {submittingInquiry ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Submitting...</>) : "Submit Inquiry"}
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Indicative Budget</label>
+                        <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
+                          <option>€100K – €500K</option>
+                          <option>€500K – €1M</option>
+                          <option>€1M – €5M</option>
+                          <option>€5M – €10M</option>
+                          <option>€10M – €25M</option>
+                          <option>€25M+</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message</label>
+                        <textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Interest, timeline, special conditions..." />
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <input type="checkbox" id="gdpr-consent-detail" required checked={gdprConsent} onChange={(e) => setGdprConsent(e.target.checked)} className="mt-1 accent-gold-leaf" />
+                        <label htmlFor="gdpr-consent-detail" className="text-[10px] text-on-surface-variant leading-relaxed">
+                          I consent to the processing of my personal data in accordance with the <span className="text-gold-leaf font-semibold">Privacy Policy</span> and <span className="text-gold-leaf font-semibold">GDPR regulations</span>. *
+                        </label>
+                      </div>
+                      <div className="flex justify-end gap-4 pt-4 border-t border-ebony-deep/5">
+                        <button type="button" onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">Cancel</button>
+                        <button type="submit" disabled={submittingInquiry || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2">
+                          {submittingInquiry ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Submitting...</>) : "Submit Inquiry"}
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      )}
 
       {/* Dossier Modal */}
       <AnimatePresence>
@@ -467,74 +539,76 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
         )}
       </AnimatePresence>
 
-      {/* 48h Reservation Modal */}
-      <AnimatePresence>
-        {showReserveModal && (
-          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
-              <button onClick={() => { setShowReserveModal(false); setReserveConfirmed(false); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
-              {reserveConfirmed ? (
-                <div className="text-center">
-                  <Clock className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">48-Hour Reservation Active</h3>
-                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    <strong>{artwork.title}</strong> has been reserved in your name for the next 48 hours.
-                    A confirmation email has been sent with your reservation details and timer information.
-                  </p>
-                  <div className="bg-surface-container-low border border-ebony-deep/5 p-6 mb-6">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">Reservation Timer</p>
-                    <div className="font-mono text-2xl text-ebony-deep font-bold tracking-wider">48:00:00</div>
-                    <p className="text-[10px] text-on-surface-variant/60 mt-2">Expires automatically. You will receive reminder emails at 24h and 1h before expiry.</p>
+      {/* 48h Reservation Modal (POR only) */}
+      {isPor && (
+        <AnimatePresence>
+          {showReserveModal && (
+            <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+                <button onClick={() => { setShowReserveModal(false); setReserveConfirmed(false); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
+                {reserveConfirmed ? (
+                  <div className="text-center">
+                    <Clock className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">48-Hour Reservation Active</h3>
+                    <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                      <strong>{artwork.title}</strong> has been reserved in your name for the next 48 hours.
+                      A confirmation email has been sent with your reservation details and timer information.
+                    </p>
+                    <div className="bg-surface-container-low border border-ebony-deep/5 p-6 mb-6">
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">Reservation Timer</p>
+                      <div className="font-mono text-2xl text-ebony-deep font-bold tracking-wider">48:00:00</div>
+                      <p className="text-[10px] text-on-surface-variant/60 mt-2">Expires automatically. You will receive reminder emails at 24h and 1h before expiry.</p>
+                    </div>
+                    <div className="flex gap-3 justify-center">
+                      <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
+                        Go to Dashboard
+                      </a>
+                      <a href={`/acquisition?artwork=${artwork.id}`} className="border border-gold-leaf text-gold-leaf px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors inline-block">
+                        Proceed to Purchase
+                      </a>
+                    </div>
                   </div>
-                  <div className="flex gap-3 justify-center">
-                    <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
-                      Go to Dashboard
-                    </a>
-                    <a href={`/acquisition?artwork=${artwork.id}`} className="border border-gold-leaf text-gold-leaf px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors inline-block">
-                      Proceed to Purchase
-                    </a>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <Clock className="w-12 h-12 text-gold-leaf mx-auto mb-3" />
-                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">Reserve for 48 Hours</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">Hold this artwork before it sells</p>
-                  </div>
-                  <div className="bg-surface-container-low border border-ebony-deep/5 p-4 mb-6 text-xs space-y-2">
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Artwork</span><span className="font-medium">{artwork.title}</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Origin</span><span className="font-medium">{artwork.origin}</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Period</span><span className="font-medium">{artwork.period}</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Reservation Period</span><span className="font-medium text-gold-leaf font-semibold">48 Hours</span></div>
-                  </div>
-                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    By confirming, you agree to hold this artwork exclusively for 48 hours. During this period, the artwork will be locked from public sale. You will receive email notifications at 24 hours and 1 hour before expiry.
-                  </p>
-                  <div className="flex gap-3">
-                    <button onClick={() => { setShowReserveModal(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        setReserveLoading(true);
-                        setTimeout(() => {
-                          setReserveLoading(false);
-                          setReserveConfirmed(true);
-                        }, 1500);
-                      }}
-                      disabled={reserveLoading}
-                      className="flex-1 bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center justify-center gap-2"
-                    >
-                      {reserveLoading ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Reserving...</>) : "Confirm Reservation"}
-                    </button>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                ) : (
+                  <>
+                    <div className="text-center mb-6">
+                      <Clock className="w-12 h-12 text-gold-leaf mx-auto mb-3" />
+                      <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">Reserve for 48 Hours</h3>
+                      <p className="text-xs text-on-surface-variant mt-1">Hold this artwork before it sells</p>
+                    </div>
+                    <div className="bg-surface-container-low border border-ebony-deep/5 p-4 mb-6 text-xs space-y-2">
+                      <div className="flex justify-between"><span className="text-on-surface-variant">Artwork</span><span className="font-medium">{artwork.title}</span></div>
+                      <div className="flex justify-between"><span className="text-on-surface-variant">Origin</span><span className="font-medium">{artwork.origin}</span></div>
+                      <div className="flex justify-between"><span className="text-on-surface-variant">Period</span><span className="font-medium">{artwork.period}</span></div>
+                      <div className="flex justify-between"><span className="text-on-surface-variant">Reservation Period</span><span className="font-medium text-gold-leaf font-semibold">48 Hours</span></div>
+                    </div>
+                    <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                      By confirming, you agree to hold this artwork exclusively for 48 hours. During this period, the artwork will be locked from public sale. You will receive email notifications at 24 hours and 1 hour before expiry.
+                    </p>
+                    <div className="flex gap-3">
+                      <button onClick={() => { setShowReserveModal(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          setReserveLoading(true);
+                          setTimeout(() => {
+                            setReserveLoading(false);
+                            setReserveConfirmed(true);
+                          }, 1500);
+                        }}
+                        disabled={reserveLoading}
+                        className="flex-1 bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center justify-center gap-2"
+                      >
+                        {reserveLoading ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Reserving...</>) : "Confirm Reservation"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      )}
 
       <div className="pb-16" />
       <Footer />

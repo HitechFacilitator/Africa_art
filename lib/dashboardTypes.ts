@@ -1,8 +1,13 @@
 export enum ActiveTab {
   Dashboard = 'Dashboard',
   Portfolio = 'Portfolio',
+  Certificates = 'Certificates',
   Inquiries = 'Inquiries',
   Consultations = 'Consultations',
+  PrivateCatalogues = 'Private Catalogues',
+  AlertsAuctions = 'Alerts & Auctions',
+  Investment = 'Investment',
+  Previews = 'Previews',
   Logistics = 'Logistics',
   Security = 'Security',
   Settings = 'Settings'

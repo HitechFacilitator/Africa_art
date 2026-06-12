@@ -102,7 +102,7 @@ export const ARTWORKS: Artwork[] = [
     era: "19th Century",
     origin: "Oyo Empire, Nigeria",
     dimensions: "45 cm × 35 cm × 35 cm",
-    imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew",
+    imageUrl: "https://images.unsplash.com/photo-1580894908361-967195033215?auto=format&fit=crop&q=80",
     label: "Price on Request",
     scarcityIndex: 95,
     preservationStatus: "Excellent",

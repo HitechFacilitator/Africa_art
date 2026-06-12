@@ -65,6 +65,10 @@ export default function CertificatesPage() {
   const [verifyInput, setVerifyInput] = useState("");
   const [verifyResult, setVerifyResult] = useState<"valid" | "invalid" | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [showRenewalModal, setShowRenewalModal] = useState(false);
+  const [renewalArtwork, setRenewalArtwork] = useState<string>("");
+  const [renewalConfirmed, setRenewalConfirmed] = useState(false);
+  const [renewalLoading, setRenewalLoading] = useState(false);
 
   const filtered = CERTIFICATES.filter((c) => {
     if (filterStatus !== "All" && c.status !== filterStatus) return false;
@@ -304,7 +308,14 @@ export default function CertificatesPage() {
                       <ExternalLink size={12} /> View on Explorer
                     </button>
                     {selectedCert.status === "RENEWAL DUE" && (
-                      <button className="border border-amber-300 text-amber-700 px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-amber-50 transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          setRenewalArtwork(selectedCert.artwork.title);
+                          setShowRenewalModal(true);
+                          setRenewalConfirmed(false);
+                        }}
+                        className="border border-amber-300 text-amber-700 px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-amber-50 transition-colors cursor-pointer bg-transparent flex items-center gap-1.5"
+                      >
                         <RefreshCw size={12} /> Renew Certificate
                       </button>
                     )}
@@ -368,6 +379,60 @@ export default function CertificatesPage() {
                     </div>
                   )}
                 </motion.div>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Renewal Confirmation Modal */}
+      <AnimatePresence>
+        {showRenewalModal && (
+          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+              <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+              {renewalConfirmed ? (
+                <div className="text-center">
+                  <CheckCircle className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
+                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Certificate Renewal Submitted</h3>
+                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                    Your renewal request for <strong>{renewalArtwork}</strong> has been submitted.
+                    Our authentication team will process the renewal within 2-3 business days and issue a new certificate.
+                  </p>
+                  <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">Close</button>
+                </div>
+              ) : (
+                <>
+                  <div className="text-center mb-6">
+                    <RefreshCw className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">Renew Certificate</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">Confirm renewal for: <strong>{renewalArtwork}</strong></p>
+                  </div>
+                  <div className="bg-surface-container-low border border-on-surface/5 p-4 mb-6 text-xs space-y-2">
+                    <div className="flex justify-between"><span className="text-on-surface-variant">Renewal Fee</span><span className="font-medium">€450.00</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">Processing Time</span><span className="font-medium">2-3 Business Days</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">New Certificate Validity</span><span className="font-medium">5 Years</span></div>
+                  </div>
+                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+                    By confirming, you authorize the renewal of this certificate of authenticity. A new certificate with updated verification data and blockchain record will be issued.
+                  </p>
+                  <div className="flex gap-3">
+                    <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Cancel</button>
+                    <button
+                      onClick={() => {
+                        setRenewalLoading(true);
+                        setTimeout(() => {
+                          setRenewalLoading(false);
+                          setRenewalConfirmed(true);
+                        }, 1500);
+                      }}
+                      disabled={renewalLoading}
+                      className="flex-1 bg-amber-500 text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-amber-600 transition-colors disabled:opacity-50 cursor-pointer border-0 flex items-center justify-center gap-2"
+                    >
+                      {renewalLoading ? "Processing..." : "Confirm Renewal"}
+                    </button>
+                  </div>
+                </>
               )}
             </motion.div>
           </div>

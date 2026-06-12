@@ -8,7 +8,7 @@ import { Search, Menu, X, Lock, User, ShieldCheck } from "lucide-react";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/catalogue", label: "Catalogue" },
-  { href: "/auctions", label: "Auctions" },
+  { href: "/auctions", label: "About Us" },
   { href: "/provenance", label: "Provenance" },
   { href: "/investment", label: "Advisory" },
 ];

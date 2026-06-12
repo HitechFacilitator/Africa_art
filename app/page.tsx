@@ -37,16 +37,17 @@ export default function HomePage() {
     <>
       <Navbar />
       <main className="flex-1">
-        {/* Hero Banner Section */}
-        <section className="relative min-h-[85vh] bg-ebony-deep flex items-center overflow-hidden">
+        {/* Hero Section */}
+        <section className="relative min-h-[90vh] bg-ebony-deep flex items-center overflow-hidden">
+          {/* Subtle background textures */}
           <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_60%_50%,_#C5A059_0%,_transparent_70%)]" />
           <div className="absolute inset-0 opacity-10 bg-[linear-gradient(135deg,_#B35C44_0%,_transparent_50%,_#C5A059_100%)]" />
 
-          <div className="relative z-10 max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-20 md:py-28 lg:py-32">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-              {/* Hero Text */}
+          <div className="relative z-10 max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-16 md:py-20 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+              {/* Hero Text — Left */}
               <motion.div
-                className="lg:col-span-5 flex flex-col items-start pr-0 lg:pr-10 z-10"
+                className="flex flex-col items-start"
                 variants={stagger}
                 initial="hidden"
                 animate="visible"
@@ -56,7 +57,7 @@ export default function HomePage() {
                   <span className="label-caps text-gold-leaf">Private Collection &mdash; Est. 1987</span>
                 </motion.div>
 
-                <motion.h1 variants={fadeUp} className="font-display-xl text-parchment-ivory max-w-2xl mb-6 md:mb-8 leading-tight">
+                <motion.h1 variants={fadeUp} className="font-display-xl text-parchment-ivory max-w-2xl mb-6 md:mb-8 leading-[1.08]">
                   Prestige African Art,{" "}
                   <em className="not-italic text-gold-leaf">Curated for the Discerning Collector</em>
                 </motion.h1>
@@ -68,19 +69,19 @@ export default function HomePage() {
                 <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 md:gap-4">
                   <a
                     href="/catalogue"
-                    className="inline-block bg-gold-leaf text-ebony-deep font-sans text-xs font-semibold uppercase tracking-[0.1em] px-6 py-4 md:px-8 hover:bg-parchment-ivory transition-all duration-300 text-center"
+                    className="inline-block bg-gold-leaf text-ebony-deep font-sans text-xs font-semibold uppercase tracking-[0.1em] px-8 py-4 hover:bg-parchment-ivory transition-all duration-300 text-center"
                   >
                     Browse Collection
                   </a>
                   <button
                     onClick={() => setShowClubModal(true)}
-                    className="inline-block border border-parchment-ivory/30 text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.1em] px-6 py-4 md:px-8 hover:border-gold-leaf hover:text-gold-leaf transition-all duration-300"
+                    className="inline-block border border-parchment-ivory/30 text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.1em] px-8 py-4 hover:border-gold-leaf hover:text-gold-leaf transition-all duration-300"
                   >
                     Request Private Access
                   </button>
                 </motion.div>
 
-                <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4 md:gap-6 border-t border-parchment-ivory/15 pt-6 md:pt-8 mt-10 md:mt-12 w-full max-w-sm">
+                <motion.div variants={fadeUp} className="grid grid-cols-3 gap-4 md:gap-6 border-t border-parchment-ivory/15 pt-6 md:pt-8 mt-10 md:mt-12 w-full max-w-md">
                   <div>
                     <span className="font-serif text-lg md:text-xl font-bold text-parchment-ivory">11.4%</span>
                     <span className="font-sans text-[8px] md:text-[9px] text-parchment-ivory/50 uppercase block tracking-wider mt-0.5">Avg Annual Return</span>
@@ -96,16 +97,16 @@ export default function HomePage() {
                 </motion.div>
               </motion.div>
 
-              {/* Hero Image */}
+              {/* Hero Image — Right */}
               <motion.div
-                className="lg:col-span-7 mt-8 lg:mt-0 relative group"
+                className="relative group"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] as const }}
               >
                 <div
                   onClick={() => setSelectedArtwork(heroArtwork)}
-                  className="relative w-full aspect-[4/5] md:aspect-[3/4] lg:aspect-[4/5] bg-ebony-deep shadow-level-2 overflow-hidden cursor-pointer border border-ebony-deep/5"
+                  className="relative w-full aspect-[3/4] bg-ebony-deep shadow-level-2 overflow-hidden cursor-pointer border border-ebony-deep/5"
                 >
                   <img
                     src={heroArtwork.imageUrl}

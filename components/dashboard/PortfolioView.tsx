@@ -189,7 +189,7 @@ export default function PortfolioView({
             {selectedAcquisition ? (
               <div className="text-on-surface">
                 <div className="aspect-[4/3] w-full bg-surface-container-highest overflow-hidden mb-6 border border-ebony-deep/5">
-                  <img src={selectedAcquisition.imageUrl} alt={selectedAcquisition.title} className="w-full h-full object-cover object-center" />
+                  <img src={selectedAcquisition.imageUrl} alt={selectedAcquisition.title} referrerPolicy="no-referrer" className="w-full h-full object-cover object-center" />
                 </div>
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
@@ -248,7 +248,7 @@ export default function PortfolioView({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {ARTWORK_OPTIONS.map((opt, idx) => (
                       <div key={idx} onClick={() => handleSelectPreset(opt)} className="bg-surface border border-ebony-deep/5 hover:border-gold-leaf p-3 cursor-pointer text-left transition-colors group flex items-start gap-3">
-                        <div className="w-12 h-12 bg-zinc-200 shrink-0 overflow-hidden"><img src={opt.imageUrl} alt={opt.title} className="w-full h-full object-cover object-center" /></div>
+                        <div className="w-12 h-12 bg-zinc-200 shrink-0 overflow-hidden"><img src={opt.imageUrl} alt={opt.title} referrerPolicy="no-referrer" className="w-full h-full object-cover object-center" /></div>
                         <div>
                           <h5 className="font-serif text-xs font-semibold text-ebony-deep line-clamp-1">{opt.title}</h5>
                           <p className="font-sans text-[9px] text-zinc-400 mt-0.5">Value: €{(opt.value / 1000000).toFixed(1)}M</p>

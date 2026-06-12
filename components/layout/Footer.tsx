@@ -7,7 +7,7 @@ const FOOTER_LINKS = {
   Collections: [
     { label: "Browse Catalogue", href: "/catalogue" },
     { label: "Private Catalogue", href: "/catalogue/private" },
-    { label: "Auction Room", href: "/auctions" },
+    { label: "About Us", href: "/auctions" },
     { label: "Price on Request", href: "/price-on-request" },
   ],
   Advisory: [

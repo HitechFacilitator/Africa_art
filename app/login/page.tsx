@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, Fingerprint, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface UserSession {
   email: string;
@@ -13,6 +14,9 @@ interface UserSession {
   securityClearance: string;
 }
 
+const MAX_ATTEMPTS = 3;
+const OTP_EXPIRY_SECONDS = 60;
+
 export default function LoginPage() {
   const router = useRouter();
   const [step, setStep] = useState<"login" | "mfa">("login");
@@ -21,7 +25,50 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockedOut, setLockedOut] = useState(false);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
+  const [otpTimer, setOtpTimer] = useState(OTP_EXPIRY_SECONDS);
+  const [otpExpired, setOtpExpired] = useState(false);
+  const [resending, setResending] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Lockout countdown
+  useEffect(() => {
+    if (!lockedOut || lockoutTimer <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutTimer((prev) => {
+        if (prev <= 1) {
+          setLockedOut(false);
+          setFailedAttempts(0);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedOut, lockoutTimer]);
+
+  // OTP expiry countdown
+  useEffect(() => {
+    if (step !== "mfa" || otpTimer <= 0 || otpExpired) return;
+    const interval = setInterval(() => {
+      setOtpTimer((prev) => {
+        if (prev <= 1) {
+          setOtpExpired(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step, otpTimer, otpExpired]);
+
+  const formatTimer = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
 
   const handleQuickLogin = (role: "Private Collector" | "Institutional Member") => {
     const session: UserSession = {
@@ -37,10 +84,17 @@ export default function LoginPage() {
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (lockedOut) {
+      setErrorMsg(`Account temporarily locked. Try again in ${formatTimer(lockoutTimer)}.`);
+      return;
+    }
     if (!email) { setErrorMsg("Please specify a valid institutional credential."); return; }
     if (!passphrase || passphrase.length < 4) { setErrorMsg("The secret passphrase must be at least 4 characters."); return; }
     setErrorMsg(null);
     setStep("mfa");
+    setOtpTimer(OTP_EXPIRY_SECONDS);
+    setOtpExpired(false);
+    setOtp(["", "", "", "", "", ""]);
   };
 
   const handleOtpChange = (value: string, index: number) => {
@@ -61,6 +115,18 @@ export default function LoginPage() {
   const handleConfirmAccess = () => {
     const code = otp.join("");
     if (code.length < 6) { setErrorMsg("Please enter the complete 6-digit cryptographic key."); return; }
+    if (otpExpired) { setErrorMsg("OTP code has expired. Please request a new code."); return; }
+
+    const newAttempts = failedAttempts + 1;
+    if (newAttempts >= MAX_ATTEMPTS) {
+      setLockedOut(true);
+      setLockoutTimer(300); // 5 minutes
+      setErrorMsg(`Too many failed attempts. Account locked for 5 minutes.`);
+      setStep("login");
+      return;
+    }
+
+    // Mock validation — accept any 6-digit code
     const session: UserSession = {
       email: email || "collector@heritagevault.com",
       role: email.includes("museum") || email.includes("institute") ? "Institutional Member" : "Private Collector",
@@ -70,6 +136,17 @@ export default function LoginPage() {
     };
     localStorage.setItem("aduna_session", JSON.stringify(session));
     router.push("/dashboard");
+  };
+
+  const handleResendOtp = () => {
+    setResending(true);
+    setTimeout(() => {
+      setResending(false);
+      setOtpTimer(OTP_EXPIRY_SECONDS);
+      setOtpExpired(false);
+      setOtp(["", "", "", "", "", ""]);
+      setErrorMsg(null);
+    }, 1500);
   };
 
   useEffect(() => { if (step === "mfa") otpRefs.current[0]?.focus(); }, [step]);
@@ -112,19 +189,30 @@ export default function LoginPage() {
                       <div className="inline-flex items-center justify-center w-14 h-14 bg-ebony-deep/5 mb-4"><Lock className="w-7 h-7 text-ebony-deep" strokeWidth={1.5} /></div>
                       <h2 className="font-display-lg text-ebony-deep">Collector Login</h2>
                     </div>
+
+                    {lockedOut && (
+                      <div className="mb-6 p-4 bg-red-50 border-l-2 border-red-700 flex items-start gap-3">
+                        <AlertCircle size={16} className="text-red-700 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-bold text-red-700">Account Temporarily Locked</p>
+                          <p className="text-[10px] text-red-700/80 mt-1">Too many failed login attempts. Please try again in {formatTimer(lockoutTimer)}.</p>
+                        </div>
+                      </div>
+                    )}
+
                     <form className="space-y-8" onSubmit={handleLoginSubmit}>
-                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">Identity / Email</label><input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="institutional@address.com" /></div>
-                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">Passphrase</label><input type="password" required value={passphrase} onChange={(e) => { setPassphrase(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="••••••••••••••••" /></div>
+                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">Identity / Email</label><input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="institutional@address.com" disabled={lockedOut} /></div>
+                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">Passphrase</label><input type="password" required value={passphrase} onChange={(e) => { setPassphrase(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="••••••••••••••••" disabled={lockedOut} /></div>
                       {errorMsg && <div className="text-xs text-red-700 bg-red-100/60 p-3 border-l-2 border-red-700">{errorMsg}</div>}
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="bg-transparent border-ebony-deep/30 text-ebony-deep focus:ring-gold-leaf rounded-none w-4 h-4" /><span className="font-sans text-xs text-on-surface-variant">Remember Device</span></label>
                         <a href="#" onClick={(e) => { e.preventDefault(); setErrorMsg("Please contact institutional security at desk@aduna.com"); }} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf transition-colors underline underline-offset-4">Forgot Passphrase?</a>
                       </div>
-                      <button type="submit" className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300">Authenticate</button>
+                      <button type="submit" disabled={lockedOut} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Authenticate</button>
                     </form>
                   </div>
                   <div className="mt-10 text-center border-t border-ebony-deep/5 pt-6">
-                    <p className="font-sans text-xs text-on-surface-variant">Prospective Member? <a href="#" onClick={(e) => { e.preventDefault(); setErrorMsg("Applications are closed for the Q2 sovereign window."); }} className="text-ebony-deep font-medium hover:text-gold-leaf underline transition-colors">Apply for Access</a></p>
+                    <p className="font-sans text-xs text-on-surface-variant">Not yet a member? <Link href="/register" className="text-ebony-deep font-medium hover:text-gold-leaf underline transition-colors">Apply for Access</Link></p>
                   </div>
                   <div className="mt-6 flex flex-col items-center justify-center gap-1.5 border-t border-dashed border-ebony-deep/5 pt-4">
                     <span className="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant/40">Sovereign Sandbox Clearance Bypass</span>
@@ -141,8 +229,20 @@ export default function LoginPage() {
                     <div className="text-center mb-8">
                       <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-leaf/5 mb-4"><Fingerprint className="w-7 h-7 text-gold-leaf" strokeWidth={1.5} /></div>
                       <h2 className="font-display-lg text-ebony-deep mb-2">Verify Identity</h2>
-                      <p className="font-sans text-xs text-on-surface-variant px-4">Enter the 6-digit credential from your hardware protection unit.</p>
+                      <p className="font-sans text-xs text-on-surface-variant px-4">Enter the 6-digit code sent to your registered email address.</p>
                     </div>
+
+                    {/* OTP Timer */}
+                    <div className="flex items-center justify-center gap-2 mb-6">
+                      <Clock size={12} className={otpExpired ? "text-red-600" : "text-gold-leaf"} />
+                      <span className={`font-mono text-sm font-bold ${otpExpired ? "text-red-600" : "text-ebony-deep"}`}>
+                        {formatTimer(otpTimer)}
+                      </span>
+                      {otpExpired && (
+                        <span className="text-[10px] text-red-600 font-semibold uppercase tracking-wider">Expired</span>
+                      )}
+                    </div>
+
                     <div className="space-y-6">
                       <div className="flex gap-2 justify-center mb-8 w-full max-w-[280px] mx-auto">
                         {otp.map((digit, i) => (
@@ -153,9 +253,11 @@ export default function LoginPage() {
                         ))}
                       </div>
                       {errorMsg && <div className="text-xs text-red-700 bg-red-100/60 p-3 border-l-2 border-red-700">{errorMsg}</div>}
-                      <button type="button" onClick={handleConfirmAccess} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300">Confirm Access</button>
+                      <button type="button" onClick={handleConfirmAccess} disabled={otpExpired} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Confirm Access</button>
                       <div className="text-center">
-                        <button onClick={() => { setOtp(["9", "9", "2", "3", "8", "0"]); setErrorMsg(null); }} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf underline transition-colors underline-offset-4">Use Backup SMS Authentication Code</button>
+                        <button onClick={handleResendOtp} disabled={resending || (!otpExpired && otpTimer > 0)} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf transition-colors underline underline-offset-4 disabled:opacity-40 disabled:cursor-not-allowed">
+                          {resending ? "Sending new code..." : otpExpired ? "Resend Code" : "Use Backup SMS Authentication Code"}
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -67,7 +67,7 @@ export default function InquiriesView({
                 return (
                   <button key={inq.id} onClick={() => selectInquiry(inq.id)} className={`w-full text-left p-5 transition-colors flex gap-4 cursor-pointer relative ${isActive ? 'bg-surface-container-low' : 'hover:bg-surface-container-low/40'}`}>
                     {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-terracotta-earth" />}
-                    <div className="w-12 h-12 bg-zinc-200 shrink-0 border border-ebony-deep/5 overflow-hidden"><img src={inq.imageUrl} alt={inq.artworkTitle} className="w-full h-full object-cover object-center" /></div>
+                    <div className="w-12 h-12 bg-zinc-200 shrink-0 border border-ebony-deep/5 overflow-hidden"><img src={inq.imageUrl} alt={inq.artworkTitle} referrerPolicy="no-referrer" className="w-full h-full object-cover object-center" /></div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-2 mb-1.5">
                         <h4 className="font-serif text-sm font-semibold text-ebony-deep truncate leading-none">{inq.artworkTitle}</h4>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Link from "next/link";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
 import { INITIAL_ACQUISITIONS, INITIAL_INQUIRIES, INITIAL_CONSULTATIONS, INITIAL_LOGISTICS, INITIAL_SECURITY, INITIAL_PROFILE } from "@/lib/dashboardData";
-import { FileText, X, Download } from "lucide-react";
+import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -22,6 +23,31 @@ export default function DashboardPage() {
   const [isOpenMobile, setIsOpenMobile] = useState<boolean>(false);
   const [theme, setTheme] = useState<string>('light');
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const mobileTabsRef = useRef<HTMLDivElement>(null);
+
+  const mobileTabs = [
+    { id: ActiveTab.Dashboard, label: "Overview" },
+    { id: ActiveTab.Portfolio, label: "Acquisitions" },
+    { id: ActiveTab.Certificates, label: "Certificates" },
+    { id: ActiveTab.Inquiries, label: "Inquiries" },
+    { id: ActiveTab.Consultations, label: "Consultations" },
+    { id: ActiveTab.PrivateCatalogues, label: "Catalogues" },
+    { id: ActiveTab.AlertsAuctions, label: "Alerts" },
+    { id: ActiveTab.Investment, label: "Investment" },
+    { id: ActiveTab.Previews, label: "Previews" },
+    { id: ActiveTab.Logistics, label: "Logistics" },
+    { id: ActiveTab.Security, label: "Security" },
+  ];
+
+  const scrollMobileTabs = (direction: "left" | "right") => {
+    if (mobileTabsRef.current) {
+      const scrollAmount = 150;
+      mobileTabsRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const [acquisitions, setAcquisitions] = useState<Acquisition[]>(INITIAL_ACQUISITIONS);
   const [inquiries, setInquiries] = useState<Inquiry[]>(INITIAL_INQUIRIES);
@@ -219,7 +245,43 @@ This report acts as a legal certifiable token of ownership index.
         }
       }} />
 
-      <main className="flex-1 lg:ml-64 bg-background min-h-screen px-6 sm:px-12 py-12 lg:py-16 pt-24 lg:pt-16 max-w-7xl mx-auto w-full">
+      {/* Mobile Horizontal Tabs */}
+      <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-surface border-b border-ebony-deep/5">
+        <div className="relative flex items-center">
+          <button
+            onClick={() => scrollMobileTabs("left")}
+            className="absolute left-0 z-10 p-2 bg-surface border-r border-on-surface/10 text-on-surface-variant hover:text-ebony-deep cursor-pointer border-0"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div
+            ref={mobileTabsRef}
+            className="flex gap-0 overflow-x-auto no-scrollbar px-8 py-0"
+          >
+            {mobileTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap border-b-2 transition-all cursor-pointer bg-transparent shrink-0 ${
+                  activeTab === tab.id
+                    ? "text-ebony-deep border-gold-leaf"
+                    : "text-on-surface-variant/60 border-transparent hover:text-ebony-deep"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => scrollMobileTabs("right")}
+            className="absolute right-0 z-10 p-2 bg-surface border-l border-on-surface/10 text-on-surface-variant hover:text-ebony-deep cursor-pointer border-0"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <main className="flex-1 lg:ml-64 bg-background min-h-screen px-6 sm:px-12 py-12 lg:py-16 pt-32 lg:pt-16 max-w-7xl mx-auto w-full">
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
             {activeTab === ActiveTab.Dashboard && (
@@ -242,6 +304,146 @@ This report acts as a legal certifiable token of ownership index.
             )}
             {activeTab === ActiveTab.Settings && (
               <SettingsView profile={profile} setProfile={setProfile} onClearCache={handleClearCache} theme={theme} onToggleTheme={handleToggleTheme} />
+            )}
+            {activeTab === ActiveTab.Certificates && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-serif text-2xl text-ebony-deep">Certificates of Authenticity</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">Manage and download certificates for your acquired artworks.</p>
+                  </div>
+                  <Link href="/dashboard/certificates" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
+                    View Full Dashboard <ExternalLink size={12} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { status: "Valid", count: 3, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { status: "Pending", count: 1, color: "text-amber-600", bg: "bg-amber-50" },
+                    { status: "Renewal Due", count: 0, color: "text-red-600", bg: "bg-red-50" },
+                  ].map((s) => (
+                    <div key={s.status} className={`${s.bg} border border-on-surface/5 p-5`}>
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{s.status}</p>
+                      <p className={`font-serif text-3xl font-bold mt-2 ${s.color}`}>{s.count}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                  <p className="text-xs text-on-surface-variant">Access the full certificates dashboard to download PDFs, verify authenticity, and manage renewals.</p>
+                </div>
+              </div>
+            )}
+            {activeTab === ActiveTab.PrivateCatalogues && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-serif text-2xl text-ebony-deep">Private Catalogues</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">Exclusive access to unpublished and confidential artworks.</p>
+                  </div>
+                  <Link href="/catalogue/private" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
+                    Browse Catalogues <ExternalLink size={12} />
+                  </Link>
+                </div>
+                <div className="bg-surface-container-low border border-on-surface/5 p-8 text-center">
+                  <BookLock className="w-12 h-12 text-gold-leaf mx-auto mb-4" />
+                  <h3 className="font-serif text-lg text-ebony-deep mb-2">Vault Access Required</h3>
+                  <p className="font-sans text-xs text-on-surface-variant max-w-md mx-auto mb-4">
+                    Private catalogues contain unpublished masterpieces available exclusively to vetted collectors. Access requires VIP tier verification.
+                  </p>
+                  <Link href="/catalogue/private" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
+                    Enter Private Vault <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </div>
+            )}
+            {activeTab === ActiveTab.AlertsAuctions && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-serif text-2xl text-ebony-deep">Alerts & Auctions</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">Live auction notifications and bidding activity.</p>
+                  </div>
+                  <Link href="/auctions" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
+                    View Auctions <ExternalLink size={12} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Bell className="w-5 h-5 text-gold-leaf" />
+                      <h3 className="font-serif text-sm font-bold text-ebony-deep">Active Alerts</h3>
+                    </div>
+                    <p className="text-xs text-on-surface-variant">You have <strong>2</strong> pending auction alerts for pieces matching your collection interests.</p>
+                  </div>
+                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Clock className="w-5 h-5 text-terracotta-earth" />
+                      <h3 className="font-serif text-sm font-bold text-ebony-deep">Upcoming Sales</h3>
+                    </div>
+                    <p className="text-xs text-on-surface-variant">Next private auction: <strong>West African Bronzes</strong> — 3 days remaining to register.</p>
+                  </div>
+                </div>
+                <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                  <Link href="/auctions" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
+                    Enter Auction Room <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </div>
+            )}
+            {activeTab === ActiveTab.Investment && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-serif text-2xl text-ebony-deep">Investment Advisory</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">Portfolio analytics, market insights, and advisory services.</p>
+                  </div>
+                  <Link href="/investment" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
+                    Full Advisory <ExternalLink size={12} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Portfolio CAGR</p>
+                    <p className="font-serif text-2xl font-bold text-gold-leaf mt-1">+11.4%</p>
+                  </div>
+                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Market Index</p>
+                    <p className="font-serif text-2xl font-bold text-ebony-deep mt-1">Stable</p>
+                  </div>
+                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Advisory Status</p>
+                    <p className="font-serif text-2xl font-bold text-emerald-600 mt-1">Active</p>
+                  </div>
+                </div>
+                <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                  <Link href="/investment" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
+                    View Investment Dashboard <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </div>
+            )}
+            {activeTab === ActiveTab.Previews && (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="font-serif text-2xl text-ebony-deep">Exclusive Previews</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">Priority access to new acquisitions before public listing.</p>
+                  </div>
+                  <Link href="/preview" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
+                    View All Previews <ExternalLink size={12} />
+                  </Link>
+                </div>
+                <div className="bg-surface-container-low border border-on-surface/5 p-8 text-center">
+                  <Eye className="w-12 h-12 text-gold-leaf mx-auto mb-4" />
+                  <h3 className="font-serif text-lg text-ebony-deep mb-2">VIP Preview Access</h3>
+                  <p className="font-sans text-xs text-on-surface-variant max-w-md mx-auto mb-4">
+                    As a valued collector, you have early access to view and reserve upcoming acquisitions before they are listed publicly.
+                  </p>
+                  <Link href="/preview" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
+                    Enter Preview Room <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </div>
             )}
           </motion.div>
         </AnimatePresence>

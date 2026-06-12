@@ -32,21 +32,30 @@ import {
   X,
   Clock,
   CheckCircle,
+  FileText,
+  Phone,
+  HelpCircle,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import type { Artwork } from "@/lib/types";
 
-type CheckoutStep = "Identity" | "Provenance" | "Payment" | "Confirmation";
+type CheckoutStep = "Summary" | "Billing" | "Payment" | "Confirmation";
 type PaymentMethod = "swift" | "escrow" | "card";
 
-interface IdentityData {
-  fullName: string;
+interface BillingData {
+  firstName: string;
+  lastName: string;
   email: string;
-  collectorId: string;
+  phone: string;
+  company: string;
   address: string;
-  kycFileName: string | null;
+  city: string;
+  postalCode: string;
+  country: string;
+  vatNumber: string;
+  invoiceNotes: string;
 }
 
 interface CardData {
@@ -61,17 +70,21 @@ function AcquisitionContent() {
   const artworkId = searchParams.get("artwork") || ARTWORKS[0]?.id || "";
   const artwork = ARTWORKS.find((a) => a.id === artworkId) || ARTWORKS[0];
 
-  const [currentStep, setCurrentStep] = useState<CheckoutStep>("Identity");
-  const [identity, setIdentity] = useState<IdentityData>({
-    fullName: "",
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>("Summary");
+  const [billing, setBilling] = useState<BillingData>({
+    firstName: "",
+    lastName: "",
     email: "",
-    collectorId: "",
+    phone: "",
+    company: "",
     address: "",
-    kycFileName: null,
+    city: "",
+    postalCode: "",
+    country: "",
+    vatNumber: "",
+    invoiceNotes: "",
   });
-  const [identityError, setIdentityError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [billingError, setBillingError] = useState<string | null>(null);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("escrow");
   const [card, setCard] = useState<CardData>({
@@ -81,66 +94,54 @@ function AcquisitionContent() {
     cardholderName: "",
   });
   const [cardError, setCardError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<"idle" | "submitting" | "verifying">("idle");
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "submitting" | "verifying" | "error">("idle");
   const [stepMsg, setStepMsg] = useState("");
+  const [paymentErrorMsg, setPaymentErrorMsg] = useState("");
   const [copiedSwift, setCopiedSwift] = useState(false);
 
-  const stepOrder: CheckoutStep[] = ["Identity", "Provenance", "Payment", "Confirmation"];
+  const stepOrder: CheckoutStep[] = ["Summary", "Billing", "Payment", "Confirmation"];
   const currentIndex = stepOrder.indexOf(currentStep);
 
-  const getStepIndex = (s: CheckoutStep) => stepOrder.indexOf(s);
-
-  const handleIdentityChange = (data: Partial<IdentityData>) => {
-    setIdentity((prev) => ({ ...prev, ...data }));
-    setIdentityError(null);
+  const parsePrice = (priceStr: string): number => {
+    const match = priceStr.replace(/\s/g, "").match(/[\d,.]+/);
+    if (!match) return 0;
+    const numStr = match[0].replace(",", ".");
+    return parseFloat(numStr) || 0;
   };
 
-  const validateIdentity = () => {
-    if (!identity.fullName.trim()) {
-      setIdentityError("Full Legal Name or Organization is required.");
+  const artworkPrice = parsePrice(artwork?.investment?.estimatedValue || "0");
+  const vatRate = 0.19;
+  const vatAmount = artworkPrice * vatRate;
+  const totalWithVAT = artworkPrice + vatAmount;
+
+  const handleBillingChange = (data: Partial<BillingData>) => {
+    setBilling((prev) => ({ ...prev, ...data }));
+    setBillingError(null);
+  };
+
+  const validateBilling = () => {
+    if (!billing.firstName.trim() || !billing.lastName.trim()) {
+      setBillingError("First and Last Name are required.");
       return false;
     }
-    if (!identity.email.trim() || !identity.email.includes("@")) {
-      setIdentityError("Please provide a valid professional collector email.");
+    if (!billing.email.trim() || !billing.email.includes("@")) {
+      setBillingError("Please provide a valid email address.");
       return false;
     }
-    if (!identity.address.trim()) {
-      setIdentityError("Physical Gallery or Vault Registry Address is required.");
+    if (!billing.address.trim()) {
+      setBillingError("Billing address is required.");
       return false;
     }
-    if (!identity.kycFileName) {
-      setIdentityError("Please upload a valid Proof of Identity / KYC documentation.");
+    if (!billing.city.trim()) {
+      setBillingError("City is required.");
       return false;
     }
-    setIdentityError(null);
+    if (!billing.country.trim()) {
+      setBillingError("Country is required.");
+      return false;
+    }
+    setBillingError(null);
     return true;
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      const ft = file.type;
-      if (ft.includes("pdf") || ft.includes("jpeg") || ft.includes("png")) {
-        handleIdentityChange({ kycFileName: file.name });
-      } else {
-        setIdentityError("Unsupported file type. Please upload a PDF, PNG, or JPEG file.");
-      }
-    }
-  };
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleIdentityChange({ kycFileName: e.target.files[0].name });
-    }
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,9 +166,10 @@ function AcquisitionContent() {
 
   const triggerEscrowPayment = () => {
     setPaymentStatus("submitting");
+    setPaymentErrorMsg("");
     const steps = [
       "Establishing TLS tunnel with Escrow.com API...",
-      `Transmitting verified KYC token for ${identity.fullName}...`,
+      `Transmitting verified billing data for ${billing.firstName} ${billing.lastName}...`,
       `Mapping custody asset ID: ${artwork?.id}...`,
       "Awaiting Escrow digital vault settlement invoice...",
       "Sovereign escrow channel established successfully!",
@@ -189,7 +191,7 @@ function AcquisitionContent() {
   const processCardPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (card.cardNumber.replace(/\s/g, "").length < 16) {
-      setCardError("Invalid Premium Card Number. Must be a 16-digit card.");
+      setCardError("Invalid card number. Must be 16 digits.");
       return;
     }
     if (card.expiry.length < 5) {
@@ -201,17 +203,18 @@ function AcquisitionContent() {
       return;
     }
     if (!card.cardholderName.trim()) {
-      setCardError("Cardholder Name is required.");
+      setCardError("Cardholder name is required.");
       return;
     }
     setCardError(null);
     setPaymentStatus("submitting");
+    setPaymentErrorMsg("");
     const cardSteps = [
-      "Tokenizing premium card credentials...",
-      "Encrypting card parameters via PCI-DSS Level 1 (AES-256)...",
-      "Contacting bank card authorized issuer...",
-      "Authenticating sovereign limits check for premium acquisition...",
-      "Sovereign charge authorization granted!",
+      "Tokenizing card credentials...",
+      "Encrypting via PCI-DSS Level 1 (AES-256)...",
+      "Contacting card issuer for authorization...",
+      "Verifying transaction limits...",
+      "Charge authorization granted!",
     ];
     let current = 0;
     setStepMsg(cardSteps[current]);
@@ -227,12 +230,18 @@ function AcquisitionContent() {
     }, 1100);
   };
 
+  const retryPayment = () => {
+    setPaymentStatus("idle");
+    setPaymentErrorMsg("");
+    setStepMsg("");
+  };
+
   const copySwiftDetails = () => {
     setCopiedSwift(true);
     setTimeout(() => setCopiedSwift(false), 2000);
   };
 
-  const txnRef = `HV-TXN-${artwork?.id?.substring(0, 6).toUpperCase() || "000000"}-${identity.fullName.substring(0, 8).replace(/\s+/g, "-").toUpperCase()}`;
+  const txnRef = `HV-TXN-${artwork?.id?.substring(0, 6).toUpperCase() || "000000"}-${billing.lastName.substring(0, 8).replace(/\s+/g, "-").toUpperCase()}`;
 
   if (!artwork) {
     return (
@@ -247,7 +256,7 @@ function AcquisitionContent() {
     <>
       {/* Payment Processing Overlay */}
       <AnimatePresence>
-        {paymentStatus !== "idle" && (
+        {paymentStatus !== "idle" && paymentStatus !== "error" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -264,7 +273,7 @@ function AcquisitionContent() {
               )}
               <div className="flex flex-col gap-2">
                 <h3 className="font-serif text-2xl text-parchment-ivory font-semibold tracking-wide">
-                  {paymentStatus === "submitting" ? "Securing Transaction Channel" : "Acquisition Certified"}
+                  {paymentStatus === "submitting" ? "Securing Transaction Channel" : "Payment Verified"}
                 </h3>
                 <p className="font-sans text-xs uppercase tracking-[0.15em] text-gold-leaf font-bold">
                   Institutional-Grade Encryption Engaged
@@ -276,7 +285,7 @@ function AcquisitionContent() {
                 </p>
               </div>
               <p className="font-sans text-[10px] text-parchment-ivory/40">
-                Do not close this gateway. Your session is protected by cryptographic end-to-end routing.
+                Do not close this gateway. Your session is protected by end-to-end encryption.
               </p>
             </div>
           </motion.div>
@@ -295,7 +304,7 @@ function AcquisitionContent() {
             <h1 className="font-display-lg text-parchment-ivory mb-3">Secure Acquisition</h1>
             <p className="font-sans text-sm text-parchment-ivory/60 max-w-lg">
               Complete your acquisition through our institutional-grade checkout —
-              identity verification, provenance review, and secure payment.
+              order summary, billing with VAT, and secure payment.
             </p>
           </div>
         </section>
@@ -306,7 +315,7 @@ function AcquisitionContent() {
           <div className="flex items-center justify-between border-b border-on-surface/10 pb-4 mb-10 text-xs font-semibold uppercase tracking-wider font-sans">
             {stepOrder.map((step, idx) => {
               const isActive = step === currentStep;
-              const isCompleted = getStepIndex(step) < currentIndex;
+              const isCompleted = stepOrder.indexOf(step) < currentIndex;
               return (
                 <div key={step} className="flex items-center gap-2">
                   {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-on-surface-variant/30 hidden sm:block" />}
@@ -332,128 +341,73 @@ function AcquisitionContent() {
           {/* Stage Rendering */}
           <div className="min-h-[500px]">
             <AnimatePresence mode="wait">
-              {/* ─── STEP 1: IDENTITY ─── */}
-              {currentStep === "Identity" && (
-                <motion.div key="identity" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              {/* ─── STEP 1: SUMMARY ─── */}
+              {currentStep === "Summary" && (
+                <motion.div key="summary" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                    {/* Form Area */}
-                    <div className="lg:col-span-8 flex flex-col gap-8 bg-surface-container-lowest p-8 md:p-10 border border-on-surface/5">
+                    {/* Order Summary */}
+                    <div className="lg:col-span-8 flex flex-col gap-6 bg-surface-container-lowest p-8 md:p-10 border border-on-surface/5">
                       <div>
-                        <h2 className="font-serif text-2xl md:text-3xl text-ebony-deep mb-3">Collector Authentication</h2>
+                        <h2 className="font-serif text-2xl md:text-3xl text-ebony-deep mb-3">Order Summary</h2>
                         <p className="font-sans text-sm text-on-surface-variant max-w-xl">
-                          In compliance with sovereign heritage preservation agreements and international AML standards, please provide accredited collector credentials before accessing custody provenance logs.
+                          Review your acquisition details before proceeding to billing.
                         </p>
                       </div>
 
-                      {identityError && (
-                        <div className="bg-red-50 border-l-2 border-terracotta-earth p-4 flex gap-3 text-sm text-red-800 items-start">
-                          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-terracotta-earth" />
-                          <span>{identityError}</span>
+                      {/* Artwork Details */}
+                      <div className="flex flex-col sm:flex-row gap-6 border-b border-on-surface/10 pb-6">
+                        <div className="w-full sm:w-40 h-48 bg-ebony-deep/5 overflow-hidden border border-on-surface/5 shrink-0">
+                          <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                         </div>
-                      )}
+                        <div className="flex flex-col gap-2 flex-1">
+                          <h3 className="font-serif text-lg text-ebony-deep">{artwork.title}</h3>
+                          <p className="font-sans text-xs text-on-surface-variant">{artwork.origin} · {artwork.period}</p>
+                          <p className="font-sans text-xs text-on-surface-variant">{artwork.material}</p>
+                          <div className="mt-2">
+                            <span className="font-sans text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Estimated Value</span>
+                            <p className="font-serif text-xl text-ebony-deep font-semibold">{artwork.investment?.estimatedValue || "Price on Request"}</p>
+                          </div>
+                        </div>
+                      </div>
 
-                      <div className="flex flex-col gap-6">
-                        <div className="flex flex-col gap-2">
-                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
-                            <span>Full Legal Name / Organization</span>
-                            <span className="text-terracotta-earth">*</span>
-                          </label>
-                          <div className="relative">
-                            <User className="absolute left-3 top-3.5 w-4 h-4 text-on-surface-variant/50" />
-                            <input type="text" value={identity.fullName} onChange={(e) => handleIdentityChange({ fullName: e.target.value })} placeholder="e.g. Baron Maximilian von Hapsburg" className="w-full bg-parchment-ivory pl-10 pr-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                      {/* VAT Breakdown */}
+                      <div className="flex flex-col gap-3">
+                        <h4 className="font-sans text-xs font-bold uppercase tracking-widest text-on-surface-variant">Price Breakdown (incl. 19% VAT)</h4>
+                        <div className="space-y-2 text-xs font-sans">
+                          <div className="flex justify-between py-1">
+                            <span className="text-on-surface-variant">Artwork Price (Net)</span>
+                            <span className="font-medium text-ebony-deep">{artworkPrice.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+                          </div>
+                          <div className="flex justify-between py-1">
+                            <span className="text-on-surface-variant">VAT (19%)</span>
+                            <span className="font-medium text-ebony-deep">{vatAmount.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+                          </div>
+                          <div className="flex justify-between py-2 border-t border-on-surface/10 font-bold">
+                            <span className="text-ebony-deep">Total (incl. VAT)</span>
+                            <span className="text-ebony-deep font-serif text-base">{totalWithVAT.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
                           </div>
                         </div>
+                      </div>
 
-                        <div className="flex flex-col gap-2">
-                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
-                            <span>Professional Email</span>
-                            <span className="text-terracotta-earth">*</span>
-                          </label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-3.5 w-4 h-4 text-on-surface-variant/50" />
-                            <input type="email" value={identity.email} onChange={(e) => handleIdentityChange({ email: e.target.value })} placeholder="e.g. collector@heritage-vault.com" className="w-full bg-parchment-ivory pl-10 pr-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="flex flex-col gap-2">
-                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Collector Membership ID (Optional)</label>
-                            <div className="relative">
-                              <Landmark className="absolute left-3 top-3.5 w-4 h-4 text-on-surface-variant/50" />
-                              <input type="text" value={identity.collectorId} onChange={(e) => handleIdentityChange({ collectorId: e.target.value })} placeholder="e.g. HV-9921-XPR" className="w-full bg-parchment-ivory pl-10 pr-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40 uppercase" />
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
-                              <span>Vault Registry Address</span>
-                              <span className="text-terracotta-earth">*</span>
-                            </label>
-                            <input type="text" value={identity.address} onChange={(e) => handleIdentityChange({ address: e.target.value })} placeholder="e.g. Port of Geneva Freeports, Vault B12" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
-                            <span>Proof of Identity / Corporate Registry (KYC)</span>
-                            <span className="text-terracotta-earth">*</span>
-                          </label>
-                          <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed p-6 text-center cursor-pointer transition-all duration-300 flex flex-col items-center justify-center gap-3 ${
-                              isDragging
-                                ? "border-gold-leaf bg-gold-leaf/5"
-                                : identity.kycFileName
-                                ? "border-gold-leaf/50 bg-parchment-ivory"
-                                : "border-on-surface/15 hover:border-gold-leaf/50 hover:bg-parchment-ivory/50 bg-parchment-ivory/30"
-                            }`}
-                          >
-                            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".pdf,image/png,image/jpeg" className="hidden" />
-                            {identity.kycFileName ? (
-                              <>
-                                <div className="w-10 h-10 rounded-full bg-gold-leaf/10 flex items-center justify-center text-gold-leaf">
-                                  <FileCheck className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <p className="font-sans text-sm font-medium text-emerald-800">Successfully Authenticated File</p>
-                                  <p className="font-mono text-xs text-on-surface-variant/80 mt-1">{identity.kycFileName}</p>
-                                </div>
-                                <p className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60">Click or drag new document to replace</p>
-                              </>
-                            ) : (
-                              <>
-                                <div className="w-10 h-10 rounded-full bg-on-surface-variant/5 flex items-center justify-center text-on-surface-variant/40">
-                                  <Upload className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <p className="font-sans text-sm font-medium text-ebony-deep">Drag & Drop Identity Document</p>
-                                  <p className="font-sans text-xs text-on-surface-variant mt-1">Passport photocopy, Corporate Registry Decree (PDF, JPG, PNG)</p>
-                                </div>
-                                <span className="bg-surface-container-high px-3 py-1 font-sans text-[10px] tracking-wider text-charcoal-text uppercase font-semibold">Select File Manually</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+                      {/* Notes */}
+                      <div className="bg-surface-container-high/40 p-4 border-l border-gold-leaf text-xs text-on-surface-variant">
+                        <strong>Important:</strong> VAT will be calculated based on your billing country. EU customers pay standard rate; non-EU may qualify for VAT exemption on export.
                       </div>
 
                       <div className="pt-4 border-t border-on-surface/5">
                         <button
-                          onClick={() => {
-                            if (validateIdentity()) setCurrentStep("Provenance");
-                          }}
+                          onClick={() => setCurrentStep("Billing")}
                           className="w-full bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
                         >
-                          Authenticate & Proceed to Provenance <ArrowRight className="w-4 h-4" />
+                          Proceed to Billing <ArrowRight className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
 
-                    {/* Artwork Spotlight Sidebar */}
+                    {/* Sidebar */}
                     <div className="lg:col-span-4 flex flex-col gap-6">
                       <div className="bg-surface-container-low border border-on-surface/5 p-6 flex flex-col gap-5 sticky top-24">
-                        <div className="font-sans text-[10px] font-bold uppercase tracking-widest text-gold-leaf">Active Acquisition</div>
+                        <div className="font-sans text-[10px] font-bold uppercase tracking-widest text-gold-leaf">Secure Checkout</div>
                         <div className="aspect-square bg-ebony-deep/5 overflow-hidden border border-on-surface/5 relative">
                           <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-95 hover:grayscale-0 transition-all duration-700" />
                           <div className="absolute top-3 right-3 bg-ebony-deep text-parchment-ivory font-mono text-[10px] px-2.5 py-1 tracking-wider uppercase">{artwork.id}</div>
@@ -463,12 +417,12 @@ function AcquisitionContent() {
                           <p className="font-sans text-xs text-on-surface-variant tracking-wide">{artwork.origin}</p>
                         </div>
                         <div className="border-t border-on-surface/10 pt-4 flex flex-col gap-1">
-                          <span className="font-sans text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Acquisition Assessment</span>
-                          <span className="font-serif text-2xl font-bold text-ebony-deep">{artwork.investment?.estimatedValue || "Price on Request"}</span>
+                          <span className="font-sans text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Total with VAT</span>
+                          <span className="font-serif text-2xl font-bold text-ebony-deep">{totalWithVAT.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
                         </div>
                         <div className="bg-surface-container-high/40 p-4 border-l border-gold-leaf text-xs text-on-surface-variant flex flex-col gap-2">
-                          <strong>Acquirer Safety:</strong>
-                          <p className="leading-relaxed">This acquisition features an institutional deposit safeguard. Escrow holds your settlement safely until physical authentication is counter-verified.</p>
+                          <strong>Buyer Protection:</strong>
+                          <p className="leading-relaxed">Escrow holds your payment safely until physical authentication is verified upon delivery.</p>
                         </div>
                       </div>
                     </div>
@@ -476,80 +430,155 @@ function AcquisitionContent() {
                 </motion.div>
               )}
 
-              {/* ─── STEP 2: PROVENANCE ─── */}
-              {currentStep === "Provenance" && (
-                <motion.div key="provenance" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                  <div className="flex flex-col gap-10">
-                    <div className="flex flex-col gap-4">
-                      <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-gold-leaf font-bold">Verified Forensics & Chain of Custody</span>
-                      <h2 className="font-serif text-3xl md:text-4xl text-ebony-deep font-medium tracking-tight">Sovereign Provenance Assessment</h2>
-                      <p className="font-sans text-base text-on-surface-variant max-w-3xl leading-relaxed">
-                        The legal legitimacy and chronological ownership chain of this heritage asset have been validated under standard forensic art academic audit.
-                      </p>
-                    </div>
+              {/* ─── STEP 2: BILLING ─── */}
+              {currentStep === "Billing" && (
+                <motion.div key="billing" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    {/* Billing Form */}
+                    <div className="lg:col-span-8 flex flex-col gap-6 bg-surface-container-lowest p-8 md:p-10 border border-on-surface/5">
+                      <div>
+                        <h2 className="font-serif text-2xl md:text-3xl text-ebony-deep mb-3">Billing Information</h2>
+                        <p className="font-sans text-sm text-on-surface-variant max-w-xl">
+                          Provide your billing details for invoicing and VAT purposes.
+                        </p>
+                      </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                      <div className="md:col-span-5 flex flex-col gap-4">
-                        <div className="bg-ebony-deep p-4 border border-on-surface/5 relative">
-                          <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full object-cover grayscale opacity-90 hover:grayscale-0 transition-all duration-700" />
-                          <div className="absolute top-6 left-6 bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold px-3 py-1 tracking-widest uppercase">Curation Standard</div>
+                      {billingError && (
+                        <div className="bg-red-50 border-l-2 border-terracotta-earth p-4 flex gap-3 text-sm text-red-800 items-start">
+                          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-terracotta-earth" />
+                          <span>{billingError}</span>
                         </div>
-                        <div className="bg-surface-container-low border border-on-surface/5 p-5 flex flex-col gap-3 font-sans">
-                          <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Technical Specifications</h4>
-                          <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-xs text-on-surface-variant border-t border-on-surface/10 pt-3">
-                            <div><span className="block text-[10px] text-on-surface-variant/60 uppercase font-semibold">Origin</span><span className="font-medium text-ebony-deep mt-0.5 block">{artwork.origin}</span></div>
-                            <div><span className="block text-[10px] text-on-surface-variant/60 uppercase font-semibold">Period</span><span className="font-medium text-ebony-deep mt-0.5 block">{artwork.period}</span></div>
-                            <div><span className="block text-[10px] text-on-surface-variant/60 uppercase font-semibold">Medium</span><span className="font-medium text-ebony-deep mt-0.5 block">{artwork.material}</span></div>
-                            <div><span className="block text-[10px] text-on-surface-variant/60 uppercase font-semibold">Dimensions</span><span className="font-medium text-ebony-deep mt-0.5 block font-mono">{artwork.dimensions}</span></div>
+                      )}
+
+                      <div className="flex flex-col gap-5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          <div className="flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
+                              <span>First Name</span>
+                              <span className="text-terracotta-earth">*</span>
+                            </label>
+                            <input type="text" value={billing.firstName} onChange={(e) => handleBillingChange({ firstName: e.target.value })} placeholder="Julian" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
                           </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
+                              <span>Last Name</span>
+                              <span className="text-terracotta-earth">*</span>
+                            </label>
+                            <input type="text" value={billing.lastName} onChange={(e) => handleBillingChange({ lastName: e.target.value })} placeholder="Doe" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                          <div className="flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
+                              <span>Email</span>
+                              <span className="text-terracotta-earth">*</span>
+                            </label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3.5 w-4 h-4 text-on-surface-variant/50" />
+                              <input type="email" value={billing.email} onChange={(e) => handleBillingChange({ email: e.target.value })} placeholder="collector@example.com" className="w-full bg-parchment-ivory pl-10 pr-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Phone</label>
+                            <div className="relative">
+                              <Phone className="absolute left-3 top-3.5 w-4 h-4 text-on-surface-variant/50" />
+                              <input type="tel" value={billing.phone} onChange={(e) => handleBillingChange({ phone: e.target.value })} placeholder="+44 7700 900000" className="w-full bg-parchment-ivory pl-10 pr-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Company / Institution (Optional)</label>
+                          <div className="relative">
+                            <Landmark className="absolute left-3 top-3.5 w-4 h-4 text-on-surface-variant/50" />
+                            <input type="text" value={billing.company} onChange={(e) => handleBillingChange({ company: e.target.value })} placeholder="Institutional Gallery LLC" className="w-full bg-parchment-ivory pl-10 pr-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
+                            <span>Street Address</span>
+                            <span className="text-terracotta-earth">*</span>
+                          </label>
+                          <input type="text" value={billing.address} onChange={(e) => handleBillingChange({ address: e.target.value })} placeholder="123 Gallery Lane" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+                          <div className="col-span-2 sm:col-span-1 flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
+                              <span>City</span>
+                              <span className="text-terracotta-earth">*</span>
+                            </label>
+                            <input type="text" value={billing.city} onChange={(e) => handleBillingChange({ city: e.target.value })} placeholder="London" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                          </div>
+                          <div className="col-span-2 sm:col-span-1 flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Postal Code</label>
+                            <input type="text" value={billing.postalCode} onChange={(e) => handleBillingChange({ postalCode: e.target.value })} placeholder="SW1A 1AA" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40" />
+                          </div>
+                          <div className="col-span-2 flex flex-col gap-2">
+                            <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex justify-between">
+                              <span>Country</span>
+                              <span className="text-terracotta-earth">*</span>
+                            </label>
+                            <select value={billing.country} onChange={(e) => handleBillingChange({ country: e.target.value })} className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans">
+                              <option value="">Select</option>
+                              <option value="DE">Germany</option>
+                              <option value="CH">Switzerland</option>
+                              <option value="AT">Austria</option>
+                              <option value="FR">France</option>
+                              <option value="GB">United Kingdom</option>
+                              <option value="US">United States</option>
+                              <option value="OTHER">Other</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+                            <span>VAT Number (Optional)</span>
+                            <span className="text-[9px] text-on-surface-variant/60 normal-case tracking-normal">For EU reverse-charge or tax exemption</span>
+                          </label>
+                          <input type="text" value={billing.vatNumber} onChange={(e) => handleBillingChange({ vatNumber: e.target.value })} placeholder="DE123456789" className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40 font-mono" />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <label className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant">Invoice Notes (Optional)</label>
+                          <textarea rows={3} value={billing.invoiceNotes} onChange={(e) => handleBillingChange({ invoiceNotes: e.target.value })} placeholder="Purchase order number, special instructions..." className="w-full bg-parchment-ivory px-4 py-3 text-sm outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans placeholder-on-surface-variant/40 resize-none" />
                         </div>
                       </div>
 
-                      <div className="md:col-span-7 flex flex-col gap-6">
-                        <div className="flex flex-col gap-3">
-                          <h3 className="font-serif text-2xl text-ebony-deep">Curation Note</h3>
-                          <p className="font-sans text-sm text-on-surface-variant leading-relaxed">{artwork.historicalStory}</p>
-                        </div>
-
-                        <div className="border-l-4 border-terracotta-earth bg-parchment-ivory p-6 md:p-8 flex flex-col gap-6">
-                          <div className="flex items-center gap-3">
-                            <Award className="w-5 h-5 text-terracotta-earth shrink-0" />
-                            <h4 className="font-sans text-xs font-bold uppercase tracking-widest text-ebony-deep">Chronological Chain of Custody</h4>
-                          </div>
-                          <div className="flex flex-col gap-6 relative pl-3 border-l border-ebony-deep/5">
-                            {artwork.provenance.map((provLine, i) => (
-                              <div key={i} className="relative group flex flex-col gap-1.5">
-                                <div className="absolute -left-[17px] top-1.5 w-2 h-2 rounded-full bg-terracotta-earth border border-parchment-ivory shadow-sm transition-transform group-hover:scale-125" />
-                                <span className="font-sans text-sm font-bold text-ebony-deep">{provLine}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col gap-4">
-                          <h4 className="font-sans text-xs font-bold uppercase tracking-widest text-ebony-deep flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-gold-leaf" />
-                            Accompanying Legal Deeds (Included in escrow handover)
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-on-surface-variant">
-                            {["Thermoluminescence Core Dating Report (Oxford Physics Labs)", "Global Art Loss Register Clean Record Registry Certificate", "UNESCO Convention Compliance Certificate of Title Verification", "Heritage Vault Signed Physical Custody Deed"].map((cert, idx) => (
-                              <div key={idx} className="bg-surface-container-lowest border border-on-surface/10 p-3 flex items-start gap-2.5">
-                                <Check className="w-4 h-4 text-gold-leaf mt-0.5 shrink-0" />
-                                <span className="leading-snug">{cert}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                      <div className="pt-4 border-t border-on-surface/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <button onClick={() => setCurrentStep("Summary")} className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 cursor-pointer border-0 bg-transparent">
+                          <ArrowLeft className="w-4 h-4" /> Back to Summary
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (validateBilling()) setCurrentStep("Payment");
+                          }}
+                          className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
+                        >
+                          Proceed to Payment <ArrowRight className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row justify-between items-center border-t border-on-surface/10 pt-8 gap-4">
-                      <button onClick={() => setCurrentStep("Identity")} className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 cursor-pointer border-0 bg-transparent">
-                        <ArrowLeft className="w-4 h-4" /> Return to Identity
-                      </button>
-                      <button onClick={() => setCurrentStep("Payment")} className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2">
-                        Approve Provenance & Continue <ArrowRight className="w-4 h-4" />
-                      </button>
+                    {/* Sidebar */}
+                    <div className="lg:col-span-4 flex flex-col gap-6">
+                      <div className="bg-surface-container-low border border-on-surface/5 p-6 flex flex-col gap-5 sticky top-24">
+                        <div className="font-sans text-[10px] font-bold uppercase tracking-widest text-gold-leaf">Order Summary</div>
+                        <div className="aspect-square bg-ebony-deep/5 overflow-hidden border border-on-surface/5 relative">
+                          <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-95 hover:grayscale-0 transition-all duration-700" />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <h3 className="font-serif text-xl text-ebony-deep leading-tight">{artwork.title}</h3>
+                          <p className="font-sans text-xs text-on-surface-variant tracking-wide">{artwork.origin}</p>
+                        </div>
+                        <div className="border-t border-on-surface/10 pt-4 flex flex-col gap-1">
+                          <span className="font-sans text-[10px] font-semibold text-on-surface-variant uppercase tracking-wider">Total with VAT</span>
+                          <span className="font-serif text-2xl font-bold text-ebony-deep">{totalWithVAT.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -566,6 +595,27 @@ function AcquisitionContent() {
                       </p>
                     </div>
 
+                    {/* Payment Error State */}
+                    {paymentStatus === "error" && (
+                      <div className="bg-red-50 border-l-2 border-terracotta-earth p-6 flex gap-4 items-start">
+                        <ShieldAlert className="w-6 h-6 text-terracotta-earth shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-sans text-sm font-bold text-red-800 mb-2">Payment Failed</h4>
+                          <p className="font-sans text-xs text-red-700 mb-4">
+                            {paymentErrorMsg || "An error occurred while processing your payment. Please try again or contact support."}
+                          </p>
+                          <div className="flex gap-3">
+                            <button onClick={retryPayment} className="bg-ebony-deep text-parchment-ivory px-4 py-2 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-1.5 cursor-pointer border-0">
+                              <RefreshCw size={10} /> Retry Payment
+                            </button>
+                            <a href="mailto:support@adunagallery.com?subject=Payment%20Failed%20-%20{txnRef}" className="border border-gold-leaf text-gold-leaf px-4 py-2 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors flex items-center gap-1.5">
+                              <HelpCircle size={10} /> Contact Support
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex flex-col gap-6">
                       {/* SWIFT */}
                       <div onClick={() => setPaymentMethod("swift")} className={`group relative cursor-pointer border p-8 flex items-start gap-6 transition-all duration-300 ${paymentMethod === "swift" ? "border-gold-leaf bg-surface-container-lowest shadow-[0_20px_40px_rgba(15,15,15,0.03)]" : "border-on-surface/10 hover:shadow-[0_20px_40px_rgba(15,15,15,0.03)] hover:-translate-y-0.5 bg-surface-container-lowest"}`}>
@@ -580,7 +630,7 @@ function AcquisitionContent() {
                               <h3 className="font-sans text-[13px] font-semibold tracking-wider text-ebony-deep mb-1 uppercase flex items-center gap-2">
                                 <LandmarkIcon className="w-4 h-4 text-gold-leaf" /> International Bank Transfer (SWIFT)
                               </h3>
-                              <p className="font-sans text-xs text-on-surface-variant max-w-lg leading-relaxed">Direct wire transfer to our secure institutional accounts. Ideal for high-value acquisitions above $500,000.</p>
+                              <p className="font-sans text-xs text-on-surface-variant max-w-lg leading-relaxed">Direct wire transfer to our secure institutional accounts. Ideal for high-value acquisitions.</p>
                             </div>
                             <div className="text-left sm:text-right shrink-0">
                               <span className="font-sans text-[10px] font-medium text-on-surface-variant block uppercase tracking-wider">Processing Time</span>
@@ -621,7 +671,7 @@ function AcquisitionContent() {
                                 </h3>
                                 <span className="bg-surface-container-high px-2 py-0.5 font-sans text-[9px] tracking-widest text-charcoal-text font-bold uppercase">Recommended</span>
                               </div>
-                              <p className="font-sans text-xs text-on-surface-variant max-w-lg leading-relaxed">Funds are held securely until provenance and physical condition are verified upon delivery. Complete premium buyer protection.</p>
+                              <p className="font-sans text-xs text-on-surface-variant max-w-lg leading-relaxed">Funds are held securely until provenance and physical condition are verified upon delivery. Complete buyer protection.</p>
                             </div>
                             <div className="text-left sm:text-right shrink-0">
                               <span className="font-sans text-[10px] font-medium text-on-surface-variant block uppercase tracking-wider">Processing Time</span>
@@ -630,7 +680,7 @@ function AcquisitionContent() {
                           </div>
                           {paymentMethod === "escrow" && (
                             <div className="mt-4 border-t border-on-surface/10 pt-5 flex flex-col gap-4 cursor-default" onClick={(e) => e.stopPropagation()}>
-                              <p className="font-sans text-xs text-on-surface-variant">You will be securely redirected to Escrow.com to complete the deposit. Once Escrow secures the funds, the curatorial office is notified instantly.</p>
+                              <p className="font-sans text-xs text-on-surface-variant">You will be securely redirected to Escrow.com to complete the deposit. Once funds are secured, the curatorial office is notified instantly.</p>
                               <button onClick={triggerEscrowPayment} type="button" className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer">Proceed to Escrow</button>
                             </div>
                           )}
@@ -668,10 +718,10 @@ function AcquisitionContent() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="flex flex-col gap-1.5">
                                   <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Cardholder Full Name</label>
-                                  <input type="text" required value={card.cardholderName} onChange={(e) => setCard((prev) => ({ ...prev, cardholderName: e.target.value }))} placeholder="e.g. Maximilian von Hapsburg" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans" />
+                                  <input type="text" required value={card.cardholderName} onChange={(e) => setCard((prev) => ({ ...prev, cardholderName: e.target.value }))} placeholder="e.g. Julian Doe" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans" />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
-                                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Premium Card Number</label>
+                                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Card Number</label>
                                   <div className="relative">
                                     <input type="text" required value={card.cardNumber} onChange={handleCardNumberChange} placeholder="4111 2222 3333 4444" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-mono" />
                                     <CreditCard className="absolute right-3 top-2.5 w-4 h-4 text-on-surface-variant/40" />
@@ -707,14 +757,21 @@ function AcquisitionContent() {
                         <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 mt-2 font-sans text-xs font-medium text-on-surface-variant">
                           <li className="flex items-center gap-2"><Check className="w-4 h-4 text-gold-leaf shrink-0" /> End-to-End AES-256 Encryption</li>
                           <li className="flex items-center gap-2"><Check className="w-4 h-4 text-gold-leaf shrink-0" /> PCI DSS Level 1 Compliant Tokenization</li>
-                          <li className="flex items-center gap-2"><Check className="w-4 h-4 text-gold-leaf shrink-0" /> Zero-Knowledge Proof for KYC data</li>
+                          <li className="flex items-center gap-2"><Check className="w-4 h-4 text-gold-leaf shrink-0" /> Zero-Knowledge Proof for billing data</li>
                         </ul>
                       </div>
                     </div>
 
+                    {/* Support Link */}
+                    <div className="flex justify-center">
+                      <a href="mailto:support@adunagallery.com?subject=Payment%20Assistance%20-%20{txnRef}" className="text-gold-leaf text-xs font-semibold uppercase tracking-widest hover:underline flex items-center gap-2">
+                        <HelpCircle size={12} /> Need help with payment? Contact Support
+                      </a>
+                    </div>
+
                     <div className="flex justify-between items-center border-t border-on-surface/10 pt-8">
-                      <button onClick={() => setCurrentStep("Provenance")} className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 cursor-pointer border-0 bg-transparent">
-                        <ArrowLeft className="w-4 h-4" /> Return to Provenance
+                      <button onClick={() => setCurrentStep("Billing")} className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 cursor-pointer border-0 bg-transparent">
+                        <ArrowLeft className="w-4 h-4" /> Return to Billing
                       </button>
                     </div>
                   </div>
@@ -734,7 +791,7 @@ function AcquisitionContent() {
                         <h2 className="font-serif text-3xl md:text-4xl text-ebony-deep font-medium tracking-tight">Acquisition Confirmed</h2>
                       </div>
                       <p className="font-sans text-sm text-on-surface-variant max-w-2xl leading-relaxed">
-                        The escrow transaction for <strong className="text-ebony-deep">{artwork.title}</strong> has been cleared. The physical asset has been locked in transit-hold, and digital title registry is complete.
+                        The payment for <strong className="text-ebony-deep">{artwork.title}</strong> has been processed. The physical asset has been locked in transit-hold, and digital title registry is complete.
                       </p>
                     </div>
 
@@ -747,12 +804,12 @@ function AcquisitionContent() {
                             <h3 className="font-serif text-2xl text-ebony-deep">Certificate of Absolute Provenance</h3>
                           </div>
                           <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                            This record hereby guarantees that <strong className="text-ebony-deep">{identity.fullName}</strong> is the authenticated registered owner of <strong className="text-ebony-deep">{artwork.title}</strong>, dated {artwork.period}. All rights, legal titles, forensics reports, and custody deeds are transferred henceforth in perpetuity.
+                            This record hereby guarantees that <strong className="text-ebony-deep">{billing.firstName} {billing.lastName}</strong> is the authenticated registered owner of <strong className="text-ebony-deep">{artwork.title}</strong>, dated {artwork.period}. All rights, legal titles, forensics reports, and custody deeds are transferred henceforth in perpetuity.
                           </p>
                           <div className="border-t border-b border-on-surface/10 py-4 grid grid-cols-2 gap-4 text-xs font-sans">
                             <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Acquisition Registry ID</span><span className="font-mono font-bold text-ebony-deep block mt-1">{artwork.id}</span></div>
                             <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Transaction Settlement Ref</span><span className="font-mono font-bold text-ebony-deep block mt-1">{txnRef}</span></div>
-                            <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Registry Address</span><span className="font-bold text-ebony-deep block mt-1">{identity.address}</span></div>
+                            <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Billing Address</span><span className="font-bold text-ebony-deep block mt-1">{billing.address}, {billing.city}, {billing.country}</span></div>
                             <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">Dating Verification</span><span className="font-bold text-ebony-deep block mt-1">{artwork.period}</span></div>
                           </div>
                         </div>
@@ -773,7 +830,7 @@ function AcquisitionContent() {
                             <div className="w-8 h-8 rounded-full bg-gold-leaf/10 text-gold-leaf flex items-center justify-center shrink-0"><Truck className="w-4 h-4" /></div>
                             <div className="flex flex-col gap-1">
                               <h4 className="font-bold text-ebony-deep text-xs uppercase tracking-wider">Armored Global Transit (G4S Fine Art)</h4>
-                              <p className="text-xs text-on-surface-variant leading-relaxed">Your physical artifact is scheduled for release from the Geneva Freeport vault. Transit-grade thermal protection and armed G4S escort will transport it to your designated vault.</p>
+                              <p className="text-xs text-on-surface-variant leading-relaxed">Your physical artifact is scheduled for release from the Geneva Freeport vault. Transit-grade thermal protection and armed escort will transport it to your designated vault.</p>
                             </div>
                           </div>
                           <div className="flex gap-4 items-start">
@@ -787,7 +844,7 @@ function AcquisitionContent() {
                             <div className="w-8 h-8 rounded-full bg-gold-leaf/10 text-gold-leaf flex items-center justify-center shrink-0"><Calendar className="w-4 h-4" /></div>
                             <div className="flex flex-col gap-1">
                               <h4 className="font-bold text-ebony-deep text-xs uppercase tracking-wider">Curation Liaison Contact</h4>
-                              <p className="text-xs text-on-surface-variant leading-relaxed">Our Director of Custody will coordinate with you at <strong className="text-ebony-deep">{identity.email}</strong> to finalize port clearance customs procedures.</p>
+                              <p className="text-xs text-on-surface-variant leading-relaxed">Our Director of Custody will coordinate with you at <strong className="text-ebony-deep">{billing.email}</strong> to finalize port clearance customs procedures.</p>
                             </div>
                           </div>
                         </div>
