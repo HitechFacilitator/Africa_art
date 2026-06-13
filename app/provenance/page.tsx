@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Microscope,
@@ -153,7 +153,50 @@ export default function ProvenancePage() {
   const [verificationError, setVerificationError] = useState("");
   const [isLoadingLedger, setIsLoadingLedger] = useState(false);
 
-  const { lang } = useTranslate();
+  const { lang, tAsync } = useTranslate();
+
+  const [masterpieces, setMasterpieces] = useState(MASTERPIECES);
+  const abortRef = useRef(0);
+
+  useEffect(() => {
+    if (lang === "en") { setMasterpieces(MASTERPIECES); return; }
+    let cancelled = false;
+    const runId = ++abortRef.current;
+
+    async function translateAll() {
+      const results = await Promise.all(MASTERPIECES.map(async (art) => {
+        const tl = await Promise.all(art.timeline.map(async (ev) => ({
+          ...ev,
+          title: await tAsync(ev.title),
+          description: await tAsync(ev.description),
+          location: await tAsync(ev.location),
+          verifierName: await tAsync(ev.verifierName),
+          verifierCredentials: await tAsync(ev.verifierCredentials),
+          scientificData: ev.scientificData ? {
+            ...ev.scientificData,
+            testMethod: await tAsync(ev.scientificData.testMethod || ""),
+            resultValue: await tAsync(ev.scientificData.resultValue || ""),
+            labFacility: await tAsync(ev.scientificData.labFacility || ""),
+          } : undefined,
+        })));
+        return {
+          ...art,
+          name: await tAsync(art.name),
+          origin: await tAsync(art.origin),
+          medium: await tAsync(art.medium),
+          dimensions: await tAsync(art.dimensions),
+          culture: await tAsync(art.culture),
+          approximateAge: await tAsync(art.approximateAge),
+          description: await tAsync(art.description),
+          caseStudyTitle: await tAsync(art.caseStudyTitle),
+          timeline: tl,
+        };
+      }));
+      if (!cancelled && runId === abortRef.current) setMasterpieces(results);
+    }
+    translateAll();
+    return () => { cancelled = true; };
+  }, [lang, tAsync]);
 
   // Certificate modal state
   const [showCertificate, setShowCertificate] = useState(false);
@@ -165,7 +208,7 @@ export default function ProvenancePage() {
   const [inquirySuccess, setInquirySuccess] = useState(false);
   const [generatedPassHash, setGeneratedPassHash] = useState("");
 
-  const currentArtifact = MASTERPIECES.find((a) => a.id === selectedArtifactId) || MASTERPIECES[0];
+  const currentArtifact = masterpieces.find((a) => a.id === selectedArtifactId) || masterpieces[0];
 
   const startAiMatching = () => {
     setMatchingProgress(0);
@@ -326,7 +369,7 @@ export default function ProvenancePage() {
                 <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Explorez les dossiers vérifiés. Sélectionnez une œuvre ci-dessous pour reconstituer son historique." : "Explore verified dossiers. Select a masterwork below to reconstruct its historic timeline."}</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                {MASTERPIECES.map((art) => (
+                {masterpieces.map((art) => (
                   <button key={art.id} onClick={() => { setSelectedArtifactId(art.id); setSelectedEventIndex(null); }} className={`px-4 py-2 border text-xs font-semibold uppercase tracking-wider transition-all ${selectedArtifactId === art.id ? "bg-ebony-deep text-parchment-ivory border-ebony-deep" : "bg-transparent text-on-surface-variant/80 border-on-surface/10 hover:border-gold-leaf/40 hover:text-ebony-deep"}`}>
                     {art.name.replace("The ", "")}
                   </button>
@@ -533,7 +576,7 @@ export default function ProvenancePage() {
                       <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "E-mail Sécurisé" : "Secure Email"}</label><input type="email" required placeholder="name@institution.org" value={inquiryForm.email} onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30" /></div>
                     </div>
                     <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Niveau de Collectionneur" : "Collector Tier"}</label><select value={inquiryForm.collectorLevel} onChange={(e) => setInquiryForm({ ...inquiryForm, collectorLevel: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer"><option value="Novice">{lang === "fr" ? "Enthousiaste Souverain Cultivateur" : "Sovereign Cultivating Enthusiast"}</option><option value="Institutional">{lang === "fr" ? "Administrateur de Musée / Fonds Patrimonial" : "Museum Trustee / Heritage Fund"}</option><option value="Private-VVIP">{lang === "fr" ? "Bureau Familial à Grande Valeur" : "High-Value Venture Family Office"}</option></select></div>
-                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Artifact Cible" : "Target Artifact"}</label><select value={inquiryForm.artifactSelection} onChange={(e) => setInquiryForm({ ...inquiryForm, artifactSelection: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer">{MASTERPIECES.map(art => <option key={art.id} value={art.id}>{art.name}</option>)}<option value="ALL">{lang === "fr" ? "Portfolio Complet" : "Entire Portfolio"}</option></select></div>
+                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Artifact Cible" : "Target Artifact"}</label><select value={inquiryForm.artifactSelection} onChange={(e) => setInquiryForm({ ...inquiryForm, artifactSelection: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer">{masterpieces.map(art => <option key={art.id} value={art.id}>{art.name}</option>)}<option value="ALL">{lang === "fr" ? "Portfolio Complet" : "Entire Portfolio"}</option></select></div>
                     <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Déclaration d'Intention" : "Intent Statement"}</label><textarea required rows={3} placeholder={lang === "fr" ? "Résumez votre intention d'acquisition..." : "Summarize your acquisition intent..."} value={inquiryForm.interestReason} onChange={(e) => setInquiryForm({ ...inquiryForm, interestReason: e.target.value })} className="w-full bg-white border border-ebony-deep/10 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30 leading-relaxed resize-none" /></div>
                     <div className="pt-4 flex justify-end space-x-3">
                       <button type="button" onClick={() => setShowInquiry(false)} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70 hover:text-ebony-deep transition-colors">{lang === "fr" ? "Annuler" : "Cancel"}</button>
@@ -551,7 +594,7 @@ export default function ProvenancePage() {
                   <div className="bg-white border border-gold-leaf/30 p-6 text-left max-w-sm mx-auto font-mono text-[10px] space-y-3 leading-relaxed border-double border-4">
                     <div className="flex justify-between items-center text-ebony-deep font-sans font-bold text-[11px] border-b border-ebony-deep/5 pb-2"><span className="flex items-center space-x-1.5 uppercase"><Award size={12} className="text-gold-leaf" /><span>PRE-VERIFIED ACCESS TICKET</span></span><span className="text-[10px] text-emerald-600">SEAL_OK</span></div>
                     <div><span className="block font-sans font-semibold text-ebony-deep uppercase text-[9px] text-on-surface-variant/60">COLLECTOR ID TIER:</span><span>{inquiryForm.collectorLevel.toUpperCase()}</span></div>
-                    <div><span className="block font-sans font-semibold text-ebony-deep uppercase text-[9px] text-on-surface-variant/60">TARGET WORK:</span><span className="text-gold-leaf">{MASTERPIECES.find(m => m.id === inquiryForm.artifactSelection)?.name || "Portfolio"}</span></div>
+                    <div><span className="block font-sans font-semibold text-ebony-deep uppercase text-[9px] text-on-surface-variant/60">TARGET WORK:</span><span className="text-gold-leaf">{masterpieces.find(m => m.id === inquiryForm.artifactSelection)?.name || "Portfolio"}</span></div>
                     <div className="pt-2 border-t border-on-surface/5"><span className="flex items-center space-x-1 font-sans font-semibold text-ebony-deep text-[9px] uppercase mb-1"><Terminal size={10} className="text-gold-leaf" /><span>TRANSACTION SEED KEY:</span></span><span className="break-all font-mono text-ebony-deep leading-snug">{generatedPassHash}</span></div>
                   </div>
                   <button onClick={() => { setShowInquiry(false); setInquirySuccess(false); }} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">{lang === "fr" ? "Fermer le Portail" : "Close Portal"}</button>

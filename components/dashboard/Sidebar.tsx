@@ -18,6 +18,7 @@ import {
   Menu,
   X
 } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -36,18 +37,19 @@ export default function Sidebar({
   setIsOpenMobile,
   onLogout
 }: SidebarProps) {
+  const { lang } = useTranslate();
   const navItems = [
-    { id: ActiveTab.Dashboard, label: 'Dashboard', icon: LayoutDashboard },
-    { id: ActiveTab.Portfolio, label: 'My Acquisitions', icon: Landmark },
-    { id: ActiveTab.Certificates, label: 'Certificates', icon: Award },
-    { id: ActiveTab.Inquiries, label: 'Inquiries', icon: ScrollText },
-    { id: ActiveTab.Consultations, label: 'Consultations', icon: Gavel },
-    { id: ActiveTab.PrivateCatalogues, label: 'Private Catalogues', icon: BookLock },
-    { id: ActiveTab.AlertsAuctions, label: 'Alerts & Auctions', icon: Bell },
-    { id: ActiveTab.Investment, label: 'Investment', icon: TrendingUp },
-    { id: ActiveTab.Previews, label: 'Exclusive Previews', icon: Eye },
-    { id: ActiveTab.Logistics, label: 'Logistics', icon: Truck },
-    { id: ActiveTab.Security, label: 'Security', icon: ShieldCheck },
+    { id: ActiveTab.Dashboard, label: lang === "fr" ? "Tableau de Bord" : "Dashboard", icon: LayoutDashboard },
+    { id: ActiveTab.Portfolio, label: lang === "fr" ? "Mes Acquisitions" : "My Acquisitions", icon: Landmark },
+    { id: ActiveTab.Certificates, label: lang === "fr" ? "Certificats" : "Certificates", icon: Award },
+    { id: ActiveTab.Inquiries, label: lang === "fr" ? "Demandes" : "Inquiries", icon: ScrollText },
+    { id: ActiveTab.Consultations, label: lang === "fr" ? "Consultations" : "Consultations", icon: Gavel },
+    { id: ActiveTab.PrivateCatalogues, label: lang === "fr" ? "Catalogues Privés" : "Private Catalogues", icon: BookLock },
+    { id: ActiveTab.AlertsAuctions, label: lang === "fr" ? "Alertes et Enchères" : "Alerts & Auctions", icon: Bell },
+    { id: ActiveTab.Investment, label: lang === "fr" ? "Investissement" : "Investment", icon: TrendingUp },
+    { id: ActiveTab.Previews, label: lang === "fr" ? "Aperçus Exclusifs" : "Exclusive Previews", icon: Eye },
+    { id: ActiveTab.Logistics, label: lang === "fr" ? "Logistique" : "Logistics", icon: Truck },
+    { id: ActiveTab.Security, label: lang === "fr" ? "Sécurité" : "Security", icon: ShieldCheck },
   ];
 
   const handleTabClick = (tabId: ActiveTab) => {
@@ -59,7 +61,7 @@ export default function Sidebar({
     <div className="flex flex-col h-full bg-surface border-r border-ebony-deep/5 shadow-sm py-8 text-on-surface">
       <div className="px-6 mb-10">
         <h1 className="font-serif text-3xl font-medium tracking-tight text-ebony-deep mb-6">
-          Aduna Gallery
+          {lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}
         </h1>
         <div className="flex items-center gap-4 bg-parchment-ivory p-4 border border-ebony-deep/5 shadow-sm">
           <div className="w-10 h-10 rounded-full bg-ebony-deep text-gold-leaf flex items-center justify-center font-serif text-xl font-semibold">
@@ -103,14 +105,14 @@ export default function Sidebar({
           }`}
         >
           <Settings className="w-4.5 h-4.5" />
-          <span className="tracking-wide">Settings</span>
+          <span className="tracking-wide">{lang === "fr" ? "Paramètres" : "Settings"}</span>
         </button>
         <button
           onClick={onLogout}
           className="w-full text-left px-4 py-3 flex items-center gap-3.5 text-on-surface-variant hover:text-terracotta-earth hover:bg-surface-container-low transition-all text-sm font-sans border-l-4 border-transparent"
         >
           <LogOut className="w-4.5 h-4.5" />
-          <span className="tracking-wide">Log Out</span>
+          <span className="tracking-wide">{lang === "fr" ? "Déconnexion" : "Log Out"}</span>
         </button>
       </div>
     </div>
@@ -123,7 +125,7 @@ export default function Sidebar({
       </aside>
 
       <div className="lg:hidden w-full h-16 bg-surface border-b border-ebony-deep/5 fixed top-0 left-0 px-6 flex items-center justify-between z-30">
-        <h1 className="font-serif text-xl font-medium tracking-tight text-ebony-deep">Aduna Gallery</h1>
+        <h1 className="font-serif text-xl font-medium tracking-tight text-ebony-deep">{lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}</h1>
         <button
           onClick={() => setIsOpenMobile(!isOpenMobile)}
           className="p-2 border border-ebony-deep/10 text-ebony-deep"

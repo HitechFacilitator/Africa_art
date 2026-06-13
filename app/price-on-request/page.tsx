@@ -18,6 +18,7 @@ import { useTranslate } from "@/lib/translations";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 
 export default function PriceOnRequestPage() {
@@ -39,11 +40,12 @@ export default function PriceOnRequestPage() {
   const [filterRegion, setFilterRegion] = useState("All");
 
   const porArtworks = ARTWORKS.filter((a) => a.label === "Price on Request");
+  const displayPorArtworks = useTranslatedArtworks(porArtworks);
 
-  const materials = ["All", ...Array.from(new Set(porArtworks.map((a) => a.material)))];
-  const regions = ["All", ...Array.from(new Set(porArtworks.map((a) => a.region)))];
+  const materials = ["All", ...Array.from(new Set(displayPorArtworks.map((a) => a.material)))];
+  const regions = ["All", ...Array.from(new Set(displayPorArtworks.map((a) => a.region)))];
 
-  const filtered = porArtworks.filter((a) => {
+  const filtered = displayPorArtworks.filter((a) => {
     if (filterMaterial !== "All" && a.material !== filterMaterial) return false;
     if (filterRegion !== "All" && a.region !== filterRegion) return false;
     return true;

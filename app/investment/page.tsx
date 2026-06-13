@@ -102,7 +102,7 @@ const SECURITY_AUDITS = [
 ];
 
 export default function InvestmentPage() {
-  const { lang } = useTranslate();
+  const { lang, tAsync } = useTranslate();
   const [activeTab, setActiveTab] = useState<"advisory" | "gallery" | "provenance" | "vault">("advisory");
   const [chartFocus, setChartFocus] = useState<"aggregate" | "nok" | "benin">("aggregate");
   const [selectedPackage, setSelectedPackage] = useState<InvestmentPackage | null>(null);
@@ -146,7 +146,50 @@ export default function InvestmentPage() {
   const [auditMessage, setAuditMessage] = useState<string | null>(null);
 
   const formRef = useRef<HTMLDivElement>(null);
-  const activeProvenanceArt = MASTER_ARTIFACTS.find((a) => a.id === selectedProvenanceId) || MASTER_ARTIFACTS[0];
+
+  const [masterArtifacts, setMasterArtifacts] = useState(MASTER_ARTIFACTS);
+  const [curatedPackages, setCuratedPackages] = useState(CURATED_PACKAGES);
+  const abortRef = useRef(0);
+
+  useEffect(() => {
+    if (lang === "en") { setMasterArtifacts(MASTER_ARTIFACTS); setCuratedPackages(CURATED_PACKAGES); return; }
+    let cancelled = false;
+    const runId = ++abortRef.current;
+
+    async function translateAll() {
+      const artifacts = await Promise.all(MASTER_ARTIFACTS.map(async (art) => ({
+        ...art,
+        title: await tAsync(art.title),
+        origin: await tAsync(art.origin),
+        period: await tAsync(art.period),
+        medium: await tAsync(art.medium),
+        estimatedValue: await tAsync(art.estimatedValue),
+        description: await tAsync(art.description),
+        provenance: await Promise.all(art.provenance.map((p) => tAsync(p))),
+        exhibitions: await Promise.all(art.exhibitions.map((e) => tAsync(e))),
+        carbonDatingDetails: art.carbonDatingDetails ? await tAsync(art.carbonDatingDetails) : undefined,
+      })));
+
+      const packages = await Promise.all(CURATED_PACKAGES.map(async (pkg) => ({
+        ...pkg,
+        title: await tAsync(pkg.title),
+        tagline: await tAsync(pkg.tagline),
+        description: await tAsync(pkg.description),
+        estimatedValue: await tAsync(pkg.estimatedValue),
+        allocation: await tAsync(pkg.allocation),
+        appreciationRate: await tAsync(pkg.appreciationRate),
+      })));
+
+      if (!cancelled && runId === abortRef.current) {
+        setMasterArtifacts(artifacts);
+        setCuratedPackages(packages);
+      }
+    }
+    translateAll();
+    return () => { cancelled = true; };
+  }, [lang, tAsync]);
+
+  const activeProvenanceArt = masterArtifacts.find((a) => a.id === selectedProvenanceId) || masterArtifacts[0];
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [activeTab]);
 
@@ -188,13 +231,13 @@ export default function InvestmentPage() {
   const handleSearchCode = (e: React.FormEvent) => {
     e.preventDefault();
     if (!typedCode) return;
-    const match = MASTER_ARTIFACTS.find((art) => art.id.toLowerCase() === typedCode.toLowerCase().trim());
+    const match = masterArtifacts.find((art) => art.id.toLowerCase() === typedCode.toLowerCase().trim());
     if (match) { setSelectedProvenanceId(match.id); setAuditMessage(`Accession Record '${match.id}' Found. Title Cleared & Vetted.`); }
     else { setAuditMessage(`No active record registered with code '${typedCode}'. Verification failed.`); }
     setTimeout(() => setAuditMessage(null), 4000);
   };
 
-  const filteredArtifacts = MASTER_ARTIFACTS.filter((art) => {
+  const filteredArtifacts = masterArtifacts.filter((art) => {
     const matchesRegion = regionFilter === "All" || art.origin.includes(regionFilter);
     const matchesMedium = mediumFilter === "All" || art.medium.includes(mediumFilter);
     const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) || art.origin.toLowerCase().includes(searchQuery.toLowerCase());
@@ -307,7 +350,7 @@ export default function InvestmentPage() {
                     <h2 className="font-serif text-3xl md:text-4xl text-ebony-deep mb-4">{lang === "fr" ? "Packages d'Investissement Curés" : "Curated Investment Packages"}</h2>
                   </div>
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
-                    {CURATED_PACKAGES.map((pkg, idx) => (
+                    {curatedPackages.map((pkg, idx) => (
                       <div key={pkg.id} onClick={() => setSelectedPackage(pkg)} className="group cursor-pointer flex flex-col bg-surface-container-lowest shadow-level-2 border border-on-surface/5 hover:border-gold-leaf/20 transition-all duration-300">
                         <div className="w-full aspect-[4/3] bg-surface-container-low relative overflow-hidden">
                           <img src={pkg.imageUrl} alt={pkg.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -530,7 +573,7 @@ export default function InvestmentPage() {
                       <div className="bg-surface-container/60 p-6 border border-on-surface/5 shadow-level-2">
                         <h3 className="font-sans text-xs uppercase tracking-widest text-ebony-deep font-bold mb-4">{lang === "fr" ? "Articles du Coffre-Fort Principal" : "Master Vault Items"}</h3>
                         <div className="space-y-3">
-                          {MASTER_ARTIFACTS.map((art) => (
+                          {masterArtifacts.map((art) => (
                             <div key={art.id} onClick={() => setSelectedProvenanceId(art.id)} className={`flex items-center gap-3 p-3 cursor-pointer border transition-colors ${art.id === selectedProvenanceId ? "bg-parchment-ivory border-gold-leaf" : "bg-surface-container-lowest/80 border-on-surface/5 hover:border-gold-leaf/30"}`}>
                               <img src={art.imageUrl} referrerPolicy="no-referrer" className="w-10 h-10 object-cover" alt="" />
                               <div className="flex-1 text-[11px] font-sans text-left"><span className="font-bold text-ebony-deep block truncate">{art.title}</span><span className="text-on-surface-variant/50">{art.accessionNo}</span></div>

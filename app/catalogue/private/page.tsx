@@ -23,6 +23,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 
 interface VaultHolding {
@@ -38,7 +39,7 @@ interface VaultHolding {
   isPublic: boolean;
 }
 
-const VAULT_HOLDINGS: VaultHolding[] = ARTWORKS.slice(0, 4).map((art, i) => ({
+const vaultHoldings: VaultHolding[] = ARTWORKS.slice(0, 4).map((art, i) => ({
   artwork: art,
   vaultLocation: ["Geneva Vault, Bay 7-A", "Zurich Freeport, Vault 12", "London Storage, Room 3-B", "Singapore Hub, Vault 5"][i],
   temperature: ["18.2°C", "17.8°C", "18.5°C", "19.1°C"][i],
@@ -67,7 +68,20 @@ const PRIVATE_CATALOGUES = [
 export default function PrivateCataloguePage() {
   const router = useRouter();
   const { lang } = useTranslate();
-  const [selectedHolding, setSelectedHolding] = useState<VaultHolding | null>(VAULT_HOLDINGS[0]);
+  const translatedArtworks = useTranslatedArtworks(ARTWORKS.slice(0, 4));
+  const vaultHoldings: VaultHolding[] = translatedArtworks.map((art, i) => ({
+    artwork: art,
+    vaultLocation: ["Geneva Vault, Bay 7-A", "Zurich Freeport, Vault 12", "London Storage, Room 3-B", "Singapore Hub, Vault 5"][i],
+    temperature: ["18.2°C", "17.8°C", "18.5°C", "19.1°C"][i],
+    humidity: ["48%", "51%", "47%", "52%"][i],
+    lastInspection: ["2026-05-14", "2026-04-28", "2026-05-20", "2026-03-15"][i],
+    insuranceValue: art.investment?.estimatedValue || "€1.2M",
+    acquisitionDate: ["2023-06-15", "2024-01-22", "2023-11-08", "2025-02-10"][i],
+    condition: ["Pristine", "Excellent", "Excellent", "Pristine"][i] as VaultHolding["condition"],
+    certStatus: ["Valid", "Valid", "Renewal Due", "Valid"][i] as VaultHolding["certStatus"],
+    isPublic: i < 2,
+  }));
+  const [selectedHolding, setSelectedHolding] = useState<VaultHolding | null>(vaultHoldings[0]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [activeTab, setActiveTab] = useState<"holdings" | "catalogues">("holdings");
   const [showPORExpress, setShowPORExpress] = useState(false);
@@ -95,8 +109,8 @@ export default function PrivateCataloguePage() {
     setShowAccessDenied(true);
   };
 
-  const confidentialHoldings = VAULT_HOLDINGS.filter(h => !h.isPublic);
-  const publicHoldings = VAULT_HOLDINGS.filter(h => h.isPublic);
+  const confidentialHoldings = vaultHoldings.filter(h => !h.isPublic);
+  const publicHoldings = vaultHoldings.filter(h => h.isPublic);
 
   return (
     <>
@@ -126,7 +140,7 @@ export default function PrivateCataloguePage() {
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{VAULT_HOLDINGS.length} {lang === "fr" ? "Détentions" : "Holdings"}</span>
+                <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{vaultHoldings.length} {lang === "fr" ? "Détentions" : "Holdings"}</span>
                 <div className="flex border border-on-surface/10">
                   <button onClick={() => setViewMode("grid")} className={`px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold cursor-pointer border-0 transition-colors ${viewMode === "grid" ? "bg-ebony-deep text-parchment-ivory" : "bg-transparent text-on-surface-variant hover:text-ebony-deep"}`}>Grid</button>
                   <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold cursor-pointer border-0 transition-colors ${viewMode === "list" ? "bg-ebony-deep text-parchment-ivory" : "bg-transparent text-on-surface-variant hover:text-ebony-deep"}`}>List</button>
@@ -172,7 +186,7 @@ export default function PrivateCataloguePage() {
               <div className="lg:col-span-5">
                 {viewMode === "grid" ? (
                   <div className="grid grid-cols-2 gap-3">
-                    {VAULT_HOLDINGS.map((h, idx) => (
+                    {vaultHoldings.map((h, idx) => (
                       <motion.div key={h.artwork.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
                       <button
                         onClick={() => {
@@ -215,7 +229,7 @@ export default function PrivateCataloguePage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {VAULT_HOLDINGS.map((h, idx) => (
+                    {vaultHoldings.map((h, idx) => (
                       <motion.div key={h.artwork.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.08 }}>
                       <button
                         onClick={() => {

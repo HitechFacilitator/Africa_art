@@ -16,6 +16,7 @@ import {
   FileCheck
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslate } from "@/lib/translations";
 
 interface DashboardViewProps {
   acquisitions: Acquisition[];
@@ -32,6 +33,7 @@ export default function DashboardView({
   setSelectedAcquisition,
   onExportReport
 }: DashboardViewProps) {
+  const { lang } = useTranslate();
   const [isAttendanceConfirmed, setIsAttendanceConfirmed] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
@@ -53,10 +55,10 @@ export default function DashboardView({
       <header className="mb-12 border-b border-ebony-deep/10 pb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
         <div>
           <h2 className="font-serif text-[48px] italic font-medium text-ebony-deep leading-tight mb-2">
-            Hello, Julian.
+            {lang === "fr" ? "Bonjour, Julian." : "Hello, Julian."}
           </h2>
           <p className="font-sans text-sm text-on-surface-variant">
-            Last updated: Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • Prestige Account Active
+            {lang === "fr" ? "Dernière mise à jour :" : "Last updated:"} Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {lang === "fr" ? "Compte Prestige Actif" : "Prestige Account Active"}
           </p>
         </div>
         <button
@@ -64,20 +66,20 @@ export default function DashboardView({
           className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-wider px-6 py-3.5 hover:opacity-90 active:scale-98 transition-all flex items-center gap-2 cursor-pointer border-0"
         >
           <Download className="w-4 h-4" />
-          Export Portfolio Report
+          {lang === "fr" ? "Exporter le Rapport de Portefeuille" : "Export Portfolio Report"}
         </button>
       </header>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-parchment-ivory p-8 border border-ebony-deep/5 shadow-level-1 flex flex-col justify-between">
-          <p className="font-sans text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-6">Total Acquisitions</p>
+          <p className="font-sans text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-6">{lang === "fr" ? "Total des Acquisitions" : "Total Acquisitions"}</p>
           <div>
             <p className="font-serif text-3xl text-ebony-deep">{acquisitions.length + 10} Pieces</p>
             <p className="font-sans text-[11px] text-zinc-500 mt-2">{acquisitions.length} secure vaults • 10 legacy trust artifacts</p>
           </div>
         </div>
         <div className="bg-parchment-ivory p-8 border border-ebony-deep/5 shadow-level-1 border-l-4 border-l-terracotta-earth flex flex-col justify-between">
-          <p className="font-sans text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-6">Est. Portfolio Value</p>
+          <p className="font-sans text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-6">{lang === "fr" ? "Valeur Est. du Portefeuille" : "Est. Portfolio Value"}</p>
           <div>
             <p className="font-serif text-3xl text-ebony-deep font-medium">€{formattedValue}M</p>
             <p className="font-sans text-xs text-terracotta-earth font-medium mt-2 flex items-center gap-1">
@@ -87,7 +89,7 @@ export default function DashboardView({
           </div>
         </div>
         <div className="bg-parchment-ivory p-8 border border-ebony-deep/5 shadow-level-1 flex flex-col justify-between">
-          <p className="font-sans text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-6">Active Operations</p>
+          <p className="font-sans text-xs font-semibold tracking-widest uppercase text-on-surface-variant mb-6">{lang === "fr" ? "Opérations Actives" : "Active Operations"}</p>
           <div>
             <p className="font-serif text-3xl text-ebony-deep">{activeShipmentsCount + pendingVettingsCount} in progress</p>
             <p className="font-sans text-[11px] text-zinc-500 mt-2">{activeShipmentsCount} courier cargo transit • {pendingVettingsCount} curation vetting</p>
@@ -104,7 +106,7 @@ export default function DashboardView({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-terracotta-earth opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-terracotta-earth"></span>
               </span>
-              <p className="font-sans text-xs font-bold tracking-widest uppercase text-terracotta-earth">Upcoming Limited Auction</p>
+              <p className="font-sans text-xs font-bold tracking-widest uppercase text-terracotta-earth">{lang === "fr" ? "Enchère Limitée à Venir" : "Upcoming Limited Auction"}</p>
             </div>
             <h3 className="font-serif text-2xl text-ebony-deep mb-2">Royal Benin & Oba Dynasty Auction</h3>
             <p className="font-sans text-sm text-on-surface-variant flex items-center gap-4 flex-wrap">
@@ -115,11 +117,11 @@ export default function DashboardView({
           <div className="relative z-10 shrink-0 select-none">
             {isAttendanceConfirmed ? (
               <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="bg-gold-leaf text-ebony-deep font-sans text-xs font-bold uppercase tracking-widest px-6 py-3.5 flex items-center gap-2">
-                <CheckCircle className="w-4.5 h-4.5" /> ✓ VIP Attendance Confirmed
+                <CheckCircle className="w-4.5 h-4.5" /> ✓ {lang === "fr" ? "Présence VIP Confirmée" : "VIP Attendance Confirmed"}
               </motion.div>
             ) : (
               <button onClick={handleConfirmAttendance} disabled={attendanceLoading} className="bg-transparent border border-gold-leaf text-gold-leaf font-sans text-xs font-semibold uppercase tracking-widest px-8 py-3.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 disabled:opacity-50 cursor-pointer">
-                {attendanceLoading ? 'Registering...' : 'Confirm Premium Attendance'}
+                {attendanceLoading ? (lang === "fr" ? "Enregistrement..." : 'Registering...') : (lang === "fr" ? "Confirmer la Présence Premium" : 'Confirm Premium Attendance')}
               </button>
             )}
           </div>
@@ -129,9 +131,9 @@ export default function DashboardView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-7">
           <div className="flex justify-between items-end mb-8 border-b border-ebony-deep/10 pb-4">
-            <h3 className="font-serif text-xl font-medium text-ebony-deep">Recent Acquisitions</h3>
+            <h3 className="font-serif text-xl font-medium text-ebony-deep">{lang === "fr" ? "Acquisitions Récentes" : "Recent Acquisitions"}</h3>
             <button onClick={() => setActiveTab(ActiveTab.Portfolio)} className="font-sans text-xs font-semibold uppercase tracking-widest text-gold-leaf hover:text-terracotta-earth underline transition-colors cursor-pointer border-0 bg-transparent">
-              View Full Cabinet
+              {lang === "fr" ? "Voir le Cabinet Complet" : "View Full Cabinet"}
             </button>
           </div>
           <div className="flex flex-col gap-6">
@@ -175,7 +177,7 @@ export default function DashboardView({
             <div>
               <div className="flex items-center gap-3 mb-8 pb-4 border-b border-gold-leaf/20">
                 <Sparkles className="w-4.5 h-4.5 text-gold-leaf" />
-                <h3 className="font-serif text-lg font-medium text-ebony-deep">Exclusive Curator Preview</h3>
+                <h3 className="font-serif text-lg font-medium text-ebony-deep">{lang === "fr" ? "Aperçu Conservateur Exclusif" : "Exclusive Curator Preview"}</h3>
               </div>
               <div className="group cursor-pointer">
                 <div className="relative w-full aspect-[4/3] mb-5 overflow-hidden border border-ebony-deep/5">
@@ -189,10 +191,10 @@ export default function DashboardView({
             </div>
             <div>
               <button onClick={() => onExpressInterest('Contemporary Weave', '2023')} className="w-full bg-transparent border border-ebony-deep text-ebony-deep font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:bg-ebony-deep hover:text-parchment-ivory transition-all duration-300 cursor-pointer">
-                Express Investment Interest
+                {lang === "fr" ? "Exprimer l'Intérêt d'Investissement" : "Express Investment Interest"}
               </button>
               <div className="mt-4 flex items-center justify-center gap-2 text-zinc-400 text-[10px] select-none uppercase tracking-widest">
-                <Lock className="w-3 h-3 text-gold-leaf" /> Private Placement Advisory
+                <Lock className="w-3 h-3 text-gold-leaf" /> {lang === "fr" ? "Conseil de Placement Privé" : "Private Placement Advisory"}
               </div>
             </div>
           </div>

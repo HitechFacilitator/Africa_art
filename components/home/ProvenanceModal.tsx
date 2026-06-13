@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { X, ShieldCheck, TrendingUp, MapPin, Clock, Coins } from "lucide-react";
 import type { Artwork } from "@/lib/types";
+import { useTranslate } from "@/lib/translations";
 
 interface ProvenanceModalProps {
   artwork: Artwork;
@@ -16,6 +17,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
   const [inquiryText, setInquiryText] = useState("");
   const [inquiryList, setInquiryList] = useState<{ sender: string; text: string; date: string }[]>([]);
   const [isTyping, setIsTyping] = useState(false);
+  const { lang } = useTranslate();
 
   const handleInquirySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +73,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
               <div className="flex items-center gap-2 text-gold-leaf mb-4">
                 <ShieldCheck size={16} />
                 <span className="font-sans text-[10px] tracking-widest uppercase font-semibold">
-                  Vetted Heritage Asset
+                  {lang === "fr" ? "Actif Patrimonia Vérifié" : "Vetted Heritage Asset"}
                 </span>
               </div>
               <div className="aspect-[4/5] w-full bg-parchment-ivory/5 border border-parchment-ivory/10 overflow-hidden mb-6 relative">
@@ -121,7 +123,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
                         : "border-transparent text-on-surface-variant/50 hover:text-ebony-deep"
                     }`}
                   >
-                    {tab === "provenance" ? "Provenance & Custody" : tab === "investment" ? "Asset & Finance" : "Technical Specs"}
+                    {tab === "provenance" ? (lang === "fr" ? "Provenance et Garde" : "Provenance & Custody") : tab === "investment" ? (lang === "fr" ? "Actif et Finance" : "Asset & Finance") : (lang === "fr" ? "Spécifications Techniques" : "Technical Specs")}
                   </button>
                 ))}
               </div>
@@ -129,7 +131,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
               {activeTab === "provenance" && (
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-serif text-lg text-ebony-deep mb-2">Historical Statement</h4>
+                    <h4 className="font-serif text-lg text-ebony-deep mb-2">{lang === "fr" ? "Déclaration Historique" : "Historical Statement"}</h4>
                     <p className="font-sans text-xs text-on-surface-variant leading-relaxed italic border-l-2 border-gold-leaf pl-4 bg-surface-container-low py-2">
                       &ldquo;{artwork.historicalStory}&rdquo;
                     </p>
@@ -137,7 +139,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
                   <div>
                     <h4 className="font-sans text-[11px] font-semibold tracking-wider uppercase text-on-surface-variant/50 mb-3 flex items-center gap-2">
                       <Clock size={12} />
-                      <span>Verified Ownership Log</span>
+                      <span>{lang === "fr" ? "Journal de Propriété Vérifié" : "Verified Ownership Log"}</span>
                     </h4>
                     <div className="relative border-l border-on-surface/15 pl-4 ml-2 space-y-4 pt-1">
                       {artwork.provenance.map((entry, index) => (
@@ -155,11 +157,11 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
                 <div className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-surface-container-low border border-on-surface/10">
-                      <span className="font-sans text-[10px] text-on-surface-variant/50 uppercase block mb-1">Appraisal Price</span>
+                      <span className="font-sans text-[10px] text-on-surface-variant/50 uppercase block mb-1">{lang === "fr" ? "Prix d'Évaluation" : "Appraisal Price"}</span>
                       <span className="font-serif text-base font-semibold text-ebony-deep">{artwork.investment?.estimatedValue}</span>
                     </div>
                     <div className="p-3 bg-surface-container-low border border-on-surface/10">
-                      <span className="font-sans text-[10px] text-on-surface-variant/50 uppercase block mb-1">Historical CAGR</span>
+                      <span className="font-sans text-[10px] text-on-surface-variant/50 uppercase block mb-1">{lang === "fr" ? "TRI Historique" : "Historical CAGR"}</span>
                       <span className="font-serif text-base font-semibold text-terracotta-earth flex items-center">
                         <TrendingUp size={14} className="mr-1" />+{artwork.investment?.historicalCagr}%
                       </span>
@@ -171,7 +173,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
               {activeTab === "specs" && (
                 <div className="space-y-4">
                   <div className="p-4 bg-surface-container-low border border-on-surface/5">
-                    <span className="font-sans text-[10px] text-on-surface-variant/50 block mb-2 uppercase font-semibold">Dimensions</span>
+                    <span className="font-sans text-[10px] text-on-surface-variant/50 block mb-2 uppercase font-semibold">{lang === "fr" ? "Dimensions" : "Dimensions"}</span>
                     <p className="font-mono text-xs text-ebony-deep font-semibold">{artwork.dimensions}</p>
                   </div>
                 </div>
@@ -184,34 +186,34 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
                   <div>
                     <div className="flex items-center gap-2 text-gold-leaf mb-1">
                       <Coins size={14} />
-                      <span className="font-sans text-[10px] tracking-widest uppercase font-semibold">Acquisition</span>
+                      <span className="font-sans text-[10px] tracking-widest uppercase font-semibold">{lang === "fr" ? "Acquisition" : "Acquisition"}</span>
                     </div>
                     <p className="font-sans text-[10px] text-parchment-ivory/60">
-                      Contact our advisory team for private acquisition details.
+                      {lang === "fr" ? "Contactez notre équipe de conseil..." : "Contact our advisory team for private acquisition details."}
                     </p>
                   </div>
                   <button
                     onClick={onApplyForClub}
                     className="mt-4 w-full bg-gold-leaf hover:bg-parchment-ivory hover:text-ebony-deep text-ebony-deep font-sans text-xs font-semibold py-2 transition-all uppercase tracking-widest"
                   >
-                    Request Acquisition Advisory
+                    {lang === "fr" ? "Demander un Conseil d'Acquisition" : "Request Acquisition Advisory"}
                   </button>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-sans text-[10px] text-on-surface-variant/50 uppercase font-semibold mb-2">Direct Curation Hotline</span>
+                  <span className="font-sans text-[10px] text-on-surface-variant/50 uppercase font-semibold mb-2">{lang === "fr" ? "Ligne Directe de Conservation" : "Direct Curation Hotline"}</span>
                   <form onSubmit={handleInquirySubmit} className="flex">
                     <input
                       type="text"
                       value={inquiryText}
                       onChange={(e) => setInquiryText(e.target.value)}
-                      placeholder="Ask about origins, testing..."
+                      placeholder={lang === "fr" ? "Posez des questions sur les origines, les tests..." : "Ask about origins, testing..."}
                       className="flex-grow border-b border-on-surface/30 bg-transparent text-xs font-sans py-2 focus:outline-none focus:border-gold-leaf text-ebony-deep"
                     />
                     <button
                       type="submit"
                       className="ml-2 bg-gold-leaf hover:bg-ebony-deep hover:text-parchment-ivory text-ebony-deep font-sans text-xs uppercase tracking-wider px-3 py-2 transition-all"
                     >
-                      Ask
+                      {lang === "fr" ? "Demander" : "Ask"}
                     </button>
                   </form>
                   {inquiryList.length > 0 && (
@@ -223,7 +225,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
                         </div>
                       ))}
                       {isTyping && (
-                        <div className="text-gold-leaf italic animate-pulse">Aduna chief archivist typing...</div>
+                        <div className="text-gold-leaf italic animate-pulse">{lang === "fr" ? "L'archiviste en chef d'Aduna tape..." : "Aduna chief archivist typing..."}</div>
                       )}
                     </div>
                   )}

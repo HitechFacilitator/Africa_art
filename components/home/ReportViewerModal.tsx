@@ -2,12 +2,14 @@
 
 import { motion } from "motion/react";
 import { X, Download, ShieldAlert, Award } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 
 interface ReportViewerModalProps {
   onClose: () => void;
 }
 
 export default function ReportViewerModal({ onClose }: ReportViewerModalProps) {
+  const { lang } = useTranslate();
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <motion.div
@@ -37,11 +39,10 @@ export default function ReportViewerModal({ onClose }: ReportViewerModalProps) {
               <div>
                 <Award className="text-gold-leaf mb-6" size={32} />
                 <span className="font-sans text-[10px] uppercase tracking-widest text-gold-leaf font-bold">
-                  Institutional Intelligence Report
+                  {lang === "fr" ? "Rapport de Renseignement Institutionnel" : "Institutional Intelligence Report"}
                 </span>
                 <h3 className="font-serif text-3xl tracking-tight mt-2 leading-tight">
-                  Heritage Assets:<br />
-                  The New Sovereign Reserve
+                  {lang === "fr" ? "Actifs Patrimoniaux : La Nouvelle Réserve Souveraine" : "Heritage Assets: The New Sovereign Reserve"}
                 </h3>
                 <p className="font-sans text-xs text-parchment-ivory/65 mt-4 max-w-xs leading-relaxed">
                   An institutional guide to Africa&apos;s highest compound-yield antiquities, detailing preservation-compliance standards and family office custody strategies.
@@ -56,8 +57,8 @@ export default function ReportViewerModal({ onClose }: ReportViewerModalProps) {
             <div className="w-full md:w-7/12 p-8 flex flex-col justify-between">
               <div className="space-y-6">
                 <div>
-                  <span className="font-sans text-[9px] uppercase tracking-widest text-gold-leaf font-bold">Executive Summary</span>
-                  <h4 className="font-serif text-[22px] tracking-tight text-ebony-deep mt-1 mb-2">Strategic Antiquities Index (SAI)</h4>
+                  <span className="font-sans text-[9px] uppercase tracking-widest text-gold-leaf font-bold">{lang === "fr" ? "Résumé Exécutif" : "Executive Summary"}</span>
+                  <h4 className="font-serif text-[22px] tracking-tight text-ebony-deep mt-1 mb-2">{lang === "fr" ? "Indice Stratégique des Antiquités (ISA)" : "Strategic Antiquities Index (SAI)"}</h4>
                   <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
                     Over the last decade, authentic, carbon-provenanced African masterworks have demonstrated independent market liquidity with a historic <strong>11.4% CAGR</strong>, displaying high counter-cyclical resistance.
                   </p>
@@ -118,7 +119,7 @@ export default function ReportViewerModal({ onClose }: ReportViewerModalProps) {
                   className="bg-ebony-deep hover:bg-gold-leaf hover:text-ebony-deep text-parchment-ivory font-sans text-xs uppercase tracking-widest py-3 px-6 transition-all flex items-center justify-center gap-2"
                 >
                   <Download size={14} />
-                  <span>Download PDF Dossier</span>
+                  <span>{lang === "fr" ? "Télécharger le Dossier PDF" : "Download PDF Dossier"}</span>
                 </button>
               </div>
             </div>

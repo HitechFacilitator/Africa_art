@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, SlidersHorizontal, Check } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 
 interface FilterOption {
   label: string;
@@ -30,6 +31,7 @@ export default function FilterBottomSheet({
   selectedValues,
   onApply,
 }: FilterBottomSheetProps) {
+  const { lang } = useTranslate();
   const [localValues, setLocalValues] = useState<Record<string, string>>(selectedValues);
 
   const handleSelect = (filterId: string, value: string) => {
@@ -77,7 +79,7 @@ export default function FilterBottomSheet({
             <div className="flex items-center justify-between px-6 pb-4 border-b border-on-surface/10">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={16} className="text-gold-leaf" />
-                <h3 className="font-serif text-lg text-ebony-deep">Filters</h3>
+                <h3 className="font-serif text-lg text-ebony-deep">{lang === "fr" ? "Filtres" : "Filters"}</h3>
               </div>
               <button onClick={onClose} className="p-2 text-on-surface-variant hover:text-ebony-deep cursor-pointer border-0 bg-transparent">
                 <X size={18} />
@@ -118,13 +120,13 @@ export default function FilterBottomSheet({
                 onClick={handleReset}
                 className="flex-1 border border-on-surface/15 text-on-surface-variant py-3 text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors cursor-pointer bg-transparent"
               >
-                Reset
+                {lang === "fr" ? "Réinitialiser" : "Reset"}
               </button>
               <button
                 onClick={handleApply}
                 className="flex-1 bg-ebony-deep text-parchment-ivory py-3 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0"
               >
-                Apply Filters
+                {lang === "fr" ? "Appliquer les Filtres" : "Apply Filters"}
               </button>
             </div>
           </motion.div>

@@ -16,6 +16,7 @@ import {
   LockKeyhole
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslate } from "@/lib/translations";
 
 interface PortfolioViewProps {
   acquisitions: Acquisition[];
@@ -32,6 +33,7 @@ export default function PortfolioView({
   selectedAcquisition,
   setSelectedAcquisition
 }: PortfolioViewProps) {
+  const { lang } = useTranslate();
   const [filter, setFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -96,11 +98,11 @@ export default function PortfolioView({
     <div className="animate-fade-in relative">
       <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pb-6 border-b border-ebony-deep/10">
         <div>
-          <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">The Collector&apos;s Cabinet</h2>
+          <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Le Cabinet du Collectionneur" : "The Collector's Cabinet"}</h2>
           <p className="font-sans text-xs text-on-surface-variant mt-1">Manage your authenticated cultural artifacts, verify ledger records, and coordinate physical private museum delivery.</p>
         </div>
         <button onClick={() => setShowAddModal(true)} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-6 py-3.5 hover:opacity-90 active:scale-98 transition-all flex items-center gap-2 cursor-pointer border-0">
-          <Plus className="w-4.5 h-4.5" /> Register New Acquisition
+          <Plus className="w-4.5 h-4.5" /> {lang === "fr" ? "Enregistrer une Nouvelle Acquisition" : "Register New Acquisition"}
         </button>
       </header>
 
@@ -108,13 +110,13 @@ export default function PortfolioView({
         <div className="flex bg-surface-container/60 border border-ebony-deep/5 p-1 self-start select-none">
           {['ALL', 'CERTIFIED', 'TRANSIT', 'PENDING'].map((tab) => (
             <button key={tab} onClick={() => setFilter(tab)} className={`px-4 py-2 text-[10px] uppercase font-bold tracking-widest transition-all cursor-pointer ${filter === tab ? 'bg-ebony-deep text-parchment-ivory' : 'text-zinc-400 hover:text-ebony-deep'}`}>
-              {tab === 'ALL' && 'All'}{tab === 'CERTIFIED' && 'Certified'}{tab === 'TRANSIT' && 'In Transit'}{tab === 'PENDING' && 'Pending'}
+              {tab === 'ALL' && (lang === "fr" ? "Tous" : 'All')}{tab === 'CERTIFIED' && (lang === "fr" ? "Certifié" : 'Certified')}{tab === 'TRANSIT' && (lang === "fr" ? "En Transit" : 'In Transit')}{tab === 'PENDING' && (lang === "fr" ? "En Attente" : 'Pending')}
             </button>
           ))}
         </div>
         <div className="relative flex items-center min-w-0 flex-1 sm:flex-initial sm:w-60">
           <Search className="absolute left-3.5 w-4 h-4 text-zinc-400" />
-          <input type="text" placeholder="Search artifacts..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-parchment-ivory border border-ebony-deep/10 pl-10 pr-4 py-2.5 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none focus:border-gold-leaf" />
+          <input type="text" placeholder={lang === "fr" ? "Rechercher des artefacts..." : "Search artifacts..."} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full bg-parchment-ivory border border-ebony-deep/10 pl-10 pr-4 py-2.5 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none focus:border-gold-leaf" />
         </div>
       </div>
 
@@ -123,7 +125,7 @@ export default function PortfolioView({
           {filteredAcquisitions.length === 0 ? (
             <div className="bg-parchment-ivory border border-dashed border-ebony-deep/10 p-12 text-center select-none">
               <ShieldAlert className="w-10 h-10 text-gold-leaf mx-auto mb-4" />
-              <p className="font-serif text-lg text-ebony-deep">No Artifacts Found</p>
+              <p className="font-serif text-lg text-ebony-deep">{lang === "fr" ? "Aucun Artefact Trouvé" : "No Artifacts Found"}</p>
               <p className="font-sans text-xs text-zinc-400 max-w-sm mx-auto mt-1">Refine your filter query or register a new museum verification item using the action panel above.</p>
             </div>
           ) : (
@@ -152,11 +154,11 @@ export default function PortfolioView({
                     </div>
                     <div className="flex justify-between items-end border-t border-ebony-deep/5 pt-3">
                       <div>
-                        <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">Estimated Advisor Value</p>
+                        <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">{lang === "fr" ? "Valeur Estimée du Conseiller" : "Estimated Advisor Value"}</p>
                         <p className="font-serif text-base text-gold-leaf font-medium">€{item.estimatedValueEur.toLocaleString()}</p>
                       </div>
                       <button onClick={(e) => toggleExpand(item.id, e)} className="font-sans text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-ebony-deep transition-all flex items-center gap-1 cursor-pointer">
-                        {isExpanded ? (<>Hide Provenance <ChevronUp className="w-3.5 h-3.5" /></>) : (<>Show Provenance <ChevronDown className="w-3.5 h-3.5" /></>)}
+                        {isExpanded ? (<>{lang === "fr" ? "Masquer la Provenance" : "Hide Provenance"} <ChevronUp className="w-3.5 h-3.5" /></>) : (<>{lang === "fr" ? "Afficher la Provenance" : "Show Provenance"} <ChevronDown className="w-3.5 h-3.5" /></>)}
                       </button>
                     </div>
                     <AnimatePresence>
@@ -184,7 +186,7 @@ export default function PortfolioView({
         <div className="lg:col-span-4">
           <div className="bg-parchment-ivory p-8 border border-ebony-deep/5 shadow-level-1 sticky top-24">
             <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 mb-6 flex items-center gap-2">
-              <LockKeyhole className="w-4 h-4 text-gold-leaf" /> Provenance Certificate
+              <LockKeyhole className="w-4 h-4 text-gold-leaf" /> {lang === "fr" ? "Certificat de Provenance" : "Provenance Certificate"}
             </h3>
             {selectedAcquisition ? (
               <div className="text-on-surface">
@@ -193,32 +195,32 @@ export default function PortfolioView({
                 </div>
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-sans text-[9px] font-bold tracking-widest uppercase bg-terracotta-earth/10 text-terracotta-earth px-2 py-0.5">Heritage File</span>
+                    <span className="font-sans text-[9px] font-bold tracking-widest uppercase bg-terracotta-earth/10 text-terracotta-earth px-2 py-0.5">{lang === "fr" ? "Dossier Patrimonial" : "Heritage File"}</span>
                     <span className="font-mono text-[10px] text-zinc-400">ID: {selectedAcquisition.id.toUpperCase()}</span>
                   </div>
                   <h4 className="font-serif text-xl font-medium mt-2 text-ebony-deep">{selectedAcquisition.title}</h4>
                   <p className="font-sans text-xs text-zinc-500 mt-1">Origin: {selectedAcquisition.culture} ({selectedAcquisition.era})</p>
                 </div>
                 <div className="border-l-4 border-l-terracotta-earth bg-surface-container-low p-4 mb-6">
-                  <p className="font-sans text-xs uppercase font-bold tracking-widest text-zinc-400 mb-1">Official Curator Note</p>
+                  <p className="font-sans text-xs uppercase font-bold tracking-widest text-zinc-400 mb-1">{lang === "fr" ? "Note Officielle du Conservateur" : "Official Curator Note"}</p>
                   <p className="font-sans text-xs text-zinc-500 leading-relaxed italic">&quot;{selectedAcquisition.description}&quot;</p>
                 </div>
                 <div className="space-y-3 pb-6 border-b border-ebony-deep/5">
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-zinc-400">Valuation Status</span>
-                    <span className="text-emerald-600 font-semibold flex items-center gap-1">Vetted Private Placement</span>
+                    <span className="text-zinc-400">{lang === "fr" ? "État de l'Évaluation" : "Valuation Status"}</span>
+                    <span className="text-emerald-600 font-semibold flex items-center gap-1">{lang === "fr" ? "Placement Privé Vérifié" : "Vetted Private Placement"}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-zinc-400">Current Valuation</span>
                     <span className="font-mono font-medium text-gold-leaf">€{selectedAcquisition.estimatedValueEur.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-zinc-400">Secure Safe Vault</span>
+                    <span className="text-zinc-400">{lang === "fr" ? "Coffre-Fort Sécurisé" : "Secure Safe Vault"}</span>
                     <span className="text-ebony-deep font-sans font-medium">Geneva Chamber IV</span>
                   </div>
                 </div>
                 <button onClick={() => alert(`Provenance report for - ${selectedAcquisition.title} - downloaded successfully under ledger signature hash.`)} className="w-full mt-6 bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 transition-all cursor-pointer">
-                  Down-stream Ledger Proof
+                  {lang === "fr" ? "Preuve de Registre en Aval" : "Down-stream Ledger Proof"}
                 </button>
               </div>
             ) : (
@@ -261,15 +263,15 @@ export default function PortfolioView({
                   <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 border-b border-ebony-deep/5 pb-2">Or Enter Custom Acquisition Parameters</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
-                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">Artifact Title <span className="text-red-500">*</span></label>
+                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">{lang === "fr" ? "Titre de l'Artefact" : "Artifact Title"} <span className="text-red-500">*</span></label>
                       <input type="text" required placeholder="e.g. Benin King Scepter" value={customTitle} onChange={(e) => setCustomTitle(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none" />
                     </div>
                     <div className="flex flex-col">
-                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">Originating Tribe / Culture <span className="text-red-500">*</span></label>
+                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">{lang === "fr" ? "Tribu / Culture d'Origine" : "Originating Tribe / Culture"} <span className="text-red-500">*</span></label>
                       <input type="text" required placeholder="e.g. Nok Culture" value={customCulture} onChange={(e) => setCustomCulture(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none" />
                     </div>
                     <div className="flex flex-col">
-                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">Era & Period</label>
+                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">{lang === "fr" ? "Ère et Période" : "Era & Period"}</label>
                       <select value={customEra} onChange={(e) => setCustomEra(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none">
                         <option value="500 BC - 200 AD">500 BC - 200 AD</option>
                         <option value="12th–15th Century">12th–15th Century</option>
@@ -280,7 +282,7 @@ export default function PortfolioView({
                       </select>
                     </div>
                     <div className="flex flex-col">
-                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">Official Valuation (EUR €) <span className="text-red-500">*</span></label>
+                      <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">{lang === "fr" ? "Évaluation Officielle" : "Official Valuation"} (EUR €) <span className="text-red-500">*</span></label>
                       <div className="relative flex items-center">
                         <span className="absolute left-3 text-zinc-400 text-xs font-semibold">€</span>
                         <input type="number" required value={customValue} onChange={(e) => setCustomValue(e.target.value)} className="w-full bg-white border border-ebony-deep/15 focus:border-gold-leaf pl-8 pr-4 py-3 text-xs focus:outline-none" />
@@ -310,8 +312,8 @@ export default function PortfolioView({
                     </div>
                   </div>
                   <div className="flex justify-end gap-4 pt-6 border-t border-ebony-deep/5">
-                    <button type="button" onClick={() => setShowAddModal(false)} className="bg-transparent border border-ebony-deep/20 px-6 py-3 text-xs font-sans font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">Bypass</button>
-                    <button type="submit" className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs font-sans font-bold uppercase tracking-widest hover:opacity-90 active:scale-98 transition-all">Certify Ledger Securely</button>
+                    <button type="button" onClick={() => setShowAddModal(false)} className="bg-transparent border border-ebony-deep/20 px-6 py-3 text-xs font-sans font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">{lang === "fr" ? "Passer" : "Bypass"}</button>
+                    <button type="submit" className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs font-sans font-bold uppercase tracking-widest hover:opacity-90 active:scale-98 transition-all">{lang === "fr" ? "Certifier le Registre en Sécurité" : "Certify Ledger Securely"}</button>
                   </div>
                 </form>
               </div>

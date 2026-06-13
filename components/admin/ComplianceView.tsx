@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminArtwork, ComplianceScanResult } from "@/lib/adminTypes";
+import { useTranslate } from "@/lib/translations";
 import { ShieldCheck, AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 interface ComplianceViewProps {
@@ -15,6 +16,7 @@ export default function ComplianceView({
   prefilledArtwork,
   onScan,
 }: ComplianceViewProps) {
+  const { lang } = useTranslate();
   const [selectedId, setSelectedId] = useState(prefilledArtwork?.id || "");
   const [annotation, setAnnotation] = useState("");
   const [scanning, setScanning] = useState(false);
@@ -60,7 +62,7 @@ export default function ComplianceView({
   return (
     <div>
       <h2 className="font-serif text-2xl font-medium text-ebony-deep mb-2">
-        Compliance Audits Node
+        {lang === "fr" ? "Nœud d'Audits de Conformité" : "Compliance Audits Node"}
       </h2>
       <p className="font-sans text-xs text-on-surface-variant mb-6">
         Institutional compliance standards — UNESCO, UNIDROIT, FATF
@@ -70,13 +72,13 @@ export default function ComplianceView({
         {/* Form */}
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-6">
           <h3 className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-4">
-            Provenance Sealing Vault
+            {lang === "fr" ? "Coffre-Fort de Scellement de Provenance" : "Provenance Sealing Vault"}
           </h3>
 
           <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-1.5">
-                Select Artwork
+                {lang === "fr" ? "Sélectionner une Œuvre" : "Select Artwork"}
               </label>
               <select
                 value={selectedId}
@@ -86,7 +88,7 @@ export default function ComplianceView({
                 }}
                 className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant/50 text-sm font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf cursor-pointer"
               >
-                <option value="">— Select Artwork —</option>
+                <option value="">{lang === "fr" ? "— Sélectionner une Œuvre —" : "— Select Artwork —"}</option>
                 {artworks.map((a) => (
                   <option key={a.id} value={a.id}>
                     {a.id} — {a.title}
@@ -126,13 +128,13 @@ export default function ComplianceView({
 
                 <div>
                   <label className="block text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-1.5">
-                    Annotation (Optional)
+                    {lang === "fr" ? "Annotation (Facultatif)" : "Annotation (Optional)"}
                   </label>
                   <textarea
                     value={annotation}
                     onChange={(e) => setAnnotation(e.target.value)}
                     rows={3}
-                    placeholder="Add compliance notes..."
+                    placeholder={lang === "fr" ? "Ajouter des notes de conformité..." : "Add compliance notes..."}
                     className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant/50 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-gold-leaf resize-none"
                   />
                 </div>
@@ -145,12 +147,12 @@ export default function ComplianceView({
                   {scanning ? (
                     <>
                       <div className="w-4 h-4 border-2 border-parchment-ivory/30 border-t-parchment-ivory rounded-full animate-spin" />
-                      Scanning Provenance...
+                      {lang === "fr" ? "Scan de la Provenance..." : "Scanning Provenance..."}
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="w-4 h-4" />
-                      Seal Cryptographic Provenance
+                      {lang === "fr" ? "Sceller la Provenance Cryptographique" : "Seal Cryptographic Provenance"}
                     </>
                   )}
                 </button>
@@ -162,14 +164,14 @@ export default function ComplianceView({
         {/* Results */}
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-6">
           <h3 className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-4">
-            Verification Checklist
+            {lang === "fr" ? "Liste de Vérification" : "Verification Checklist"}
           </h3>
 
           {scanning && (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="w-8 h-8 border-2 border-gold-leaf/30 border-t-gold-leaf rounded-full animate-spin mb-4" />
               <p className="font-sans text-sm text-on-surface-variant animate-pulse">
-                Running provenance analysis...
+                {lang === "fr" ? "Analyse de provenance en cours..." : "Running provenance analysis..."}
               </p>
             </div>
           )}
@@ -178,7 +180,7 @@ export default function ComplianceView({
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <ShieldCheck className="w-10 h-10 text-outline-variant/40 mb-3" />
               <p className="font-sans text-sm text-on-surface-variant">
-                Select an artwork and run a scan to view compliance results.
+                {lang === "fr" ? "Sélectionnez une œuvre et lancez un scan pour voir les résultats de conformité." : "Select an artwork and run a scan to view compliance results."}
               </p>
             </div>
           )}
@@ -204,7 +206,7 @@ export default function ComplianceView({
                 )}
                 <div>
                   <p className="font-sans text-xs font-bold uppercase tracking-wide">
-                    Risk Level: {result.riskLevel}
+                    {lang === "fr" ? "Niveau de Risque :" : "Risk Level:"} {result.riskLevel}
                   </p>
                   <p className="font-sans text-[11px] mt-1">{result.verdict}</p>
                 </div>
@@ -215,7 +217,7 @@ export default function ComplianceView({
                 <div className="flex items-center gap-2 mb-2">
                   <Info className="w-3.5 h-3.5 text-gold-leaf" />
                   <p className="font-sans text-xs font-semibold text-ebony-deep">
-                    Cultural Safeguard
+                    {lang === "fr" ? "Protection Culturelle" : "Cultural Safeguard"}
                   </p>
                 </div>
                 <p className="font-sans text-[11px] text-on-surface-variant leading-relaxed">
@@ -226,7 +228,7 @@ export default function ComplianceView({
               {/* Treaties */}
               <div>
                 <p className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-2">
-                  Triggered Treaties
+                  {lang === "fr" ? "Traités Déclenchés" : "Triggered Treaties"}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {result.treaties.map((t) => (
@@ -243,7 +245,7 @@ export default function ComplianceView({
               {/* Guidelines */}
               <div>
                 <p className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-2">
-                  Administrative Guidelines
+                  {lang === "fr" ? "Directives Administratives" : "Administrative Guidelines"}
                 </p>
                 <ul className="space-y-1.5">
                   {result.guidelines.map((g, i) => (

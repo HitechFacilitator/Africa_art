@@ -40,6 +40,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtwork } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 
 type CheckoutStep = "Summary" | "Billing" | "Payment" | "Confirmation";
@@ -70,7 +71,8 @@ function AcquisitionContent() {
   const { lang } = useTranslate();
   const searchParams = useSearchParams();
   const artworkId = searchParams.get("artwork") || ARTWORKS[0]?.id || "";
-  const artwork = ARTWORKS.find((a) => a.id === artworkId) || ARTWORKS[0];
+  const rawArtwork = ARTWORKS.find((a) => a.id === artworkId) || ARTWORKS[0];
+  const artwork = useTranslatedArtwork(rawArtwork);
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("Summary");
   const [billing, setBilling] = useState<BillingData>({

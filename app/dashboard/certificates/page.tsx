@@ -17,6 +17,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 
 interface Certificate {
@@ -37,21 +38,6 @@ const CERTIFICATE_ISSUE_DATES = ["2024-03-15", "2023-11-22", "2024-06-08", "2025
 const CERTIFICATE_LEVELS = ["Level IV — Full Scientific", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific", "Level III — Provenance Verified", "Level IV — Full Scientific", "Level IV — Full Scientific", "Level III — Provenance Verified"];
 const CERTIFICATE_VERIFIED = ["2026-05-20", "2026-04-15", "2026-03-10", "2026-06-01", "2026-05-05", "2026-04-28", "2026-06-08", "2026-05-12", "2026-06-10", "2026-06-02"];
 
-const CERTIFICATES: Certificate[] = ARTWORKS.map((art, i) => ({
-  id: `cert-${i}`,
-  artwork: art,
-  certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${art.id.substring(0, 6).toUpperCase()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-  issueDate: CERTIFICATE_ISSUE_DATES[i] || "2024-06-01",
-  expiryDate: CERTIFICATE_ISSUE_DATES[i]
-    ? `${Number(CERTIFICATE_ISSUE_DATES[i].substring(0, 4)) + 5}${CERTIFICATE_ISSUE_DATES[i].substring(4)}`
-    : "2029-06-01",
-  status: CERTIFICATE_STATUSES[i] || "VALID",
-  issuer: "Aduna Gallery Authentication Division",
-  authenticationLevel: CERTIFICATE_LEVELS[i] || "Level IV — Full Scientific",
-  lastVerified: CERTIFICATE_VERIFIED[i] || "2026-06-01",
-  blockchainHash: `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`,
-}));
-
 const STATUS_STYLES = {
   VALID: { color: "text-emerald-600 bg-emerald-50 border-emerald-200", icon: CheckCircle, label: "Valid" },
   "RENEWAL DUE": { color: "text-amber-600 bg-amber-50 border-amber-200", icon: AlertTriangle, label: "Renewal Due" },
@@ -61,6 +47,21 @@ const STATUS_STYLES = {
 
 export default function CertificatesPage() {
   const { lang } = useTranslate();
+  const translatedArtworks = useTranslatedArtworks(ARTWORKS);
+  const CERTIFICATES: Certificate[] = translatedArtworks.map((art, i) => ({
+    id: `cert-${i}`,
+    artwork: art,
+    certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${art.id.substring(0, 6).toUpperCase()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+    issueDate: CERTIFICATE_ISSUE_DATES[i] || "2024-06-01",
+    expiryDate: CERTIFICATE_ISSUE_DATES[i]
+      ? `${Number(CERTIFICATE_ISSUE_DATES[i].substring(0, 4)) + 5}${CERTIFICATE_ISSUE_DATES[i].substring(4)}`
+      : "2029-06-01",
+    status: CERTIFICATE_STATUSES[i] || "VALID",
+    issuer: "Aduna Gallery Authentication Division",
+    authenticationLevel: CERTIFICATE_LEVELS[i] || "Level IV — Full Scientific",
+    lastVerified: CERTIFICATE_VERIFIED[i] || "2026-06-01",
+    blockchainHash: `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`,
+  }));
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(CERTIFICATES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showVerifyModal, setShowVerifyModal] = useState(false);

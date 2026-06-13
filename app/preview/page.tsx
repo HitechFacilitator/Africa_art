@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -83,7 +83,37 @@ const UPCOMING_ARTWORKS: PreviewArtwork[] = [
 ];
 
 export default function PreviewPage() {
-  const { lang } = useTranslate();
+  const { lang, tAsync } = useTranslate();
+  const [previewArtworks, setPreviewArtworks] = useState<PreviewArtwork[]>(UPCOMING_ARTWORKS);
+  const abortRef = useRef(0);
+
+  useEffect(() => {
+    if (lang === "en") {
+      setPreviewArtworks(previewArtworks);
+      return;
+    }
+    let cancelled = false;
+    const runId = ++abortRef.current;
+    async function translate() {
+      const results = await Promise.all(
+        previewArtworks.map(async (art) => ({
+          ...art,
+          title: await tAsync(art.title),
+          origin: await tAsync(art.origin),
+          region: await tAsync(art.region),
+          tribe: await tAsync(art.tribe),
+          material: await tAsync(art.material),
+          period: await tAsync(art.period),
+          dimensions: await tAsync(art.dimensions),
+          description: await tAsync(art.description),
+          estimatedValue: await tAsync(art.estimatedValue),
+        }))
+      );
+      if (!cancelled && runId === abortRef.current) setPreviewArtworks(results);
+    }
+    translate();
+    return () => { cancelled = true; };
+  }, [lang, tAsync]);
   const [selectedArtwork, setSelectedArtwork] = useState<PreviewArtwork | null>(null);
   const [showPORModal, setShowPORModal] = useState(false);
   const [showReserveModal, setShowReserveModal] = useState(false);
@@ -148,12 +178,12 @@ export default function PreviewPage() {
         <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12 md:py-16">
           <div className="flex items-center justify-between mb-8">
             <p className="text-xs text-on-surface-variant">
-              <span className="font-bold text-ebony-deep">{UPCOMING_ARTWORKS.length}</span> {lang === "fr" ? "acquisitions à venir" : "upcoming acquisitions"}
+              <span className="font-bold text-ebony-deep">{previewArtworks.length}</span> {lang === "fr" ? "acquisitions à venir" : "upcoming acquisitions"}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {UPCOMING_ARTWORKS.map((artwork, idx) => (
+            {previewArtworks.map((artwork, idx) => (
               <motion.div
                 key={artwork.id}
                 initial={{ opacity: 0, y: 20 }}

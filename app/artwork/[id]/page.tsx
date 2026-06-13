@@ -26,6 +26,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtwork, useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 
 interface ChatMessage {
@@ -36,7 +37,9 @@ interface ChatMessage {
 export default function ArtworkDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const artwork = ARTWORKS.find((a) => a.id === id) || ARTWORKS[0];
+  const rawArtwork = ARTWORKS.find((a) => a.id === id) || ARTWORKS[0];
+  const artwork = useTranslatedArtwork(rawArtwork);
+  const allArtworks = useTranslatedArtworks(ARTWORKS);
   const { lang, t } = useTranslate();
 
   const [showExhibitionRooms, setShowExhibitionRooms] = useState(false);
@@ -151,7 +154,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                 className="overflow-hidden"
               >
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
-                  {ARTWORKS.map((m) => {
+                  {allArtworks.map((m) => {
                     const isActive = m.id === artwork.id;
                     return (
                       <Link

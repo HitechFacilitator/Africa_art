@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AdminArtwork, AdminView } from "@/lib/adminTypes";
+import { useTranslate } from "@/lib/translations";
 import {
   Search,
   Plus,
@@ -30,6 +31,7 @@ export default function ArtworksView({
   onRiskScan,
   setActiveView,
 }: ArtworksViewProps) {
+  const { lang } = useTranslate();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [tierFilter, setTierFilter] = useState<string>("All Tiers");
@@ -61,10 +63,10 @@ export default function ArtworksView({
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-serif text-2xl font-medium text-ebony-deep">
-          Masterpiece Inventory
+          {lang === "fr" ? "Inventaire de Chefs-d'Œuvre" : "Masterpiece Inventory"}
         </h2>
         <span className="text-xs text-on-surface-variant font-sans">
-          {artworks.length} Total Assets
+          {artworks.length} {lang === "fr" ? "Total des Actifs" : "Total Assets"}
         </span>
       </div>
 
@@ -74,7 +76,7 @@ export default function ArtworksView({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant/60" />
           <input
             type="text"
-            placeholder="Search by title, ID, culture..."
+            placeholder={lang === "fr" ? "Rechercher par titre, ID, culture..." : "Search by title, ID, culture..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-surface-container-low border border-outline-variant/50 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-gold-leaf transition-colors"
@@ -85,13 +87,13 @@ export default function ArtworksView({
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2.5 bg-surface-container-low border border-outline-variant/50 text-sm font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf cursor-pointer"
         >
-          <option>All</option>
-          <option>Live</option>
-          <option>Draft</option>
-          <option>Unpublished</option>
+          <option>{lang === "fr" ? "Tous" : "All"}</option>
+          <option>{lang === "fr" ? "En Direct" : "Live"}</option>
+          <option>{lang === "fr" ? "Brouillon" : "Draft"}</option>
+          <option>{lang === "fr" ? "Non Publié" : "Unpublished"}</option>
         </select>
         <div className="flex gap-1 bg-surface-container-low border border-outline-variant/50 p-0.5">
-          {["All Tiers", "VIP", "Prestige", "Standard"].map((t) => (
+          {(["All Tiers", "VIP", "Prestige", "Standard"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTierFilter(t)}
@@ -101,7 +103,7 @@ export default function ArtworksView({
                   : "text-on-surface-variant hover:text-ebony-deep"
               }`}
             >
-              {t}
+              {t === "All Tiers" ? (lang === "fr" ? "Tous les Niveaux" : "All Tiers") : t}
             </button>
           ))}
         </div>
@@ -197,7 +199,7 @@ export default function ArtworksView({
                               }}
                               className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
                             >
-                              <Eye className="w-3 h-3" /> Publish Live
+                               <Eye className="w-3 h-3" /> {lang === "fr" ? "Publier en Direct" : "Publish Live"}
                             </button>
                           )}
                           {artwork.status === "Live" && (
@@ -208,7 +210,7 @@ export default function ArtworksView({
                               }}
                               className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
                             >
-                              <EyeOff className="w-3 h-3" /> Revert to Draft
+                               <EyeOff className="w-3 h-3" /> {lang === "fr" ? "Revenir au Brouillon" : "Revert to Draft"}
                             </button>
                           )}
                           <button
@@ -218,7 +220,7 @@ export default function ArtworksView({
                             }}
                             className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
                           >
-                            <EyeOff className="w-3 h-3" /> Unpublish
+                             <EyeOff className="w-3 h-3" /> {lang === "fr" ? "Dépublier" : "Unpublish"}
                           </button>
                           <button
                             onClick={() => {
@@ -228,7 +230,7 @@ export default function ArtworksView({
                             }}
                             className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
                           >
-                            <BadgeCheck className="w-3 h-3" /> Verify Provenance
+                             <BadgeCheck className="w-3 h-3" /> {lang === "fr" ? "Vérifier la Provenance" : "Verify Provenance"}
                           </button>
                           <button
                             onClick={() => {
@@ -239,7 +241,7 @@ export default function ArtworksView({
                             }}
                             className="w-full text-left px-3 py-2 text-xs font-sans text-terracotta-earth hover:bg-terracotta-earth/5 flex items-center gap-2"
                           >
-                            <Trash2 className="w-3 h-3" /> Archive Delete
+                             <Trash2 className="w-3 h-3" /> {lang === "fr" ? "Archiver Supprimer" : "Archive Delete"}
                           </button>
                         </div>
                       )}
@@ -249,7 +251,7 @@ export default function ArtworksView({
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={6} className="px-4 py-8 text-center text-on-surface-variant text-sm font-sans">
-                      No artworks match your filters.
+                      {lang === "fr" ? "Aucune œuvre ne correspond à vos filtres." : "No artworks match your filters."}
                     </td>
                   </tr>
                 )}
@@ -263,7 +265,7 @@ export default function ArtworksView({
           {/* Audit Trail */}
           <div className="bg-surface-container-lowest border border-outline-variant/30 p-4">
             <h3 className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-4">
-              Recent Audit Trail
+              {lang === "fr" ? "Piste d'Audit Récente" : "Recent Audit Trail"}
             </h3>
             <div className="space-y-3">
               {recentLogs.map((log, i) => (
@@ -294,20 +296,20 @@ export default function ArtworksView({
           {/* Gallery Overview */}
           <div className="bg-surface-container-lowest border border-outline-variant/30 p-4">
             <h3 className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-4">
-              Gallery Overview
+              {lang === "fr" ? "Aperçu de la Galerie" : "Gallery Overview"}
             </h3>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-surface-container-low p-3">
                 <p className="font-serif text-2xl font-semibold text-ebony-deep">
                   {artworks.length}
                 </p>
-                <p className="text-[10px] font-sans text-on-surface-variant">Total Assets</p>
+                <p className="text-[10px] font-sans text-on-surface-variant">{lang === "fr" ? "Total des Actifs" : "Total Assets"}</p>
               </div>
               <div className="bg-surface-container-low p-3">
                 <p className="font-serif text-2xl font-semibold text-gold-leaf">
                   {artworks.filter((a) => a.valuation === "POR").length}
                 </p>
-                <p className="text-[10px] font-sans text-on-surface-variant">Active POR</p>
+                <p className="text-[10px] font-sans text-on-surface-variant">{lang === "fr" ? "POR Actif" : "Active POR"}</p>
               </div>
             </div>
           </div>

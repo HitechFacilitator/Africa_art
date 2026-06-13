@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useTranslate } from "@/lib/translations";
 
 interface AuctionWinner {
   lotId: string;
@@ -46,6 +47,7 @@ const MOCK_WINNER: AuctionWinner = {
 };
 
 export default function AuctionAcquisitionPage() {
+  const { lang } = useTranslate();
   const [winner] = useState<AuctionWinner>(MOCK_WINNER);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [billingName, setBillingName] = useState("");
@@ -101,18 +103,18 @@ export default function AuctionAcquisitionPage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <Gavel size={12} className="text-gold-leaf" />
-                  <span className="label-caps text-gold-leaf">Auction Winner</span>
+                  <span className="label-caps text-gold-leaf">{lang === "fr" ? "Gagnant de l'Enchère" : "Auction Winner"}</span>
                 </div>
-                <h1 className="font-display-lg text-parchment-ivory mb-2">Complete Your Acquisition</h1>
+                <h1 className="font-display-lg text-parchment-ivory mb-2">{lang === "fr" ? "Complétez Votre Acquisition" : "Complete Your Acquisition"}</h1>
                 <p className="font-sans text-sm text-parchment-ivory/60 max-w-lg">
                   Congratulations on winning lot {winner.lotId}. Complete your payment
                   and shipping details to finalize ownership transfer.
                 </p>
               </div>
               <div className="bg-parchment-ivory/5 border border-gold-leaf/15 p-5 text-center">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf/70 mb-1">Payment Window</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf/70 mb-1">{lang === "fr" ? "Fenêtre de Paiement" : "Payment Window"}</p>
                 <p className={`font-mono text-2xl text-parchment-ivory font-bold tracking-wider ${paymentTimer < 3600 ? "animate-pulse" : ""}`}>{formatTimer(paymentTimer)}</p>
-                <p className="text-[9px] text-parchment-ivory/40 mt-1">Remaining to complete payment</p>
+                <p className="text-[9px] text-parchment-ivory/40 mt-1">{lang === "fr" ? "Restant pour compléter le paiement" : "Remaining to complete payment"}</p>
               </div>
             </div>
           </div>
@@ -123,9 +125,9 @@ export default function AuctionAcquisitionPage() {
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-4">
             <div className="flex items-center justify-center">
               {[
-                { num: 1, label: "Billing Details", icon: User },
-                { num: 2, label: "Payment Method", icon: CreditCard },
-                { num: 3, label: "Confirm & Pay", icon: CheckCircle },
+                { num: 1, label: lang === "fr" ? "Détails de Facturation" : "Billing Details", icon: User },
+                { num: 2, label: lang === "fr" ? "Méthode de Paiement" : "Payment Method", icon: CreditCard },
+                { num: 3, label: lang === "fr" ? "Confirmer et Payer" : "Confirm & Pay", icon: CheckCircle },
               ].map((s, idx) => {
                 const Icon = s.icon;
                 return (
@@ -156,7 +158,7 @@ export default function AuctionAcquisitionPage() {
           {completed ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg mx-auto text-center py-16">
               <CheckCircle className="w-16 h-16 text-gold-leaf mx-auto mb-6" />
-              <h2 className="font-serif text-2xl text-ebony-deep mb-3">Payment Confirmed</h2>
+              <h2 className="font-serif text-2xl text-ebony-deep mb-3">{lang === "fr" ? "Paiement Confirmé" : "Payment Confirmed"}</h2>
               <p className="font-sans text-sm text-on-surface-variant mb-6">
                 Your acquisition of <strong>{winner.title}</strong> has been finalized.
                 Ownership transfer is being processed and you will receive confirmation within 24 hours.
@@ -167,7 +169,7 @@ export default function AuctionAcquisitionPage() {
                   <span className="font-mono text-ebony-deep font-semibold">{paymentRef}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-on-surface-variant">Total Paid</span>
+                  <span className="text-on-surface-variant">{lang === "fr" ? "Total Payé" : "Total Paid"}</span>
                   <span className="text-ebony-deep font-semibold">{formatCurrency(winner.totalDue)}</span>
                 </div>
                 <div className="flex justify-between text-xs">
@@ -177,10 +179,10 @@ export default function AuctionAcquisitionPage() {
               </div>
               <div className="flex gap-3 justify-center">
                 <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
-                  Go to Dashboard
+                  {lang === "fr" ? "Aller au Tableau de Bord" : "Go to Dashboard"}
                 </a>
                 <button className="border border-on-surface/20 text-on-surface-variant px-6 py-3 text-xs uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors bg-transparent cursor-pointer flex items-center gap-1.5">
-                  <Download size={12} /> Download Receipt
+                  <Download size={12} /> {lang === "fr" ? "Télécharger le Reçu" : "Download Receipt"}
                 </button>
               </div>
             </motion.div>
@@ -191,28 +193,28 @@ export default function AuctionAcquisitionPage() {
                   {/* Step 1: Billing */}
                   {step === 1 && (
                     <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                      <h2 className="font-serif text-xl text-ebony-deep mb-6">Billing Information</h2>
+                      <h2 className="font-serif text-xl text-ebony-deep mb-6">{lang === "fr" ? "Informations de Facturation" : "Billing Information"}</h2>
                       <div className="space-y-5">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Full Legal Name *</label>
+                            <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Nom Légal Complet *" : "Full Legal Name *"}</label>
                             <input type="text" required value={billingName} onChange={(e) => setBillingName(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface" placeholder="Julian Doe" />
                           </div>
                           <div>
-                            <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Email *</label>
+                            <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Email *" : "Email *"}</label>
                             <input type="email" required value={billingEmail} onChange={(e) => setBillingEmail(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface" placeholder="collector@institution.com" />
                           </div>
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Organization / Institution</label>
+                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Organisation / Institution" : "Organization / Institution"}</label>
                           <input type="text" value={billingOrg} onChange={(e) => setBillingOrg(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface" placeholder="Family Office or Museum" />
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Billing Address *</label>
+                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Adresse de Facturation *" : "Billing Address *"}</label>
                           <textarea rows={2} value={billingAddress} onChange={(e) => setBillingAddress(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface resize-none" placeholder="Full billing address..." />
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Country *</label>
+                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Pays *" : "Country *"}</label>
                           <input type="text" value={billingCountry} onChange={(e) => setBillingCountry(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface" placeholder="Switzerland" />
                         </div>
                       </div>
@@ -222,7 +224,7 @@ export default function AuctionAcquisitionPage() {
                   {/* Step 2: Payment */}
                   {step === 2 && (
                     <motion.div key="step2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                      <h2 className="font-serif text-xl text-ebony-deep mb-2">Payment Method</h2>
+                      <h2 className="font-serif text-xl text-ebony-deep mb-2">{lang === "fr" ? "Méthode de Paiement" : "Payment Method"}</h2>
                       <p className="text-xs text-on-surface-variant mb-6">Select your preferred payment method. All transactions are processed through institutional escrow.</p>
 
                       <div className="mb-8">
@@ -249,10 +251,10 @@ export default function AuctionAcquisitionPage() {
                       {paymentMethod === "wire" && (
                         <div className="space-y-4">
                           <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">Wire Transfer Instructions</p>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">{lang === "fr" ? "Instructions de Virement" : "Wire Transfer Instructions"}</p>
                             <div className="space-y-2 text-xs">
-                              <div className="flex justify-between"><span className="text-on-surface-variant">Bank</span><span className="text-ebony-deep font-semibold">UBS AG, Geneva</span></div>
-                              <div className="flex justify-between"><span className="text-on-surface-variant">Account Name</span><span className="text-ebony-deep font-semibold">Aduna Gallery Escrow S.A.</span></div>
+                              <div className="flex justify-between"><span className="text-on-surface-variant">{lang === "fr" ? "Banque" : "Bank"}</span><span className="text-ebony-deep font-semibold">UBS AG, Geneva</span></div>
+                              <div className="flex justify-between"><span className="text-on-surface-variant">{lang === "fr" ? "Nom du Compte" : "Account Name"}</span><span className="text-ebony-deep font-semibold">Aduna Gallery Escrow S.A.</span></div>
                               <div className="flex justify-between"><span className="text-on-surface-variant">IBAN</span><span className="font-mono text-ebony-deep font-semibold">CH93 0024 3243 7689 1200 1</span></div>
                               <div className="flex justify-between"><span className="text-on-surface-variant">SWIFT/BIC</span><span className="font-mono text-ebony-deep font-semibold">UBSWCHZH80A</span></div>
                               <div className="flex justify-between"><span className="text-on-surface-variant">Reference</span><span className="font-mono text-ebony-deep font-semibold">{winner.lotId}</span></div>
@@ -264,11 +266,11 @@ export default function AuctionAcquisitionPage() {
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">SWIFT Code</label>
+                              <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Code SWIFT" : "SWIFT Code"}</label>
                               <input type="text" value={swiftCode} onChange={(e) => setSwiftCode(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface font-mono" placeholder="UBSWCHZH" />
                             </div>
                             <div>
-                              <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Account Number</label>
+                              <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Numéro de Compte" : "Account Number"}</label>
                               <input type="text" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface" placeholder="Your account number" />
                             </div>
                           </div>
@@ -297,15 +299,15 @@ export default function AuctionAcquisitionPage() {
                         </div>
                         <div className="space-y-2 pt-4">
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Winning Bid</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "Offre Gagnante" : "Winning Bid"}</span>
                             <span className="text-ebony-deep font-medium">{formatCurrency(winner.winningBid)}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Buyer&apos;s Premium (11%)</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "Prime de l'Acheteur (11%)" : "Buyer's Premium (11%)"}</span>
                             <span className="text-ebony-deep font-medium">{formatCurrency(winner.buyerPremium)}</span>
                           </div>
                           <div className="flex justify-between text-xs pt-2 border-t border-on-surface/5">
-                            <span className="text-ebony-deep font-bold">Total Due</span>
+                            <span className="text-ebony-deep font-bold">{lang === "fr" ? "Total Dû" : "Total Due"}</span>
                             <span className="text-ebony-deep font-bold text-base">{formatCurrency(winner.totalDue)}</span>
                           </div>
                         </div>
@@ -339,14 +341,14 @@ export default function AuctionAcquisitionPage() {
                     disabled={step === 1}
                     className="text-xs font-bold uppercase tracking-widest text-on-surface-variant hover:text-ebony-deep transition-colors disabled:opacity-30 cursor-pointer border-0 bg-transparent flex items-center gap-1.5"
                   >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Previous
+                    <ArrowLeft className="w-3.5 h-3.5" /> {lang === "fr" ? "Précédent" : "Previous"}
                   </button>
                   {step < 3 ? (
                     <button
                       onClick={() => setStep((step + 1) as 1 | 2 | 3)}
                       className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-2"
                     >
-                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                      {lang === "fr" ? "Continuer" : "Continue"} <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   ) : (
                     <button
@@ -355,7 +357,7 @@ export default function AuctionAcquisitionPage() {
                       className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors disabled:opacity-30 cursor-pointer border-0 flex items-center gap-2"
                     >
                       {submitting ? (
-                        <><Clock className="w-3.5 h-3.5 animate-spin" /> Processing Payment...</>
+                        <><Clock className="w-3.5 h-3.5 animate-spin" /> {lang === "fr" ? "Traitement du Paiement..." : "Processing Payment..."}</>
                       ) : (
                         <><Lock className="w-3.5 h-3.5" /> Confirm &amp; Pay {formatCurrency(winner.totalDue)}</>
                       )}
@@ -367,12 +369,12 @@ export default function AuctionAcquisitionPage() {
               {/* Sidebar */}
               <div className="lg:col-span-4">
                 <div className="bg-surface-container-low border border-on-surface/5 p-6 sticky top-24">
-                  <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">Lot Details</h3>
+                  <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">{lang === "fr" ? "Détails du Lot" : "Lot Details"}</h3>
                   <div className="space-y-3">
                     <div className="aspect-[4/5] bg-ebony-deep overflow-hidden relative">
                       <img src={winner.imageUrl} alt={winner.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       <div className="absolute top-2 left-2 bg-ebony-deep/80 backdrop-blur-sm px-2 py-1 border border-gold-leaf/20">
-                        <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">SOLD</span>
+                        <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">{lang === "fr" ? "VENDU" : "SOLD"}</span>
                       </div>
                     </div>
                     <div>
@@ -382,15 +384,15 @@ export default function AuctionAcquisitionPage() {
                     </div>
                     <div className="border-t border-on-surface/5 pt-3 space-y-2">
                       <div className="flex justify-between text-xs">
-                        <span className="text-on-surface-variant">Hammer Price</span>
+                        <span className="text-on-surface-variant">{lang === "fr" ? "Prix du Marteau" : "Hammer Price"}</span>
                         <span className="text-ebony-deep font-semibold">{formatCurrency(winner.winningBid)}</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-on-surface-variant">Premium (11%)</span>
+                        <span className="text-on-surface-variant">{lang === "fr" ? "Prime (11%)" : "Premium (11%)"}</span>
                         <span className="text-ebony-deep font-medium">{formatCurrency(winner.buyerPremium)}</span>
                       </div>
                       <div className="flex justify-between text-xs pt-2 border-t border-on-surface/5">
-                        <span className="text-ebony-deep font-bold">Total Due</span>
+                        <span className="text-ebony-deep font-bold">{lang === "fr" ? "Total Dû" : "Total Due"}</span>
                         <span className="text-ebony-deep font-bold">{formatCurrency(winner.totalDue)}</span>
                       </div>
                     </div>

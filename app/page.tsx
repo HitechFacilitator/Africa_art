@@ -12,6 +12,7 @@ import CollectorClubModal from "@/components/home/CollectorClubModal";
 import ReportViewerModal from "@/components/home/ReportViewerModal";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import { T } from "@/components/T";
 import type { Artwork, MemberApplication } from "@/lib/types";
 
@@ -31,6 +32,7 @@ export default function HomePage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [memberApp, setMemberApp] = useState<MemberApplication | null>(null);
   const { lang, t } = useTranslate();
+  const curatedArtworks = useTranslatedArtworks(ARTWORKS.slice(0, 3));
 
   const handleApplicationSuccess = (app: MemberApplication) => {
     setMemberApp(app);
@@ -96,7 +98,7 @@ export default function HomePage() {
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
             >
-              {ARTWORKS.slice(0, 3).map((item, index) => (
+              {curatedArtworks.map((item, index) => (
                 <motion.div
                   key={item.id}
                   variants={fadeUp}

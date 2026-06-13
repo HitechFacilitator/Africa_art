@@ -10,22 +10,24 @@ import {
   Activity,
   HeartPulse
 } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 
 interface SecurityViewProps {
   records: SecurityRecord[];
 }
 
 export default function SecurityView({ records }: SecurityViewProps) {
+  const { lang } = useTranslate();
   return (
     <div className="animate-fade-in text-on-surface">
       <header className="mb-10 pb-6 border-b border-ebony-deep/10">
-        <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">Cryptographic Deeds & Vault Vaults</h2>
+        <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Actes Cryptographiques et Coffres-Forts" : "Cryptographic Deeds & Vault Vaults"}</h2>
         <p className="font-sans text-xs text-on-surface-variant mt-1">Verify digital authenticity hashes of your rare physical art. Real-time logging of temperature, humidity, biometric scans, and AXA-syndicated insurance certifications.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 flex flex-col gap-6">
-          <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">Active Vault Chambers Coordinates</h3>
+          <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">{lang === "fr" ? "Coordonnées des Chambres de Coffre-Fort Actives" : "Active Vault Chambers Coordinates"}</h3>
           {records.map((rec) => (
             <div key={rec.id} className="bg-parchment-ivory border border-ebony-deep/5 p-8 shadow-level-1 relative">
               <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6 border-b border-ebony-deep/5 pb-4">
@@ -35,7 +37,7 @@ export default function SecurityView({ records }: SecurityViewProps) {
                   <p className="font-sans text-xs text-zinc-400 flex items-center gap-1.5 mt-1"><Lock className="w-3.5 h-3.5 text-gold-leaf" /> Location Code: <span className="font-mono text-zinc-500">{rec.vaultLocation}</span></p>
                 </div>
                 <div className="text-left md:text-right">
-                  <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-250/20 text-[9px] font-sans font-bold uppercase tracking-wider">Secured Standard</span>
+                  <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-250/20 text-[9px] font-sans font-bold uppercase tracking-wider">{lang === "fr" ? "Standard Sécurisé" : "Secured Standard"}</span>
                   <p className="font-sans text-[11px] text-zinc-400 mt-1.5">Last Inspected: {rec.lastInspectionDate}</p>
                 </div>
               </div>
@@ -44,7 +46,7 @@ export default function SecurityView({ records }: SecurityViewProps) {
                 <div className="bg-surface-container-low p-4 border border-ebony-deep/5 flex items-center gap-4">
                   <div className="w-10 h-10 bg-ebony-deep text-gold-leaf flex items-center justify-center"><Thermometer className="w-5 h-5 text-gold-leaf" /></div>
                   <div>
-                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">Microclimate Sensor</p>
+                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">{lang === "fr" ? "Capteur de Microclimat" : "Microclimate Sensor"}</p>
                     <p className="font-sans text-xs text-ebony-deep font-semibold">{rec.temperatureHumidity}</p>
                     <p className="font-sans text-[10px] text-emerald-600 mt-0.5">Atmospheric Delta: Stable</p>
                   </div>
@@ -52,7 +54,7 @@ export default function SecurityView({ records }: SecurityViewProps) {
                 <div className="bg-surface-container-low p-4 border border-ebony-deep/5 flex items-center gap-4">
                   <div className="w-10 h-10 bg-ebony-deep text-gold-leaf flex items-center justify-center"><Fingerprint className="w-5 h-5 text-gold-leaf" /></div>
                   <div>
-                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">Surface Biometric Tag</p>
+                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">{lang === "fr" ? "Étiquette Biométrique de Surface" : "Surface Biometric Tag"}</p>
                     <p className="font-mono text-xs text-ebony-deep font-semibold">{rec.fingerprintId}</p>
                     <p className="font-sans text-[10px] text-[#C5A059] mt-0.5">Vibration Signature: Active</p>
                   </div>
@@ -60,7 +62,7 @@ export default function SecurityView({ records }: SecurityViewProps) {
                 <div className="bg-surface-container-low p-4 border border-ebony-deep/5 flex items-center gap-4">
                   <div className="w-10 h-10 bg-ebony-deep text-gold-leaf flex items-center justify-center"><Cpu className="w-5 h-5 text-gold-leaf" /></div>
                   <div>
-                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">Ledger Smart Contract</p>
+                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">{lang === "fr" ? "Contrat Intelligent du Registre" : "Ledger Smart Contract"}</p>
                     <p className="font-mono text-xs text-[#B35C44] font-semibold">{rec.smartContractAddress}</p>
                     <p className="font-sans text-[10px] text-zinc-400 mt-0.5">Deed Registry: V2 Verified</p>
                   </div>
@@ -68,7 +70,7 @@ export default function SecurityView({ records }: SecurityViewProps) {
                 <div className="bg-surface-container-low p-4 border border-ebony-deep/5 flex items-center gap-4">
                   <div className="w-10 h-10 bg-ebony-deep text-gold-leaf flex items-center justify-center"><FileDigit className="w-5 h-5 text-gold-leaf" /></div>
                   <div>
-                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">AXA Fine Art Contract</p>
+                    <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400">{lang === "fr" ? "Contrat AXA Arts Fin" : "AXA Fine Art Contract"}</p>
                     <p className="font-mono text-xs text-ebony-deep font-semibold">{rec.insurancePolicyNumber}</p>
                     <p className="font-sans text-[10px] text-emerald-600 mt-0.5">Indemnity Coverage: Fully Authorized</p>
                   </div>
@@ -80,7 +82,7 @@ export default function SecurityView({ records }: SecurityViewProps) {
 
         <div className="lg:col-span-4 space-y-8 text-xs text-zinc-500 leading-relaxed font-sans">
           <div className="bg-parchment-ivory border border-ebony-deep/5 p-8 shadow-level-1 space-y-6">
-            <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2"><Activity className="w-4.5 h-4.5 text-gold-leaf" /> Cryptographic Integrity Vows</h3>
+            <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2"><Activity className="w-4.5 h-4.5 text-gold-leaf" /> {lang === "fr" ? "Engagements d'Intégrité Cryptographique" : "Cryptographic Integrity Vows"}</h3>
             <p>The Aduna Registry employs military-grade physical and cryptographic mechanisms to ensure the authenticity sequence of ancient antiquities remains untampered across centuries of logistics.</p>
             <div className="bg-zinc-50 p-4 border border-ebony-deep/10 space-y-3">
               <p className="font-bold text-ebony-deep uppercase tracking-wider text-[10px] flex items-center gap-1"><HeartPulse className="w-3.5 h-3.5" /> Bio-Signature Audit Log</p>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { X, Shield, UserCheck, KeyRound } from "lucide-react";
 import type { MemberApplication } from "@/lib/types";
+import { useTranslate } from "@/lib/translations";
 
 interface CollectorClubModalProps {
   onClose: () => void;
@@ -19,6 +20,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [createdPass, setCreatedPass] = useState<MemberApplication | null>(null);
   const [secureId] = useState(() => Math.floor(Math.random() * 89999 + 10000));
+  const { lang } = useTranslate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,9 +74,9 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                 <div className="flex justify-center mb-2">
                   <Shield size={28} className="text-gold-leaf" />
                 </div>
-                <h3 className="font-serif text-2xl text-ebony-deep tracking-tight">Inquire Private Access</h3>
+                <h3 className="font-serif text-2xl text-ebony-deep tracking-tight">{lang === "fr" ? "Demander l'Accès Privé" : "Inquire Private Access"}</h3>
                 <p className="font-sans text-[11px] uppercase tracking-widest text-gold-leaf mt-1 font-semibold">
-                  Membership Onboarding Portal
+                  {lang === "fr" ? "Portail d'Adhésion" : "Membership Onboarding Portal"}
                 </p>
                 <p className="font-sans text-[11px] text-on-surface-variant mt-1.5 max-w-sm mx-auto">
                   Access to physical safehouse vaults and fractional heritage stakes is restricted to verified family offices and high-net-worth curators.
@@ -84,7 +86,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
               <div className="space-y-4">
                 <div>
                   <label className="block text-[10px] font-sans font-bold uppercase tracking-widest text-on-surface-variant/50 mb-1.5">
-                    Full Legal Name
+                    {lang === "fr" ? "Nom Légal Complet" : "Full Legal Name"}
                   </label>
                   <input
                     type="text"
@@ -98,7 +100,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
 
                 <div>
                   <label className="block text-[10px] font-sans font-bold uppercase tracking-widest text-on-surface-variant/50 mb-1.5">
-                    Confidential Email
+                    {lang === "fr" ? "Email Confidentiel" : "Confidential Email"}
                   </label>
                   <input
                     type="email"
@@ -113,7 +115,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-sans font-bold uppercase tracking-widest text-on-surface-variant/50 mb-1.5">
-                      Classification
+                      {lang === "fr" ? "Classification" : "Classification"}
                     </label>
                     <select
                       value={collectorType}
@@ -128,7 +130,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                   </div>
                   <div>
                     <label className="block text-[10px] font-sans font-bold uppercase tracking-widest text-on-surface-variant/50 mb-1.5">
-                      Budget Limit (EUR)
+                      {lang === "fr" ? "Limite de Budget (EUR)" : "Budget Limit (EUR)"}
                     </label>
                     <select
                       value={investmentLimit}
@@ -153,7 +155,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                     className="mt-0.5 border-on-surface/30 text-gold-leaf focus:ring-gold-leaf w-4 h-4"
                   />
                   <label htmlFor="agree" className="font-sans text-[11px] text-on-surface-variant leading-tight select-none">
-                    I attest that my financial information is authentic and that I agree to protect the spatial integrity and carbon verification protocols of the Aduna Private Vault.
+                    {lang === "fr" ? "J'atteste que mes informations financières..." : "I attest that my financial information is authentic and that I agree to protect the spatial integrity and carbon verification protocols of the Aduna Private Vault."}
                   </label>
                 </div>
               </div>
@@ -163,7 +165,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                 disabled={!agreeToTerms}
                 className="w-full bg-ebony-deep hover:bg-gold-leaf hover:text-ebony-deep text-parchment-ivory py-4 font-sans text-xs uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Initiate Institutional Review
+                {lang === "fr" ? "Lancer l'Examen Institutionnel" : "Initiate Institutional Review"}
               </button>
             </form>
           ) : (
@@ -172,9 +174,9 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                 <div className="w-12 h-12 rounded-full bg-emerald-500/15 flex items-center justify-center mb-3">
                   <UserCheck className="text-emerald-600" size={24} />
                 </div>
-                <h3 className="font-serif text-2xl text-ebony-deep">Identity Secured</h3>
+                <h3 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Identité Sécurisée" : "Identity Secured"}</h3>
                 <p className="font-sans text-[11px] text-gold-leaf uppercase font-semibold tracking-widest mt-1">
-                  VVIP Access Pass Generated
+                  {lang === "fr" ? "Pass d'Accès VVIP Généré" : "VVIP Access Pass Generated"}
                 </p>
               </div>
 
@@ -182,8 +184,8 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #fff 1px, transparent 0)", backgroundSize: "16px 16px" }} />
                 <div className="flex justify-between items-start z-10">
                   <div>
-                    <span className="font-sans text-[9px] uppercase tracking-widest text-gold-leaf font-bold">Institutional Heritage Pass</span>
-                    <h4 className="font-serif text-xl tracking-tight mt-1 text-parchment-ivory">ADUNA VAULT SIGNATURE</h4>
+                    <span className="font-sans text-[9px] uppercase tracking-widest text-gold-leaf font-bold">{lang === "fr" ? "Pass Patrimoine Institutionnel" : "Institutional Heritage Pass"}</span>
+                    <h4 className="font-serif text-xl tracking-tight mt-1 text-parchment-ivory">{lang === "fr" ? "SIGNEATURE COFFRE-FORT ADUNA" : "ADUNA VAULT SIGNATURE"}</h4>
                   </div>
                   <KeyRound size={24} className="text-gold-leaf" />
                 </div>
@@ -201,7 +203,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-sans text-[9px] text-emerald-400 font-bold uppercase tracking-wider">Vetted Access Active</span>
+                    <span className="font-sans text-[9px] text-emerald-400 font-bold uppercase tracking-wider">{lang === "fr" ? "Accès Vérifié Actif" : "Vetted Access Active"}</span>
                   </div>
                 </div>
               </div>
@@ -214,7 +216,7 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
                 onClick={handleCompleteSuccess}
                 className="w-full bg-gold-leaf text-ebony-deep hover:bg-ebony-deep hover:text-parchment-ivory py-3.5 font-sans text-xs uppercase tracking-widest font-semibold transition-all"
               >
-                Access VVIP Vault Catalog
+                {lang === "fr" ? "Accéder au Catalogue Coffre-Fort VVIP" : "Access VVIP Vault Catalog"}
               </button>
             </div>
           )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslate } from "@/lib/translations";
 import { AdminView, AdminArtwork, AdminCollector, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
 import { INITIAL_ADMIN_ARTWORKS, INITIAL_ADMIN_COLLECTORS, INITIAL_ESCROW, INITIAL_AUDIT_LOGS } from "@/lib/adminData";
 import { AnimatePresence, motion } from "motion/react";
@@ -15,6 +16,7 @@ import ComplianceView from "@/components/admin/ComplianceView";
 import SettingsView from "@/components/admin/SettingsView";
 
 export default function AdminPage() {
+  const { lang } = useTranslate();
   const [activeView, setActiveView] = useState<AdminView>(AdminView.Artworks);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [prefilledArtwork, setPrefilledArtwork] = useState<AdminArtwork | null>(null);
@@ -185,14 +187,15 @@ export default function AdminPage() {
 }
 
 function DocsView() {
+  const { lang } = useTranslate();
   return (
     <div>
-      <h2 className="font-serif text-2xl font-medium text-ebony-deep mb-6">Documentation</h2>
+      <h2 className="font-serif text-2xl font-medium text-ebony-deep mb-6">{lang === "fr" ? "Documentation" : "Documentation"}</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-6">
           <FileText className="w-8 h-8 text-gold-leaf mb-3" />
-          <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">
-            Protocol Overview
+            <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">
+            {lang === "fr" ? "Aperçu du Protocole" : "Protocol Overview"}
           </h3>
           <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
             The Aduna Gallery ledger system uses a multi-signature escrow protocol for all
@@ -202,8 +205,8 @@ function DocsView() {
         </div>
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-6">
           <FileText className="w-8 h-8 text-gold-leaf mb-3" />
-          <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">
-            Provenance Standards
+            <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">
+            {lang === "fr" ? "Standards de Provenance" : "Provenance Standards"}
           </h3>
           <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
             All provenance records must comply with the UNESCO 1970 Convention and UNIDROIT
@@ -213,8 +216,8 @@ function DocsView() {
         </div>
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-6">
           <FileText className="w-8 h-8 text-gold-leaf mb-3" />
-          <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">
-            Multi-Sig Escrow
+            <h3 className="font-serif text-lg font-medium text-ebony-deep mb-2">
+            {lang === "fr" ? "Séquestre Multi-Sig" : "Multi-Sig Escrow"}
           </h3>
           <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
             Escrow contracts require dual authentication from both buyer and seller before
@@ -228,6 +231,7 @@ function DocsView() {
 }
 
 function SupportView() {
+  const { lang } = useTranslate();
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -240,24 +244,23 @@ function SupportView() {
 
   return (
     <div>
-      <h2 className="font-serif text-2xl font-medium text-ebony-deep mb-6">Support Request</h2>
+      <h2 className="font-serif text-2xl font-medium text-ebony-deep mb-6">{lang === "fr" ? "Demande de Support" : "Support Request"}</h2>
       <div className="max-w-xl bg-surface-container-lowest border border-outline-variant/30 p-6">
         <p className="font-sans text-xs text-on-surface-variant mb-4">
-          Submit a support ticket to the Aduna Gallery technical team. Response time: within 24
-          business hours.
+          {lang === "fr" ? "Soumettre un ticket de support à l'équipe technique d'Aduna Gallery. Délai de réponse : dans les 24 heures ouvrables." : "Submit a support ticket to the Aduna Gallery technical team. Response time: within 24 business hours."}
         </p>
         <textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={6}
-          placeholder="Describe your issue or request..."
+          placeholder={lang === "fr" ? "Décrivez votre problème ou demande..." : "Describe your issue or request..."}
           className="w-full px-3 py-2.5 bg-surface-container-low border border-outline-variant/50 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-gold-leaf resize-none mb-4"
         />
         <button
           onClick={handleSubmit}
           className="px-4 py-2.5 bg-ebony-deep text-parchment-ivory text-xs font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
         >
-          {submitted ? "Ticket Submitted" : "Submit Ticket"}
+          {submitted ? (lang === "fr" ? "Ticket Soumis" : "Ticket Submitted") : (lang === "fr" ? "Soumettre le Ticket" : "Submit Ticket")}
         </button>
       </div>
     </div>

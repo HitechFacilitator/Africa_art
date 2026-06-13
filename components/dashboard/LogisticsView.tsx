@@ -8,29 +8,31 @@ import {
   FileCheck2,
   PackageCheck
 } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 
 interface LogisticsViewProps {
   shipments: LogisticsShipment[];
 }
 
 export default function LogisticsView({ shipments }: LogisticsViewProps) {
+  const { lang } = useTranslate();
   return (
     <div className="animate-fade-in text-on-surface">
       <header className="mb-10 pb-6 border-b border-ebony-deep/10">
-        <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">Secure Armed Logistics & Freight</h2>
+        <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Logistique et Fret Sécurisés et Armés" : "Secure Armed Logistics & Freight"}</h2>
         <p className="font-sans text-xs text-on-surface-variant mt-1">Monitor your heritage treasures in real-time transit. Couriers utilize temperature-shielded armored chambers, satellite telematics, and armed customs escorts.</p>
       </header>
 
       {shipments.length === 0 ? (
         <div className="bg-parchment-ivory border border-dashed border-ebony-deep/10 p-16 text-center select-none">
           <Truck className="w-10 h-10 text-gold-leaf mx-auto mb-4" />
-          <p className="font-serif text-lg text-ebony-deep">No Shipments Active</p>
+          <p className="font-serif text-lg text-ebony-deep">{lang === "fr" ? "Aucun Expédition Active" : "No Shipments Active"}</p>
           <p className="font-sans text-xs text-zinc-400 mt-2 max-w-sm mx-auto">All your acquisitions are currently stationary inside Swiss Freeport safes or authorized private display galleries.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           <div className="lg:col-span-8 flex flex-col gap-8">
-            <h3 className="font-serif text-lg font-medium text-ebony-deep">Active Courier Cargo Streams ({shipments.length})</h3>
+            <h3 className="font-serif text-lg font-medium text-ebony-deep">{lang === "fr" ? "Flux de Cargaison de Coursier Actifs" : "Active Courier Cargo Streams"} ({shipments.length})</h3>
             {shipments.map((ship) => {
               const statusPercentage = ship.status === 'Origin Hub' ? 20 : ship.status === 'Customs Clearance' ? 50 : ship.status === 'International Transit' ? 75 : ship.status === 'Local Delivery' ? 90 : 100;
               return (
@@ -42,7 +44,7 @@ export default function LogisticsView({ shipments }: LogisticsViewProps) {
                       <p className="font-sans text-xs text-zinc-400">Carrier: {ship.carrier} • Tracking Reference: <span className="font-mono">{ship.id.toUpperCase()}</span></p>
                     </div>
                     <div className="text-left sm:text-right">
-                      <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 font-bold mb-1">ADVISOR ESTIMATE DELIVERY</p>
+                      <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 font-bold mb-1">{lang === "fr" ? "LIVESTIMATION DU CONSEILLER" : "ADVISOR ESTIMATE DELIVERY"}</p>
                       <p className="font-serif text-base text-gold-leaf font-semibold flex items-center gap-1.5 justify-start sm:justify-end"><Clock className="w-4.5 h-4.5" /> {ship.estimatedDeliveryDate}</p>
                     </div>
                   </div>
@@ -64,9 +66,9 @@ export default function LogisticsView({ shipments }: LogisticsViewProps) {
 
                   <div className="mb-10">
                     <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-2">
-                      <span>Departed</span>
+                      <span>{lang === "fr" ? "Parti" : "Departed"}</span>
                       <span className="text-gold-leaf">{ship.status} ({statusPercentage}%)</span>
-                      <span>Delivery</span>
+                      <span>{lang === "fr" ? "Livraison" : "Delivery"}</span>
                     </div>
                     <div className="w-full bg-zinc-200 h-1 relative">
                       <div className="bg-gold-leaf h-1 transition-all duration-1000" style={{ width: `${statusPercentage}%` }} />
@@ -75,7 +77,7 @@ export default function LogisticsView({ shipments }: LogisticsViewProps) {
                   </div>
 
                   <div>
-                    <h5 className="font-serif text-sm font-semibold text-ebony-deep mb-4 flex items-center gap-2"><FileCheck2 className="w-4 h-4 text-gold-leaf" /> Secure Chain of Custody Registry</h5>
+                    <h5 className="font-serif text-sm font-semibold text-ebony-deep mb-4 flex items-center gap-2"><FileCheck2 className="w-4 h-4 text-gold-leaf" /> {lang === "fr" ? "Registre de Chaîne de Garde Sécurisée" : "Secure Chain of Custody Registry"}</h5>
                     <div className="relative pl-6 border-l border-ebony-deep/10 flex flex-col gap-6">
                       {ship.updates.map((update, idx) => (
                         <div key={idx} className="relative">
@@ -96,7 +98,7 @@ export default function LogisticsView({ shipments }: LogisticsViewProps) {
 
           <div className="lg:col-span-4 space-y-8">
             <div className="bg-parchment-ivory border border-ebony-deep/5 p-8 shadow-level-1 space-y-6">
-              <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2"><PackageCheck className="w-4.5 h-4.5 text-gold-leaf" /> White-Glove Installation</h3>
+              <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2"><PackageCheck className="w-4.5 h-4.5 text-gold-leaf" /> {lang === "fr" ? "Installation Blanche-Gant" : "White-Glove Installation"}</h3>
               <div className="space-y-4 font-sans text-xs text-zinc-500 leading-relaxed">
                 <p>Upon final customs clearance, Aduna Gallery coordinates directly with physical engineering specialists to handle delicate, white-glove site installation.</p>
                 <p className="font-bold text-ebony-deep uppercase tracking-wider text-[10px]">Protocol Regulations Include:</p>

@@ -5,21 +5,25 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Lock, ChevronLeft, ChevronRight } from "lucide-react";
 import { ARTWORKS } from "@/lib/mockData";
-
-const SLIDES = ARTWORKS.filter((a) => a.investment).slice(0, 5);
+import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
+  const { lang } = useTranslate();
+
+  const SLIDES = ARTWORKS.filter((a) => a.investment).slice(0, 5);
+  const translatedSlides = useTranslatedArtworks(SLIDES);
 
   const next = useCallback(() => {
     setDirection(1);
-    setCurrent((prev) => (prev + 1) % SLIDES.length);
+    setCurrent((prev) => (prev + 1) % translatedSlides.length);
   }, []);
 
   const prev = useCallback(() => {
     setDirection(-1);
-    setCurrent((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+    setCurrent((prev) => (prev - 1 + translatedSlides.length) % translatedSlides.length);
   }, []);
 
   useEffect(() => {
@@ -27,7 +31,7 @@ export default function HeroSlider() {
     return () => clearInterval(timer);
   }, [next]);
 
-  const artwork = SLIDES[current];
+  const artwork = translatedSlides[current];
 
   const variants = {
     enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
@@ -72,7 +76,7 @@ export default function HeroSlider() {
             >
               <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <Lock size={12} className="text-gold-leaf" />
-                <span className="label-caps text-gold-leaf">Asset of Prestige Class</span>
+                <span className="label-caps text-gold-leaf">{lang === "fr" ? "Actif de Classe Prestige" : "Asset of Prestige Class"}</span>
               </div>
 
               <h1 className="font-display-xl text-parchment-ivory mb-4 md:mb-6">
@@ -102,13 +106,13 @@ export default function HeroSlider() {
                   href={`/artwork/${artwork.id}`}
                   className="inline-block bg-gold-leaf text-ebony-deep font-sans text-xs font-semibold uppercase tracking-[0.1em] px-8 py-4 hover:bg-parchment-ivory transition-all duration-300 text-center"
                 >
-                  View Full Details
+                  {lang === "fr" ? "Voir les Détails Complets" : "View Full Details"}
                 </Link>
                 <Link
                   href="/catalogue"
                   className="inline-block border border-parchment-ivory/30 text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.1em] px-8 py-4 hover:border-gold-leaf hover:text-gold-leaf transition-all duration-300 text-center"
                 >
-                  Browse Collection
+                  {lang === "fr" ? "Parcourir la Collection" : "Browse Collection"}
                 </Link>
               </div>
             </motion.div>
@@ -116,7 +120,7 @@ export default function HeroSlider() {
 
           {/* Slide Indicators */}
           <div className="absolute bottom-10 left-6 md:left-16 xl:left-20 flex items-center gap-3">
-            {SLIDES.map((_, i) => (
+            {translatedSlides.map((_, i) => (
               <button
                 key={i}
                 onClick={() => {
@@ -150,7 +154,7 @@ export default function HeroSlider() {
 
           {/* Slide Counter */}
           <div className="absolute bottom-12 left-1/2 -translate-x-1/2 font-mono text-[10px] text-parchment-ivory/30 tracking-widest">
-            {String(current + 1).padStart(2, "0")} / {String(SLIDES.length).padStart(2, "0")}
+            {String(current + 1).padStart(2, "0")} / {String(translatedSlides.length).padStart(2, "0")}
           </div>
         </div>
       </div>

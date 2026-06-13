@@ -9,6 +9,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -40,6 +41,8 @@ function SearchResults() {
     );
   }, [query]);
 
+  const displayResults = useTranslatedArtworks(results);
+
   return (
     <>
       <Navbar />
@@ -56,21 +59,21 @@ function SearchResults() {
               {query ? `Results for "${query}"` : (lang === "fr" ? "Rechercher dans la collection" : "Search the Collection")}
             </h1>
             <p className="font-sans text-sm text-parchment-ivory/60">
-              {results.length} artwork{results.length !== 1 ? "s" : ""} {lang === "fr" ? "résultats trouvés" : "found matching your query."}
+              {displayResults.length} artwork{displayResults.length !== 1 ? "s" : ""} {lang === "fr" ? "résultats trouvés" : "found matching your query."}
             </p>
           </div>
         </section>
 
         {/* Results */}
         <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12 md:py-16">
-          {results.length > 0 ? (
+          {displayResults.length > 0 ? (
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               variants={stagger}
               initial="hidden"
               animate="visible"
             >
-              {results.map((artwork) => (
+              {displayResults.map((artwork) => (
                 <motion.div key={artwork.id} variants={fadeUp}>
                   <Link href={`/artwork/${artwork.id}`} className="group block">
                     <div className="relative bg-ebony-deep overflow-hidden mb-4 aspect-[4/5]">

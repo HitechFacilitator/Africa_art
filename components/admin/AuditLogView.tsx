@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { AuditLogEntry } from "@/lib/adminTypes";
+import { useTranslate } from "@/lib/translations";
 import {
   Download,
   ShieldCheck,
@@ -17,6 +18,7 @@ interface AuditLogViewProps {
 }
 
 export default function AuditLogView({ logs, onVerify, onVerifyAll }: AuditLogViewProps) {
+  const { lang } = useTranslate();
   const [userFilter, setUserFilter] = useState("All");
   const [verifyingAll, setVerifyingAll] = useState(false);
 
@@ -57,7 +59,7 @@ export default function AuditLogView({ logs, onVerify, onVerifyAll }: AuditLogVi
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-serif text-2xl font-medium text-ebony-deep">Audit Log</h2>
+        <h2 className="font-serif text-2xl font-medium text-ebony-deep">{lang === "fr" ? "Journal d'Audit" : "Audit Log"}</h2>
         <div className="flex gap-2">
           <button
             onClick={handleVerifyAll}
@@ -69,13 +71,13 @@ export default function AuditLogView({ logs, onVerify, onVerifyAll }: AuditLogVi
             ) : (
               <ShieldCheck className="w-3.5 h-3.5" />
             )}
-            {verifyingAll ? "Verifying..." : "Verify All"}
+            {verifyingAll ? (lang === "fr" ? "Vérification..." : "Verifying...") : (lang === "fr" ? "Tout Vérifier" : "Verify All")}
           </button>
           <button
             onClick={handleDownload}
             className="flex items-center gap-2 px-3 py-2 border border-outline-variant/50 text-on-surface-variant text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-surface-container-low transition-colors"
           >
-            <Download className="w-3.5 h-3.5" /> Export
+            <Download className="w-3.5 h-3.5" /> {lang === "fr" ? "Exporter" : "Export"}
           </button>
         </div>
       </div>
@@ -102,11 +104,11 @@ export default function AuditLogView({ logs, onVerify, onVerifyAll }: AuditLogVi
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-outline-variant/30 text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant">
-              <th className="text-left px-4 py-3 whitespace-nowrap">Timestamp</th>
-              <th className="text-left px-4 py-3">Operator</th>
-              <th className="text-left px-4 py-3">Action Details</th>
-              <th className="text-left px-4 py-3 hidden lg:table-cell">TX Hash</th>
-              <th className="text-center px-4 py-3">Integrity</th>
+              <th className="text-left px-4 py-3 whitespace-nowrap">{lang === "fr" ? "Horodatage" : "Timestamp"}</th>
+              <th className="text-left px-4 py-3">{lang === "fr" ? "Opérateur" : "Operator"}</th>
+              <th className="text-left px-4 py-3">{lang === "fr" ? "Détails de l'Action" : "Action Details"}</th>
+              <th className="text-left px-4 py-3 hidden lg:table-cell">{lang === "fr" ? "Hash TX" : "TX Hash"}</th>
+              <th className="text-center px-4 py-3">{lang === "fr" ? "Intégrité" : "Integrity"}</th>
             </tr>
           </thead>
           <tbody>
@@ -145,14 +147,14 @@ export default function AuditLogView({ logs, onVerify, onVerifyAll }: AuditLogVi
                 <td className="px-4 py-3 text-center">
                   {log.signed ? (
                     <span className="inline-flex items-center gap-1 text-[10px] font-sans font-bold text-emerald-700">
-                      <CheckCircle className="w-3 h-3" /> Signed Pass
+                      <CheckCircle className="w-3 h-3" /> {lang === "fr" ? "Passe Signé" : "Signed Pass"}
                     </span>
                   ) : (
                     <button
                       onClick={() => onVerify(log.id)}
                       className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-sans font-bold text-gold-leaf border border-gold-leaf/30 hover:bg-gold-leaf/5 transition-colors"
                     >
-                      <Clock className="w-3 h-3" /> Block Sign
+                      <Clock className="w-3 h-3" /> {lang === "fr" ? "Signature de Bloc" : "Block Sign"}
                     </button>
                   )}
                 </td>

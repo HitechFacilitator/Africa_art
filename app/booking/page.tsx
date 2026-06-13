@@ -16,6 +16,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 
 interface Specialist {
   id: string;
@@ -94,6 +95,7 @@ const TIME_SLOTS = [
 
 export default function BookingPage() {
   const { lang } = useTranslate();
+  const displayArtworks = useTranslatedArtworks(ARTWORKS);
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -362,7 +364,7 @@ export default function BookingPage() {
                           className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface"
                         >
                           <option value="">{lang === "fr" ? "Aucune œuvre spécifique" : "No specific artwork"}</option>
-                          {ARTWORKS.map((a) => (
+                          {displayArtworks.map((a) => (
                             <option key={a.id} value={a.id}>{a.title} — {a.origin}</option>
                           ))}
                         </select>
@@ -485,7 +487,7 @@ export default function BookingPage() {
                       {artworkInterest && (
                         <div className="flex justify-between text-xs">
                           <span className="text-on-surface-variant">{lang === "fr" ? "Œuvre" : "Artwork"}</span>
-                          <span className="text-ebony-deep font-semibold text-right">{ARTWORKS.find(a => a.id === artworkInterest)?.title}</span>
+                          <span className="text-ebony-deep font-semibold text-right">{displayArtworks.find(a => a.id === artworkInterest)?.title}</span>
                         </div>
                       )}
                     </div>

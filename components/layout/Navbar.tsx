@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, Menu, X, Lock, User, ShieldCheck, Globe } from "lucide-react";
+import { Search, Menu, X, Lock, User, ShieldCheck } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 
 const NAV_LINKS = [
@@ -94,15 +94,33 @@ export default function Navbar() {
 
           {/* Desktop Right Controls */}
           <div className="hidden md:flex items-center space-x-5">
-            {/* Language Switcher */}
-            <button
-              onClick={() => setLang(lang === "en" ? "fr" : "en")}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-sans font-bold uppercase tracking-widest border border-on-surface/10 hover:border-gold-leaf/40 text-on-surface-variant/70 hover:text-gold-leaf transition-all cursor-pointer"
-              aria-label="Toggle language"
-            >
-              <Globe size={12} />
-              {lang === "en" ? "FR" : "EN"}
-            </button>
+            {/* Language Toggle */}
+            <div className="flex items-center bg-surface-container-low rounded-full p-0.5">
+              <button
+                onClick={() => setLang("en")}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
+                  lang === "en"
+                    ? "bg-ebony-deep text-parchment-ivory shadow-sm"
+                    : "text-on-surface-variant/60 hover:text-ebony-deep"
+                }`}
+                aria-label="Switch to English"
+              >
+                <span className="text-sm leading-none">🇬🇧</span>
+                <span>EN</span>
+              </button>
+              <button
+                onClick={() => setLang("fr")}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
+                  lang === "fr"
+                    ? "bg-ebony-deep text-parchment-ivory shadow-sm"
+                    : "text-on-surface-variant/60 hover:text-ebony-deep"
+                }`}
+                aria-label="Passer en français"
+              >
+                <span className="text-sm leading-none">🇫🇷</span>
+                <span>FR</span>
+              </button>
+            </div>
 
             {/* Search */}
             <button
@@ -135,16 +153,34 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Controls */}
-          <div className="flex md:hidden items-center space-x-3">
-            {/* Mobile Language Switcher */}
-            <button
-              onClick={() => setLang(lang === "en" ? "fr" : "en")}
-              className="p-2 text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-1"
-              aria-label="Toggle language"
-            >
-              <Globe size={16} />
-              <span className="text-[10px] font-bold uppercase">{lang === "en" ? "FR" : "EN"}</span>
-            </button>
+          <div className="flex md:hidden items-center space-x-2">
+            {/* Mobile Language Toggle */}
+            <div className="flex items-center bg-surface-container-low rounded-full p-0.5">
+              <button
+                onClick={() => setLang("en")}
+                className={`flex items-center gap-1 px-2 py-1.5 text-[9px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
+                  lang === "en"
+                    ? "bg-ebony-deep text-parchment-ivory shadow-sm"
+                    : "text-on-surface-variant/60"
+                }`}
+                aria-label="Switch to English"
+              >
+                <span className="text-xs leading-none">🇬🇧</span>
+                <span>EN</span>
+              </button>
+              <button
+                onClick={() => setLang("fr")}
+                className={`flex items-center gap-1 px-2 py-1.5 text-[9px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
+                  lang === "fr"
+                    ? "bg-ebony-deep text-parchment-ivory shadow-sm"
+                    : "text-on-surface-variant/60"
+                }`}
+                aria-label="Passer en français"
+              >
+                <span className="text-xs leading-none">🇫🇷</span>
+                <span>FR</span>
+              </button>
+            </div>
             <button
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
@@ -218,6 +254,31 @@ export default function Navbar() {
             </div>
 
             <div className="px-8 pb-10 space-y-4">
+              {/* Mobile Drawer Language Selector */}
+              <div className="flex items-center bg-surface-container-low rounded-full p-0.5">
+                <button
+                  onClick={() => setLang("en")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
+                    lang === "en"
+                      ? "bg-ebony-deep text-parchment-ivory shadow-sm"
+                      : "text-on-surface-variant/60 hover:text-ebony-deep"
+                  }`}
+                >
+                  <span className="text-xs leading-none">🇬🇧</span>
+                  <span>English</span>
+                </button>
+                <button
+                  onClick={() => setLang("fr")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
+                    lang === "fr"
+                      ? "bg-ebony-deep text-parchment-ivory shadow-sm"
+                      : "text-on-surface-variant/60 hover:text-ebony-deep"
+                  }`}
+                >
+                  <span className="text-xs leading-none">🇫🇷</span>
+                  <span>Français</span>
+                </button>
+              </div>
               <Link
                 href="/price-on-request"
                 className="block w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-wider py-4 text-center hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300"

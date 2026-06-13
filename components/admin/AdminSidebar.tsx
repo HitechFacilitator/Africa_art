@@ -1,6 +1,7 @@
 "use client";
 
 import { AdminView } from "@/lib/adminTypes";
+import { useTranslate } from "@/lib/translations";
 import {
   Palette,
   Users,
@@ -27,17 +28,18 @@ export default function AdminSidebar({
   isOpenMobile,
   setIsOpenMobile,
 }: AdminSidebarProps) {
+  const { lang } = useTranslate();
   const navItems = [
-    { id: AdminView.Artworks, label: "Artworks", icon: Palette },
-    { id: AdminView.Collectors, label: "Collectors", icon: Users },
-    { id: AdminView.Escrow, label: "Escrow", icon: Shield },
-    { id: AdminView.AuditLog, label: "Audit Log", icon: History },
-    { id: AdminView.Compliance, label: "Compliance", icon: BadgeCheck },
-    { id: AdminView.Settings, label: "Settings", icon: Settings },
+    { id: AdminView.Artworks, label: lang === "fr" ? "Œuvres" : "Artworks", icon: Palette },
+    { id: AdminView.Collectors, label: lang === "fr" ? "Collectionneurs" : "Collectors", icon: Users },
+    { id: AdminView.Escrow, label: lang === "fr" ? "Séquestre" : "Escrow", icon: Shield },
+    { id: AdminView.AuditLog, label: lang === "fr" ? "Journal d'Audit" : "Audit Log", icon: History },
+    { id: AdminView.Compliance, label: lang === "fr" ? "Conformité" : "Compliance", icon: BadgeCheck },
+    { id: AdminView.Settings, label: lang === "fr" ? "Paramètres" : "Settings", icon: Settings },
   ];
 
   const bottomItems = [
-    { id: AdminView.Docs, label: "Documentation", icon: FileText },
+    { id: AdminView.Docs, label: lang === "fr" ? "Documentation" : "Documentation", icon: FileText },
     { id: AdminView.Support, label: "Support", icon: HelpCircle },
   ];
 
@@ -53,7 +55,7 @@ export default function AdminSidebar({
           Aduna Gallery
         </h1>
         <p className="text-[10px] font-sans font-bold tracking-[0.12em] uppercase text-gold-leaf mt-1">
-          Admin Control Hub
+          {lang === "fr" ? "Centre de Contrôle Admin" : "Admin Control Hub"}
         </p>
       </div>
 

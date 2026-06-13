@@ -16,6 +16,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork, AdvisorMessage } from "@/lib/types";
 
 const stagger = {
@@ -87,6 +88,8 @@ export default function CataloguePage() {
 
     return result;
   }, [selectedRegion, selectedTribe, selectedMaterial, searchQuery, artifacts, sortBy]);
+
+  const displayArtifacts = useTranslatedArtworks(filteredArtifacts);
 
   const hasActiveFilters = selectedRegion !== "All Regions" || selectedTribe !== "All Tribes" || selectedMaterial !== "All" || searchQuery;
 
@@ -267,14 +270,14 @@ export default function CataloguePage() {
           )}
 
           {/* Artwork Grid */}
-          {filteredArtifacts.length > 0 && (
+          {displayArtifacts.length > 0 && (
             <motion.section
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10"
               variants={stagger}
               initial="hidden"
               animate="visible"
             >
-              {filteredArtifacts.map((item, idx) => (
+              {displayArtifacts.map((item, idx) => (
                 <motion.article key={item.id} variants={fadeUp}>
                   <Link href={`/artwork/${item.id}`} className="group block">
                     <div className={`relative overflow-hidden mb-5 bg-surface-container-lowest shadow-level-2 hover-lift ${

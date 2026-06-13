@@ -10,6 +10,7 @@ import {
   Sparkles,
   UserCheck2
 } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 
 interface InquiriesViewProps {
   inquiries: Inquiry[];
@@ -24,6 +25,7 @@ export default function InquiriesView({
   selectedInquiryId,
   setSelectedInquiryId
 }: InquiriesViewProps) {
+  const { lang } = useTranslate();
   const [activeId, setActiveId] = useState<string>(selectedInquiryId || inquiries[0]?.id || '');
   const [typedMessage, setTypedMessage] = useState('');
 
@@ -44,21 +46,21 @@ export default function InquiriesView({
   return (
     <div className="animate-fade-in">
       <header className="mb-10 pb-6 border-b border-ebony-deep/10">
-        <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">Advisory & Private Placements</h2>
+        <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Conseil et Placements Privés" : "Advisory & Private Placements"}</h2>
         <p className="font-sans text-xs text-on-surface-variant mt-1">Maintain encrypted, direct dialogues with your assigned personal art liaison, Helena Sterling. Coordinates private commissions and bid representation.</p>
       </header>
 
       {inquiries.length === 0 ? (
         <div className="bg-parchment-ivory border border-dashed border-ebony-deep/10 p-16 text-center select-none">
           <MessageSquare className="w-10 h-10 text-gold-leaf mx-auto mb-4" />
-          <p className="font-serif text-lg text-ebony-deep">No Active Inquiries</p>
+          <p className="font-serif text-lg text-ebony-deep">{lang === "fr" ? "Aucune Demande Active" : "No Active Inquiries"}</p>
           <p className="font-sans text-xs text-zinc-400 max-w-sm mx-auto mt-2">Initiate a confidential inquiry regarding our exclusive curator previews from the main dashboard to establish an active placement ledger.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch lg:h-[calc(100vh-270px)] min-h-[400px]">
           <div className="lg:col-span-4 bg-parchment-ivory w-full border border-ebony-deep/5 flex flex-col overflow-y-auto">
             <div className="p-4 bg-ebony-deep text-gold-leaf font-sans text-[10px] uppercase font-bold tracking-widest border-b border-gold-leaf/25">
-              Active Placement Requests ({inquiries.length})
+              {lang === "fr" ? "Demandes de Placement Actives" : "Active Placement Requests"} ({inquiries.length})
             </div>
             <div className="divide-y divide-ebony-deep/5 select-none">
               {inquiries.map((inq) => {
@@ -101,7 +103,7 @@ export default function InquiriesView({
                     </div>
                   </div>
                   <div className="flex flex-col items-end text-right">
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-0.5"><Clock className="w-3.5 h-3.5 text-zinc-400" /><span>Private Ledger Channel</span></div>
+                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 mb-0.5"><Clock className="w-3.5 h-3.5 text-zinc-400" /><span>{lang === "fr" ? "Canal de Registre Privé" : "Private Ledger Channel"}</span></div>
                     <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">{activeInquiry.id}</span>
                   </div>
                 </div>
@@ -109,7 +111,7 @@ export default function InquiriesView({
                 <div className="flex-1 p-6 overflow-y-auto bg-surface-container-lowest/40 flex flex-col gap-4">
                   <div className="flex items-center justify-center mb-4">
                     <div className="bg-amber-50/50 border border-gold-leaf/30 text-center px-4 py-2.5 max-w-md shadow-sm">
-                      <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-gold-leaf mb-0.5 flex items-center justify-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> End-to-End Cryptic Channel Active</p>
+                      <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-gold-leaf mb-0.5 flex items-center justify-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> {lang === "fr" ? "Canal Crypté Bout en Bout Actif" : "End-to-End Cryptic Channel Active"}</p>
                       <p className="font-sans text-[10px] text-zinc-400">This discussion acts as a binding provenance register and private placement record.</p>
                     </div>
                   </div>
@@ -133,7 +135,7 @@ export default function InquiriesView({
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400">
                 <ShieldAlert className="w-10 h-10 text-gold-leaf mb-3 animate-pulse" />
-                <p className="font-serif italic text-sm mb-1">Channel Unselected</p>
+                <p className="font-serif italic text-sm mb-1">{lang === "fr" ? "Canal Non Sélectionné" : "Channel Unselected"}</p>
                 <p className="font-sans text-xs">Select any private positioning card on your left cabinet stream to initialize peer advisory lines.</p>
               </div>
             )}

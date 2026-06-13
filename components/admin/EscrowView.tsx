@@ -1,6 +1,7 @@
 "use client";
 
 import { EscrowTransaction } from "@/lib/adminTypes";
+import { useTranslate } from "@/lib/translations";
 import {
   Lock,
   CheckCircle2,
@@ -17,33 +18,33 @@ interface EscrowViewProps {
   onRefund: (id: string) => void;
 }
 
-function getStatusConfig(status: EscrowTransaction["status"]) {
+function getStatusConfig(status: EscrowTransaction["status"], lang: string) {
   switch (status) {
     case "Held":
       return {
         icon: Lock,
-        label: "Funds Locked",
+        label: lang === "fr" ? "Fonds Bloqués" : "Funds Locked",
         color: "bg-gold-leaf/10 text-gold-leaf",
         iconColor: "text-gold-leaf",
       };
     case "Released":
       return {
         icon: CheckCircle2,
-        label: "Released",
+        label: lang === "fr" ? "Libérés" : "Released",
         color: "bg-emerald-100 text-emerald-800",
         iconColor: "text-emerald-600",
       };
     case "Disputed":
       return {
         icon: AlertTriangle,
-        label: "Disputed",
+        label: lang === "fr" ? "Litigieux" : "Disputed",
         color: "bg-red-100 text-red-800",
         iconColor: "text-red-600",
       };
     case "Refunded":
       return {
         icon: RefreshCw,
-        label: "Refunded",
+        label: lang === "fr" ? "Remboursés" : "Refunded",
         color: "bg-amber-100 text-amber-800",
         iconColor: "text-amber-600",
       };
@@ -56,6 +57,7 @@ export default function EscrowView({
   onDispute,
   onRefund,
 }: EscrowViewProps) {
+  const { lang } = useTranslate();
   const totalHeld = transactions
     .filter((t) => t.status === "Held")
     .reduce((sum, t) => sum + t.amount, 0);
@@ -70,7 +72,7 @@ export default function EscrowView({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-4">
           <p className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-1">
-            Escrow Cold Storage
+            {lang === "fr" ? "Stockage Froid Séquestre" : "Escrow Cold Storage"}
           </p>
           <p className="font-serif text-xl font-semibold text-ebony-deep">
             €{totalHeld.toLocaleString()}
@@ -78,13 +80,13 @@ export default function EscrowView({
         </div>
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-4">
           <p className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-1">
-            Active Contracts
+            {lang === "fr" ? "Contrats Actifs" : "Active Contracts"}
           </p>
           <p className="font-serif text-xl font-semibold text-ebony-deep">{activeContracts}</p>
         </div>
         <div className="bg-surface-container-lowest border border-outline-variant/30 p-4">
           <p className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-1">
-            Pending Disputes
+            {lang === "fr" ? "Litiges en Attente" : "Pending Disputes"}
           </p>
           <p className="font-serif text-xl font-semibold text-terracotta-earth">
             {disputedCount}
@@ -93,13 +95,13 @@ export default function EscrowView({
       </div>
 
       <h2 className="font-serif text-2xl font-medium text-ebony-deep mb-4">
-        Escrow Holding Ledger
+        {lang === "fr" ? "Registre de Détention Séquestre" : "Escrow Holding Ledger"}
       </h2>
 
       <div className="grid grid-cols-1 lg:grid-cols-8 gap-6">
         <div className="lg:col-span-5 space-y-4">
           {transactions.map((tx) => {
-            const config = getStatusConfig(tx.status);
+            const config = getStatusConfig(tx.status, lang);
             const Icon = config.icon;
             return (
               <div
@@ -123,21 +125,21 @@ export default function EscrowView({
 
                 <div className="grid grid-cols-2 gap-3 text-xs font-sans mb-3">
                   <div>
-                    <p className="text-on-surface-variant">Buyer</p>
+                    <p className="text-on-surface-variant">{lang === "fr" ? "Acheteur" : "Buyer"}</p>
                     <p className="font-medium text-ebony-deep">{tx.buyerName}</p>
                   </div>
                   <div>
-                    <p className="text-on-surface-variant">Seller</p>
+                    <p className="text-on-surface-variant">{lang === "fr" ? "Vendeur" : "Seller"}</p>
                     <p className="font-medium text-ebony-deep">{tx.sellerName}</p>
                   </div>
                   <div>
-                    <p className="text-on-surface-variant">Escrow Sum</p>
+                    <p className="text-on-surface-variant">{lang === "fr" ? "Somme Séquestre" : "Escrow Sum"}</p>
                     <p className="font-serif font-semibold text-ebony-deep">
                       €{tx.amount.toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-on-surface-variant">Created</p>
+                    <p className="text-on-surface-variant">{lang === "fr" ? "Créé" : "Created"}</p>
                     <p className="text-ebony-deep">{tx.createdDate}</p>
                   </div>
                 </div>
@@ -152,13 +154,13 @@ export default function EscrowView({
                 <div className="flex gap-2">
                   {tx.status === "Held" && (
                     <>
-                      <button
+                       <button
                         onClick={() => {
                           if (confirm("Release escrow funds to seller?")) onRelease(tx.id);
                         }}
                         className="px-3 py-1.5 bg-gold-leaf text-ebony-deep text-[10px] font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
                       >
-                        Release & Disburse
+                        {lang === "fr" ? "Libérer et Décaisser" : "Release & Disburse"}
                       </button>
                       <button
                         onClick={() => {
@@ -166,7 +168,7 @@ export default function EscrowView({
                         }}
                         className="px-3 py-1.5 border border-terracotta-earth/50 text-terracotta-earth text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/5 transition-colors"
                       >
-                        Initiate Dispute
+                        {lang === "fr" ? "Lancer un Litige" : "Initiate Dispute"}
                       </button>
                     </>
                   )}
@@ -178,7 +180,7 @@ export default function EscrowView({
                         }}
                         className="px-3 py-1.5 bg-emerald-600 text-white text-[10px] font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
                       >
-                        Settle Transfer
+                        {lang === "fr" ? "Régler le Transfert" : "Settle Transfer"}
                       </button>
                       <button
                         onClick={() => {
@@ -186,18 +188,18 @@ export default function EscrowView({
                         }}
                         className="px-3 py-1.5 bg-red-600 text-white text-[10px] font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
                       >
-                        Settle Refund
+                        {lang === "fr" ? "Régler le Remboursement" : "Settle Refund"}
                       </button>
                     </>
                   )}
                   {tx.status === "Released" && (
                     <span className="text-[10px] font-sans font-bold text-emerald-700 tracking-wide uppercase">
-                      [COMPLETE]
+                      {lang === "fr" ? "[COMPLÉTÉ]" : "[COMPLETE]"}
                     </span>
                   )}
                   {tx.status === "Refunded" && (
                     <span className="text-[10px] font-sans font-bold text-amber-700 tracking-wide uppercase">
-                      [REFUNDED]
+                      {lang === "fr" ? "[REMBOURSÉ]" : "[REFUNDED]"}
                     </span>
                   )}
                 </div>
@@ -210,14 +212,14 @@ export default function EscrowView({
         <div className="lg:col-span-3">
           <div className="bg-surface-container-lowest border border-outline-variant/30 p-5">
             <h3 className="text-[10px] font-sans font-bold tracking-[0.1em] uppercase text-on-surface-variant mb-4">
-              Escrow Safe Covenants
+              {lang === "fr" ? "Pactes de Sécurité Séquestre" : "Escrow Safe Covenants"}
             </h3>
             <div className="space-y-4">
               <div className="bg-surface-container-low p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Lock className="w-3.5 h-3.5 text-gold-leaf" />
                   <p className="font-sans text-xs font-semibold text-ebony-deep">
-                    Custodial Freeze
+                    {lang === "fr" ? "Gel de Garde" : "Custodial Freeze"}
                   </p>
                 </div>
                 <p className="font-sans text-[11px] text-on-surface-variant leading-relaxed">
@@ -229,7 +231,7 @@ export default function EscrowView({
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle2 className="w-3.5 h-3.5 text-gold-leaf" />
                   <p className="font-sans text-xs font-semibold text-ebony-deep">
-                    Automated Release
+                    {lang === "fr" ? "Libération Automatisée" : "Automated Release"}
                   </p>
                 </div>
                 <p className="font-sans text-[11px] text-on-surface-variant leading-relaxed">
@@ -241,7 +243,7 @@ export default function EscrowView({
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-gold-leaf" />
                   <p className="font-sans text-xs font-semibold text-ebony-deep">
-                    Sovereign Arbitrage
+                    {lang === "fr" ? "Arbitrage Souverain" : "Sovereign Arbitrage"}
                   </p>
                 </div>
                 <p className="font-sans text-[11px] text-on-surface-variant leading-relaxed">
