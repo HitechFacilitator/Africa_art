@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { TranslationProvider } from "@/lib/translations";
 
 export const metadata: Metadata = {
   title: {
@@ -35,12 +36,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <head>
-        {/* Google Fonts preconnect */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-ebony-deep font-sans antialiased">
-        {children}
+        <TranslationProvider>{children}</TranslationProvider>
       </body>
     </html>
   );

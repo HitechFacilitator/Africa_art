@@ -6,6 +6,7 @@ import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, Secur
 import { INITIAL_ACQUISITIONS, INITIAL_INQUIRIES, INITIAL_CONSULTATIONS, INITIAL_LOGISTICS, INITIAL_SECURITY, INITIAL_PROFILE } from "@/lib/dashboardData";
 import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslate } from "@/lib/translations";
 
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardView from "@/components/dashboard/DashboardView";
@@ -17,6 +18,7 @@ import SecurityView from "@/components/dashboard/SecurityView";
 import SettingsView from "@/components/dashboard/SettingsView";
 
 export default function DashboardPage() {
+  const { lang } = useTranslate();
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Dashboard);
   const [selectedAcquisition, setSelectedAcquisition] = useState<Acquisition | null>(INITIAL_ACQUISITIONS[0] ?? null);
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
@@ -26,17 +28,17 @@ export default function DashboardPage() {
   const mobileTabsRef = useRef<HTMLDivElement>(null);
 
   const mobileTabs = [
-    { id: ActiveTab.Dashboard, label: "Overview" },
-    { id: ActiveTab.Portfolio, label: "Acquisitions" },
-    { id: ActiveTab.Certificates, label: "Certificates" },
-    { id: ActiveTab.Inquiries, label: "Inquiries" },
-    { id: ActiveTab.Consultations, label: "Consultations" },
-    { id: ActiveTab.PrivateCatalogues, label: "Catalogues" },
-    { id: ActiveTab.AlertsAuctions, label: "Alerts" },
-    { id: ActiveTab.Investment, label: "Investment" },
-    { id: ActiveTab.Previews, label: "Previews" },
-    { id: ActiveTab.Logistics, label: "Logistics" },
-    { id: ActiveTab.Security, label: "Security" },
+    { id: ActiveTab.Dashboard, label: lang === "fr" ? "Vue d'ensemble" : "Overview" },
+    { id: ActiveTab.Portfolio, label: lang === "fr" ? "Acquisitions" : "Acquisitions" },
+    { id: ActiveTab.Certificates, label: lang === "fr" ? "Certificats" : "Certificates" },
+    { id: ActiveTab.Inquiries, label: lang === "fr" ? "Demandes" : "Inquiries" },
+    { id: ActiveTab.Consultations, label: lang === "fr" ? "Consultations" : "Consultations" },
+    { id: ActiveTab.PrivateCatalogues, label: lang === "fr" ? "Catalogues" : "Catalogues" },
+    { id: ActiveTab.AlertsAuctions, label: lang === "fr" ? "Alertes" : "Alerts" },
+    { id: ActiveTab.Investment, label: lang === "fr" ? "Investissement" : "Investment" },
+    { id: ActiveTab.Previews, label: lang === "fr" ? "Aperçus" : "Previews" },
+    { id: ActiveTab.Logistics, label: lang === "fr" ? "Logistique" : "Logistics" },
+    { id: ActiveTab.Security, label: lang === "fr" ? "Sécurité" : "Security" },
   ];
 
   const scrollMobileTabs = (direction: "left" | "right") => {
@@ -69,7 +71,7 @@ export default function DashboardPage() {
     setProfile(INITIAL_PROFILE);
     setSelectedAcquisition(INITIAL_ACQUISITIONS[0]);
     setActiveTab(ActiveTab.Dashboard);
-    alert('Aduna Gallery metrics initialized successfully to pristine defaults.');
+    alert(lang === "fr" ? "Les métriques d'Aduna Gallery ont été initialisées avec succès aux paramètres par défaut." : 'Aduna Gallery metrics initialized successfully to pristine defaults.');
   };
 
   const handleExpressInterest = (artworkTitle: string, year: string) => {
@@ -178,7 +180,7 @@ export default function DashboardPage() {
       };
       setLogistics(prev => [newShipment, ...prev]);
     }
-    alert(`Heritage Piece Certified! "${newAcq.title}" has been securely logged on the Aduna mainframe and added to your portfolio.`);
+    alert(lang === "fr" ? `Pièce du Patrimoine Certifiée ! « ${newAcq.title} » a été enregistrée de manière sécurisée sur le serveur principal Aduna et ajoutée à votre portefeuille.` : `Heritage Piece Certified! "${newAcq.title}" has been securely logged on the Aduna mainframe and added to your portfolio.`);
   };
 
   const handleRemoveAcquisition = (id: string) => {
@@ -232,7 +234,7 @@ This report acts as a legal certifiable token of ownership index.
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    alert('Cryptographic report download complete.');
+    alert(lang === "fr" ? "Téléchargement du rapport cryptographique terminé." : 'Cryptographic report download complete.');
   };
 
   const totalValueEur = acquisitions.reduce((acc, item) => acc + item.estimatedValueEur, 0);
@@ -240,8 +242,8 @@ This report acts as a legal certifiable token of ownership index.
   return (
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} onLogout={() => {
-        if (confirm('De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
-          alert('Session closed safely. Authenticated collector credentials detached.');
+        if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
+          alert(lang === "fr" ? "Session fermée en toute sécurité. Identifiants du collectionneur authentifiés détachés." : 'Session closed safely. Authenticated collector credentials detached.');
         }
       }} />
 
@@ -309,11 +311,11 @@ This report acts as a legal certifiable token of ownership index.
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-serif text-2xl text-ebony-deep">Certificates of Authenticity</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">Manage and download certificates for your acquired artworks.</p>
+                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Certificats d'Authenticité" : "Certificates of Authenticity"}</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Gérez et téléchargez les certificats de vos œuvres acquises." : "Manage and download certificates for your acquired artworks."}</p>
                   </div>
                   <Link href="/dashboard/certificates" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    View Full Dashboard <ExternalLink size={12} />
+                    {lang === "fr" ? "Voir le Tableau de Bord Complet" : "View Full Dashboard"} <ExternalLink size={12} />
                   </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -323,13 +325,13 @@ This report acts as a legal certifiable token of ownership index.
                     { status: "Renewal Due", count: 0, color: "text-red-600", bg: "bg-red-50" },
                   ].map((s) => (
                     <div key={s.status} className={`${s.bg} border border-on-surface/5 p-5`}>
-                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{s.status}</p>
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? (s.status === "Valid" ? "Valide" : s.status === "Pending" ? "En attente" : "Renouvellement dû") : s.status}</p>
                       <p className={`font-serif text-3xl font-bold mt-2 ${s.color}`}>{s.count}</p>
                     </div>
                   ))}
                 </div>
                 <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                  <p className="text-xs text-on-surface-variant">Access the full certificates dashboard to download PDFs, verify authenticity, and manage renewals.</p>
+                  <p className="text-xs text-on-surface-variant">{lang === "fr" ? "Accédez au tableau de bord complet des certificats pour télécharger les PDF, vérifier l'authenticité et gérer les renouvellements." : "Access the full certificates dashboard to download PDFs, verify authenticity, and manage renewals."}</p>
                 </div>
               </div>
             )}
@@ -337,21 +339,21 @@ This report acts as a legal certifiable token of ownership index.
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-serif text-2xl text-ebony-deep">Private Catalogues</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">Exclusive access to unpublished and confidential artworks.</p>
+                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Catalogues Privés" : "Private Catalogues"}</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Accès exclusif aux œuvres inédites et confidentielles." : "Exclusive access to unpublished and confidential artworks."}</p>
                   </div>
                   <Link href="/catalogue/private" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    Browse Catalogues <ExternalLink size={12} />
+                    {lang === "fr" ? "Parcourir les Catalogues" : "Browse Catalogues"} <ExternalLink size={12} />
                   </Link>
                 </div>
                 <div className="bg-surface-container-low border border-on-surface/5 p-8 text-center">
                   <BookLock className="w-12 h-12 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-lg text-ebony-deep mb-2">Vault Access Required</h3>
+                  <h3 className="font-serif text-lg text-ebony-deep mb-2">{lang === "fr" ? "Accès à la Coffre-fort Requis" : "Vault Access Required"}</h3>
                   <p className="font-sans text-xs text-on-surface-variant max-w-md mx-auto mb-4">
-                    Private catalogues contain unpublished masterpieces available exclusively to vetted collectors. Access requires VIP tier verification.
+                    {lang === "fr" ? "Les catalogues privés contiennent des chefs-d'œuvre inédits disponibles exclusivement aux collectionneurs vérifiés. L'accès nécessite une vérification du niveau VIP." : "Private catalogues contain unpublished masterpieces available exclusively to vetted collectors. Access requires VIP tier verification."}
                   </p>
                   <Link href="/catalogue/private" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
-                    Enter Private Vault <ArrowRight size={12} />
+                    {lang === "fr" ? "Entrer dans le Coffre-fort Privé" : "Enter Private Vault"} <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>
@@ -360,32 +362,32 @@ This report acts as a legal certifiable token of ownership index.
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-serif text-2xl text-ebony-deep">Alerts & Auctions</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">Live auction notifications and bidding activity.</p>
+                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Alertes & Ventes aux Enchères" : "Alerts & Auctions"}</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Notifications de ventes aux enchères en direct et activité d'enchères." : "Live auction notifications and bidding activity."}</p>
                   </div>
                   <Link href="/auctions" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    View Auctions <ExternalLink size={12} />
+                    {lang === "fr" ? "Voir les Ventes" : "View Auctions"} <ExternalLink size={12} />
                   </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-surface-container-low border border-on-surface/5 p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <Bell className="w-5 h-5 text-gold-leaf" />
-                      <h3 className="font-serif text-sm font-bold text-ebony-deep">Active Alerts</h3>
+                      <h3 className="font-serif text-sm font-bold text-ebony-deep">{lang === "fr" ? "Alertes Actives" : "Active Alerts"}</h3>
                     </div>
-                    <p className="text-xs text-on-surface-variant">You have <strong>2</strong> pending auction alerts for pieces matching your collection interests.</p>
+                    <p className="text-xs text-on-surface-variant">{lang === "fr" ? <>Vous avez <strong>2</strong> alertes de vente en attente pour des pièces correspondant à vos centres d'intérêt de collection.</> : <>You have <strong>2</strong> pending auction alerts for pieces matching your collection interests.</>}</p>
                   </div>
                   <div className="bg-surface-container-low border border-on-surface/5 p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <Clock className="w-5 h-5 text-terracotta-earth" />
-                      <h3 className="font-serif text-sm font-bold text-ebony-deep">Upcoming Sales</h3>
+                      <h3 className="font-serif text-sm font-bold text-ebony-deep">{lang === "fr" ? "Ventes à Venir" : "Upcoming Sales"}</h3>
                     </div>
-                    <p className="text-xs text-on-surface-variant">Next private auction: <strong>West African Bronzes</strong> — 3 days remaining to register.</p>
+                    <p className="text-xs text-on-surface-variant">{lang === "fr" ? <>Prochaine vente privée : <strong>Bronzes d'Afrique de l'Ouest</strong> — 3 jours restants pour s'inscrire.</> : <>Next private auction: <strong>West African Bronzes</strong> — 3 days remaining to register.</>}</p>
                   </div>
                 </div>
                 <div className="bg-surface-container-low border border-on-surface/5 p-6">
                   <Link href="/auctions" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
-                    Enter Auction Room <ArrowRight size={12} />
+                    {lang === "fr" ? "Entrer dans la Salle des Ventes" : "Enter Auction Room"} <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>
@@ -394,30 +396,30 @@ This report acts as a legal certifiable token of ownership index.
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-serif text-2xl text-ebony-deep">Investment Advisory</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">Portfolio analytics, market insights, and advisory services.</p>
+                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Conseil en Investissement" : "Investment Advisory"}</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Analyse de portefeuille, aperçus du marché et services de conseil." : "Portfolio analytics, market insights, and advisory services."}</p>
                   </div>
                   <Link href="/investment" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    Full Advisory <ExternalLink size={12} />
+                    {lang === "fr" ? "Conseil Complet" : "Full Advisory"} <ExternalLink size={12} />
                   </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Portfolio CAGR</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "TRI du Portefeuille" : "Portfolio CAGR"}</p>
                     <p className="font-serif text-2xl font-bold text-gold-leaf mt-1">+11.4%</p>
                   </div>
                   <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Market Index</p>
-                    <p className="font-serif text-2xl font-bold text-ebony-deep mt-1">Stable</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Indice du Marché" : "Market Index"}</p>
+                    <p className="font-serif text-2xl font-bold text-ebony-deep mt-1">{lang === "fr" ? "Stable" : "Stable"}</p>
                   </div>
                   <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Advisory Status</p>
-                    <p className="font-serif text-2xl font-bold text-emerald-600 mt-1">Active</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Statut du Conseil" : "Advisory Status"}</p>
+                    <p className="font-serif text-2xl font-bold text-emerald-600 mt-1">{lang === "fr" ? "Actif" : "Active"}</p>
                   </div>
                 </div>
                 <div className="bg-surface-container-low border border-on-surface/5 p-6">
                   <Link href="/investment" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
-                    View Investment Dashboard <ArrowRight size={12} />
+                    {lang === "fr" ? "Voir le Tableau de Bord d'Investissement" : "View Investment Dashboard"} <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>
@@ -426,21 +428,21 @@ This report acts as a legal certifiable token of ownership index.
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="font-serif text-2xl text-ebony-deep">Exclusive Previews</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">Priority access to new acquisitions before public listing.</p>
+                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Aperçus Exclusifs" : "Exclusive Previews"}</h2>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Accès prioritaire aux nouvelles acquisitions avant leur publication." : "Priority access to new acquisitions before public listing."}</p>
                   </div>
                   <Link href="/preview" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    View All Previews <ExternalLink size={12} />
+                    {lang === "fr" ? "Voir Tous les Aperçus" : "View All Previews"} <ExternalLink size={12} />
                   </Link>
                 </div>
                 <div className="bg-surface-container-low border border-on-surface/5 p-8 text-center">
                   <Eye className="w-12 h-12 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-lg text-ebony-deep mb-2">VIP Preview Access</h3>
+                  <h3 className="font-serif text-lg text-ebony-deep mb-2">{lang === "fr" ? "Accès VIP aux Aperçus" : "VIP Preview Access"}</h3>
                   <p className="font-sans text-xs text-on-surface-variant max-w-md mx-auto mb-4">
-                    As a valued collector, you have early access to view and reserve upcoming acquisitions before they are listed publicly.
+                    {lang === "fr" ? "En tant que collectionneur estimé, vous avez un accès anticipé pour voir et réserver les prochaines acquisitions avant leur publication." : "As a valued collector, you have early access to view and reserve upcoming acquisitions before they are listed publicly."}
                   </p>
                   <Link href="/preview" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
-                    Enter Preview Room <ArrowRight size={12} />
+                    {lang === "fr" ? "Entrer dans la Salle d'Aperçu" : "Enter Preview Room"} <ArrowRight size={12} />
                   </Link>
                 </div>
               </div>
@@ -456,21 +458,21 @@ This report acts as a legal certifiable token of ownership index.
               <button onClick={() => setShowExportModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer"><X className="w-6 h-6" /></button>
               <div className="text-center mb-6">
                 <FileText className="w-12 h-12 text-gold-leaf mx-auto mb-3" />
-                <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">State Placement Report Ready</h3>
-                <p className="font-sans text-xs text-zinc-450 mt-1">Private dossier compiled under dual-signature legal registry keys.</p>
+                <h3 className="font-serif text-xl font-medium uppercase tracking-wide text-ebony-deep">{lang === "fr" ? "Rapport de Placement d'État Prêt" : "State Placement Report Ready"}</h3>
+                <p className="font-sans text-xs text-zinc-450 mt-1">{lang === "fr" ? "Dossier privé compilé sous clés de registre juridique à double signature." : "Private dossier compiled under dual-signature legal registry keys."}</p>
               </div>
               <div className="bg-surface-container-low border border-ebony-deep/5 p-4 mb-6 text-xs space-y-3 font-sans">
-                <div className="flex justify-between"><span className="text-zinc-400">Target Collector</span><span className="font-medium text-ebony-deep">{profile.name} ({profile.tier})</span></div>
-                <div className="flex justify-between"><span className="text-zinc-400">Total Acquisitions</span><span className="font-medium text-ebony-deep">{acquisitions.length + 10} Artifacts</span></div>
-                <div className="flex justify-between"><span className="text-zinc-450">Estimated Portfolio Value</span><span className="font-serif font-bold text-gold-leaf text-sm">€{(totalValueEur / 1000000).toFixed(1)}M</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">{lang === "fr" ? "Collectionneur Cible" : "Target Collector"}</span><span className="font-medium text-ebony-deep">{profile.name} ({profile.tier})</span></div>
+                <div className="flex justify-between"><span className="text-zinc-400">{lang === "fr" ? "Total des Acquisitions" : "Total Acquisitions"}</span><span className="font-medium text-ebony-deep">{lang === "fr" ? `${acquisitions.length + 10} Artefacts` : `${acquisitions.length + 10} Artifacts`}</span></div>
+                <div className="flex justify-between"><span className="text-zinc-450">{lang === "fr" ? "Valeur Estimée du Portefeuille" : "Estimated Portfolio Value"}</span><span className="font-serif font-bold text-gold-leaf text-sm">€{(totalValueEur / 1000000).toFixed(1)}M</span></div>
                 <div className="flex justify-between pt-2 border-t border-ebony-deep/5 text-[11px] items-center">
-                  <span className="text-emerald-700 font-semibold flex items-center gap-1">✓ Vetted Safe Blockchain Link</span>
+                  <span className="text-emerald-700 font-semibold flex items-center gap-1">{lang === "fr" ? "✓ Lien Blockchain Vérifié et Sûr" : "✓ Vetted Safe Blockchain Link"}</span>
                   <span className="font-mono text-zinc-400 text-[9px] uppercase font-bold select-all">REG-D-49122</span>
                 </div>
               </div>
               <div className="space-y-3">
-                <button type="button" onClick={handleDownloadReportFile} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2 border-0"><Download className="w-4 h-4" /> Download Certified Text Ledger</button>
-                <button type="button" onClick={() => setShowExportModal(false)} className="w-full bg-transparent border border-ebony-deep/15 text-zinc-500 hover:text-ebony-deep font-sans text-xs font-semibold py-3 hover:bg-zinc-50 transition-colors uppercase tracking-widest cursor-pointer">Bypass Overview</button>
+                <button type="button" onClick={handleDownloadReportFile} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2 border-0"><Download className="w-4 h-4" /> {lang === "fr" ? "Télécharger le Grand Livre Texte Certifié" : "Download Certified Text Ledger"}</button>
+                <button type="button" onClick={() => setShowExportModal(false)} className="w-full bg-transparent border border-ebony-deep/15 text-zinc-500 hover:text-ebony-deep font-sans text-xs font-semibold py-3 hover:bg-zinc-50 transition-colors uppercase tracking-widest cursor-pointer">{lang === "fr" ? "Passer l'Aperçu" : "Bypass Overview"}</button>
               </div>
             </motion.div>
           </div>

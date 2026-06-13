@@ -15,13 +15,8 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
+import { useTranslate } from "@/lib/translations";
 import type { Artwork, AdvisorMessage } from "@/lib/types";
-
-const SUGGESTED_PROMPTS = [
-  { label: "Provenance standards?", text: "What are Aduna Gallery's Provenance standards?" },
-  { label: "Tell me about Ife head", text: "Explain the historical background of the Ife Terracotta Head." },
-  { label: "Why invest in Benin Bronze?", text: "Why is the Benin Bronze Relief Plaque considered a pristine, high-performing investment grade antiquity?" },
-];
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -41,11 +36,17 @@ export default function CataloguePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("Historical Significance");
   const [isAdvisorOpen, setIsAdvisorOpen] = useState(false);
+  const { lang, t } = useTranslate();
+  const SUGGESTED_PROMPTS = [
+    { label: lang === "fr" ? "Standards de provenance ?" : "Provenance standards?", text: lang === "fr" ? "Quels sont les standards de provenance d'Aduna Gallery ?" : "What are Aduna Gallery's Provenance standards?" },
+    { label: lang === "fr" ? "Parlez-moi de la tête d'Ife" : "Tell me about Ife head", text: lang === "fr" ? "Expliquez l'historique de la Tête en Terre Cuite d'Ife." : "Explain the historical background of the Ife Terracotta Head." },
+    { label: lang === "fr" ? "Pourquoi investir dans le Bronze du Bénin ?" : "Why invest in Benin Bronze?", text: lang === "fr" ? "Pourquoi la Plaque en Relief du Bronze du Bénin est-elle considérée comme une antiquité de grade investissement performante ?" : "Why is the Benin Bronze Relief Plaque considered a pristine, high-performing investment grade antiquity?" },
+  ];
   const [chatMessages, setChatMessages] = useState<AdvisorMessage[]>([
     {
       id: "welcome",
       sender: "advisor",
-      text: "Greetings. I am your Aduna Art Advisor. How may I direct your investment today?",
+      text: lang === "fr" ? "Bonjour. Je suis votre conseiller en art Aduna. Comment puis-je orienter votre investissement aujourd'hui ?" : "Greetings. I am your Aduna Art Advisor. How may I direct your investment today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -143,22 +144,24 @@ export default function CataloguePage() {
             transition={{ duration: 0.5 }}
           >
             <div className="max-w-2xl">
-              <h1 className="font-display-lg text-ebony-deep mb-4">The Collection</h1>
+              <h1 className="font-display-lg text-ebony-deep mb-4">{lang === "fr" ? "La Collection" : "The Collection"}</h1>
               <p className="font-sans text-lg text-on-surface-variant leading-relaxed">
-                A curated selection of museum-grade artifacts, representing the pinnacle of African heritage and investment-grade antiquities.
+                {lang === "fr"
+                  ? "Une sélection curatée d' artefacts de qualité musée, représentant l'apogée du patrimoine africain et des antiquités de grade investissement."
+                  : "A curated selection of museum-grade artifacts, representing the pinnacle of African heritage and investment-grade antiquities."}
               </p>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto relative border-b border-on-surface/20 pb-2 group focus-within:border-gold-leaf transition-colors">
-              <span className="font-sans text-xs uppercase tracking-widest font-semibold text-on-surface-variant/60">Sort by:</span>
+              <span className="font-sans text-xs uppercase tracking-widest font-semibold text-on-surface-variant/60">{lang === "fr" ? "Trier par :" : "Sort by:"}</span>
               <div className="relative flex items-center">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="appearance-none bg-transparent border-none font-sans text-xs font-semibold text-ebony-deep focus:ring-0 cursor-pointer pr-6 outline-none"
                 >
-                  <option value="Historical Significance">Historical Significance</option>
-                  <option value="Recently Acquired">Recently Acquired</option>
-                  <option value="Investment Value">Investment Value (Scarcity Index)</option>
+                  <option value="Historical Significance">{lang === "fr" ? "Importance Historique" : "Historical Significance"}</option>
+                  <option value="Recently Acquired">{lang === "fr" ? "Récemment Acquis" : "Recently Acquired"}</option>
+                  <option value="Investment Value">{lang === "fr" ? "Valeur d'Investissement (Indice de Rareté)" : "Investment Value (Scarcity Index)"}</option>
                 </select>
                 <ChevronDown className="w-3.5 h-3.5 absolute right-0 pointer-events-none text-on-surface-variant" />
               </div>
@@ -169,7 +172,7 @@ export default function CataloguePage() {
           <section className="mb-10 pb-6 border-b border-on-surface/5">
             <div className="flex flex-wrap items-end gap-4">
               <div className="relative">
-                <label className="label-caps text-on-surface-variant/60 mb-1.5 block">Region</label>
+                <label className="label-caps text-on-surface-variant/60 mb-1.5 block">{lang === "fr" ? "Région" : "Region"}</label>
                 <div className="relative">
                   <select
                     value={selectedRegion}
@@ -185,7 +188,7 @@ export default function CataloguePage() {
               </div>
 
               <div className="relative">
-                <label className="label-caps text-on-surface-variant/60 mb-1.5 block">Tribe</label>
+                <label className="label-caps text-on-surface-variant/60 mb-1.5 block">{lang === "fr" ? "Tribu" : "Tribe"}</label>
                 <div className="relative">
                   <select
                     value={selectedTribe}
@@ -208,7 +211,7 @@ export default function CataloguePage() {
               </div>
 
               <div className="relative">
-                <label className="label-caps text-on-surface-variant/60 mb-1.5 block">Material</label>
+                <label className="label-caps text-on-surface-variant/60 mb-1.5 block">{lang === "fr" ? "Matériau" : "Material"}</label>
                 <div className="relative">
                   <select
                     value={selectedMaterial}
@@ -231,7 +234,7 @@ export default function CataloguePage() {
                   onClick={clearFilters}
                   className="font-sans text-[10px] uppercase tracking-wider font-semibold text-terracotta-earth hover:text-ebony-deep transition-colors border-b border-terracotta-earth/30 hover:border-ebony-deep/30 pb-0.5 ml-2"
                 >
-                  Clear All
+                  {lang === "fr" ? "Tout Effacer" : "Clear All"}
                 </button>
               )}
             </div>
@@ -240,7 +243,7 @@ export default function CataloguePage() {
           {/* Results Count */}
           <div className="mb-6">
             <p className="text-xs text-on-surface-variant">
-              <span className="font-bold text-ebony-deep">{filteredArtifacts.length}</span> {filteredArtifacts.length === 1 ? "artifact" : "artifacts"} found
+              <span className="font-bold text-ebony-deep">{filteredArtifacts.length}</span> {lang === "fr" ? (filteredArtifacts.length === 1 ? "artefact trouvé" : "artefacts trouvés") : (filteredArtifacts.length === 1 ? "artifact" : "artifacts")} {lang === "fr" ? "trouvé" : "found"}
             </p>
           </div>
 
@@ -248,15 +251,17 @@ export default function CataloguePage() {
           {filteredArtifacts.length === 0 && (
             <div className="py-24 text-center border border-dashed border-on-surface/20 bg-surface-container-lowest">
               <Compass className="w-10 h-10 text-on-surface-variant/40 mx-auto mb-4 stroke-[1.25]" />
-              <h3 className="font-serif text-xl text-ebony-deep font-medium mb-1">No Artifact Matches</h3>
+              <h3 className="font-serif text-xl text-ebony-deep font-medium mb-1">{lang === "fr" ? "Aucun Artefact Correspondant" : "No Artifact Matches"}</h3>
               <p className="font-sans text-sm text-on-surface-variant max-w-md mx-auto mb-6">
-                Our curatorial logs do not list pieces matching your specific filter criteria.
+                {lang === "fr"
+                  ? "Nos registres curatoriaux ne répertorient pas de pièces correspondant à vos critères de filtrage spécifiques."
+                  : "Our curatorial logs do not list pieces matching your specific filter criteria."}
               </p>
               <button
                 onClick={clearFilters}
                 className="font-sans text-xs uppercase tracking-wider font-semibold text-ebony-deep border-b border-gold-leaf pb-0.5 hover:text-gold-leaf transition-colors"
               >
-                Reset Curatorial Filters
+                {lang === "fr" ? "Réinitialiser les Filtres" : "Reset Curatorial Filters"}
               </button>
             </div>
           )}
@@ -286,7 +291,7 @@ export default function CataloguePage() {
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-t from-ebony-deep/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                        <span className="text-[10px] text-parchment-ivory uppercase tracking-widest font-bold">View Details</span>
+                        <span className="text-[10px] text-parchment-ivory uppercase tracking-widest font-bold">{lang === "fr" ? "Voir les Détails" : "View Details"}</span>
                         <ArrowRight className="w-4 h-4 text-gold-leaf" />
                       </div>
                     </div>
@@ -313,15 +318,15 @@ export default function CataloguePage() {
           <div className="flex items-center gap-4">
             <Calendar size={24} className="text-gold-leaf shrink-0" />
             <div>
-              <h3 className="font-serif text-lg text-parchment-ivory">Need Help Finding the Right Piece?</h3>
-              <p className="font-sans text-xs text-parchment-ivory/60 mt-1">Our specialists can assist with acquisitions, valuations, and bespoke searches.</p>
+              <h3 className="font-serif text-lg text-parchment-ivory">{lang === "fr" ? "Besoin d'Aide pour Trouver la Pièce Idéale ?" : "Need Help Finding the Right Piece?"}</h3>
+              <p className="font-sans text-xs text-parchment-ivory/60 mt-1">{lang === "fr" ? "Nos spécialistes peuvent vous aider pour les acquisitions, les évaluations et les recherches sur mesure." : "Our specialists can assist with acquisitions, valuations, and bespoke searches."}</p>
             </div>
           </div>
           <a
             href="/booking"
             className="bg-gold-leaf text-ebony-deep font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 hover:bg-parchment-ivory transition-colors whitespace-nowrap"
           >
-            Book a Consultation
+            {lang === "fr" ? "Réserver une Consultation" : "Book a Consultation"}
           </a>
         </div>
       </section>
@@ -341,7 +346,7 @@ export default function CataloguePage() {
             <MessageSquare className="w-4.5 h-4.5 text-gold-leaf animate-pulse" />
             <div>
               <h3 className="font-serif text-[15px] font-medium tracking-tight text-white leading-none">Aduna Intelligence</h3>
-              <span className="label-caps text-on-surface-variant/60">Classical antiquities Advisor</span>
+              <span className="label-caps text-on-surface-variant/60">{lang === "fr" ? "Conseiller en Antiquités Classiques" : "Classical antiquities Advisor"}</span>
             </div>
           </div>
           <button onClick={() => setIsAdvisorOpen(false)} className="text-white opacity-80 hover:opacity-100 hover:text-gold-leaf p-1">
@@ -364,7 +369,7 @@ export default function CataloguePage() {
             <div className="flex justify-start">
               <div className="p-3 bg-surface-container border border-on-surface/10 flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 text-gold-leaf animate-spin" />
-                <span className="font-sans text-xs text-on-surface-variant italic">Curating historical data...</span>
+                <span className="font-sans text-xs text-on-surface-variant italic">{lang === "fr" ? "Curation des données historiques..." : "Curating historical data..."}</span>
               </div>
             </div>
           )}
@@ -386,7 +391,7 @@ export default function CataloguePage() {
         <div className="p-3 bg-parchment-ivory border-t border-on-surface/10 flex gap-2">
           <input
             type="text"
-            placeholder="Consult the Advisory AI..."
+            placeholder={lang === "fr" ? "Consultez l'IA Conseillère..." : "Consult the Advisory AI..."}
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
@@ -396,7 +401,7 @@ export default function CataloguePage() {
             onClick={() => handleSendMessage()}
             className="bg-ebony-deep text-parchment-ivory hover:bg-gold-leaf hover:text-ebony-deep transition-all px-4 flex items-center justify-center font-bold text-xs"
           >
-            Send
+            {lang === "fr" ? "Envoyer" : "Send"}
           </button>
         </div>
       </motion.div>
@@ -408,7 +413,7 @@ export default function CataloguePage() {
         className="fixed bottom-6 right-4 md:bottom-8 md:right-8 z-50 bg-ebony-deep text-parchment-ivory shadow-level-3 px-5 py-3 md:px-6 md:py-4 flex items-center gap-3 transition-all hover:bg-gold-leaf hover:text-ebony-deep group"
       >
         <MessageSquare className="w-4 h-4 text-gold-leaf group-hover:text-ebony-deep transition-colors" />
-        <span className="font-sans text-xs uppercase tracking-widest font-bold">Talk to an Advisor</span>
+        <span className="font-sans text-xs uppercase tracking-widest font-bold">{lang === "fr" ? "Parler à un Conseiller" : "Talk to an Advisor"}</span>
       </button>
     </>
   );

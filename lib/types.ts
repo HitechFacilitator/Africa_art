@@ -9,6 +9,7 @@ export interface Artwork {
   origin: string;
   dimensions: string;
   imageUrl: string;
+  blurDataURL?: string;
   label: "Price on Request" | number;
   scarcityIndex?: number;
   preservationStatus?: string;

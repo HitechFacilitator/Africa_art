@@ -14,6 +14,7 @@ import {
   FileText,
   Sparkles,
 } from "lucide-react";
+import { useTranslate } from "@/lib/translations";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
@@ -21,6 +22,7 @@ import type { Artwork } from "@/lib/types";
 
 export default function PriceOnRequestPage() {
   const router = useRouter();
+  const { lang } = useTranslate();
   const [selectedArtwork, setSelectedArtwork] = useState<Artwork | null>(null);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [inquiryFirstName, setInquiryFirstName] = useState("");
@@ -89,33 +91,31 @@ export default function PriceOnRequestPage() {
               <div className="lg:col-span-7">
                 <div className="flex items-center gap-2 mb-4">
                   <Lock size={12} className="text-gold-leaf" />
-                  <span className="label-caps text-gold-leaf">Confidential Offering</span>
+                  <span className="label-caps text-gold-leaf">{lang === "fr" ? "Offre Confidentielle" : "Confidential Offering"}</span>
                 </div>
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-                  <h1 className="font-display-lg text-parchment-ivory mb-4">Price on Request</h1>
+                  <h1 className="font-display-lg text-parchment-ivory mb-4">{lang === "fr" ? "Prix sur Demande" : "Price on Request"}</h1>
                 </motion.div>
                 <p className="font-sans text-sm text-parchment-ivory/60 max-w-lg leading-relaxed">
-                  For our most significant masterpieces, pricing is disclosed exclusively
-                  to vetted collectors. Browse the catalogue below and submit a confidential
-                  inquiry to receive allocation terms, provenance dossiers, and investment analysis.
+                  {lang === "fr" ? "Pour nos œuvres maîtresses les plus significatives, les prix sont divulgués exclusivement aux collectionneurs vérifiés. Parcourez le catalogue ci-dessous et soumettez une demande confidentielle pour recevoir les conditions d'allocation, les dossiers de provenance et l'analyse d'investissement." : "For our most significant masterpieces, pricing is disclosed exclusively to vetted collectors. Browse the catalogue below and submit a confidential inquiry to receive allocation terms, provenance dossiers, and investment analysis."}
                 </p>
                 <div className="flex items-center gap-6 mt-8">
                   <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-semibold text-parchment-ivory/40">
-                    <ShieldCheck size={12} className="text-gold-leaf/70" /> End-to-end encrypted
+                    <ShieldCheck size={12} className="text-gold-leaf/70" /> {lang === "fr" ? "Chiffrement de bout en bout" : "End-to-end encrypted"}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-semibold text-parchment-ivory/40">
-                    <FileText size={12} className="text-gold-leaf/70" /> Full dossier included
+                    <FileText size={12} className="text-gold-leaf/70" /> {lang === "fr" ? "Dossier complet inclus" : "Full dossier included"}
                   </div>
                 </div>
               </div>
               <div className="lg:col-span-5">
                 <div className="bg-parchment-ivory/5 border border-gold-leaf/15 p-6">
-                  <h3 className="font-serif text-lg text-parchment-ivory mb-3">How It Works</h3>
+                  <h3 className="font-serif text-lg text-parchment-ivory mb-3">{lang === "fr" ? "Comment ça marche" : "How It Works"}</h3>
                   <div className="space-y-3">
                     {[
-                      { step: "1", text: "Browse our curated POR collection below" },
-                      { step: "2", text: "Select an artwork and submit a confidential inquiry" },
-                      { step: "3", text: "Receive full pricing, provenance dossier, and terms within 24 hours" },
+                      { step: "1", text: lang === "fr" ? "Parcourez notre collection POR ci-dessous" : "Browse our curated POR collection below" },
+                      { step: "2", text: lang === "fr" ? "Sélectionnez une œuvre et soumettez une demande confidentielle" : "Select an artwork and submit a confidential inquiry" },
+                      { step: "3", text: lang === "fr" ? "Recevez les prix complets, le dossier de provenance et les conditions sous 24 heures" : "Receive full pricing, provenance dossier, and terms within 24 hours" },
                     ].map((s) => (
                       <div key={s.step} className="flex items-start gap-3">
                         <span className="w-6 h-6 rounded-full bg-gold-leaf text-ebony-deep flex items-center justify-center text-[10px] font-bold shrink-0">{s.step}</span>
@@ -133,7 +133,7 @@ export default function PriceOnRequestPage() {
         <div className="bg-surface-container border-b border-on-surface/5">
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-4">
             <div className="flex flex-wrap items-center gap-4">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Filter:</span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Filtrer :" : "Filter:"}</span>
               <div className="flex gap-2">
                 {materials.map((m) => (
                   <button
@@ -169,7 +169,7 @@ export default function PriceOnRequestPage() {
         <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12 md:py-16">
           <div className="flex items-center justify-between mb-8">
             <p className="text-xs text-on-surface-variant">
-              <span className="font-bold text-ebony-deep">{filtered.length}</span> masterpieces available
+              <span className="font-bold text-ebony-deep">{filtered.length}</span> {lang === "fr" ? "œuvres disponibles" : "masterpieces available"}
             </p>
           </div>
 
@@ -209,14 +209,14 @@ export default function PriceOnRequestPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Scarcity Index</p>
+                    <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">{lang === "fr" ? "Indice de Rareté" : "Scarcity Index"}</p>
                     <p className="font-serif text-sm text-ebony-deep font-semibold">{artwork.scarcityIndex}/100</p>
                   </div>
                   <button
                     onClick={() => openInquiry(artwork)}
                     className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5"
                   >
-                    <Send size={10} /> Inquire
+                    <Send size={10} /> {lang === "fr" ? "Demander" : "Inquire"}
                   </button>
                 </div>
               </motion.div>
@@ -225,9 +225,9 @@ export default function PriceOnRequestPage() {
 
           {filtered.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-sm text-on-surface-variant">No artworks match your current filters.</p>
+              <p className="text-sm text-on-surface-variant">{lang === "fr" ? "Aucune œuvre ne correspond à vos filtres actuels." : "No artworks match your current filters."}</p>
               <button onClick={() => { setFilterMaterial("All"); setFilterRegion("All"); }} className="mt-4 text-xs text-gold-leaf uppercase tracking-widest font-bold hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent">
-                Clear Filters
+                {lang === "fr" ? "Effacer les Filtres" : "Clear Filters"}
               </button>
             </div>
           )}
@@ -243,40 +243,38 @@ export default function PriceOnRequestPage() {
               {submitted ? (
                 <div className="text-center">
                   <CheckCircle className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Inquiry Received</h3>
+                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">{lang === "fr" ? "Demande Reçue" : "Inquiry Received"}</h3>
                   <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    Your confidential inquiry for <strong>{selectedArtwork?.title}</strong> has been received.
-                    Our curatorial team will respond within 24 hours with full provenance
-                    documentation and private placement terms.
+                    {lang === "fr" ? <>Votre demande confidentielle pour <strong>{selectedArtwork?.title}</strong> a été reçue. Notre équipe de curateurs répondra dans les 24 heures avec la documentation complète de provenance et les conditions de placement privé.</> : <>Your confidential inquiry for <strong>{selectedArtwork?.title}</strong> has been received. Our curatorial team will respond within 24 hours with full provenance documentation and private placement terms.</>}
                   </p>
                   <button onClick={resetModal} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">
-                    Close
+                    {lang === "fr" ? "Fermer" : "Close"}
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="text-center mb-6">
                     <Sparkles className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
-                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">Confidential Acquisition Inquiry</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">For: {selectedArtwork?.title}</p>
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">{lang === "fr" ? "Demande d'Acquisition Confidentielle" : "Confidential Acquisition Inquiry"}</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Pour :" : "For:"} {selectedArtwork?.title}</p>
                   </div>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">First Name *</label>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Prénom *" : "First Name *"}</label>
                         <input type="text" required value={inquiryFirstName} onChange={(e) => setInquiryFirstName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Julian" />
                       </div>
                       <div>
-                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Last Name *</label>
+                        <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Nom *" : "Last Name *"}</label>
                         <input type="text" required value={inquiryLastName} onChange={(e) => setInquiryLastName(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="Doe" />
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Professional Email *</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Email Professionnel *" : "Professional Email *"}</label>
                       <input type="email" required value={inquiryEmail} onChange={(e) => setInquiryEmail(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none" placeholder="collector@institution.com" />
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">International Phone</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Téléphone International" : "International Phone"}</label>
                       <div className="flex">
                         <select className="border border-ebony-deep/15 border-r-0 p-3 text-xs focus:border-gold-leaf focus:outline-none bg-surface-container-low w-24 shrink-0">
                           <option>+44</option>
@@ -292,16 +290,16 @@ export default function PriceOnRequestPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Profile *</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Profil *" : "Profile *"}</label>
                       <select value={clientProfile} onChange={(e) => setClientProfile(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
-                        <option>Private Collector</option>
-                        <option>Institution / Museum</option>
-                        <option>Auction House</option>
-                        <option>Investor</option>
+                        <option>{lang === "fr" ? "Collectionneur Privé" : "Private Collector"}</option>
+                        <option>{lang === "fr" ? "Institution / Musée" : "Institution / Museum"}</option>
+                        <option>{lang === "fr" ? "Maison de Ventes" : "Auction House"}</option>
+                        <option>{lang === "fr" ? "Investisseur" : "Investor"}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Indicative Budget</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Budget Indicatif" : "Indicative Budget"}</label>
                       <select value={budgetRange} onChange={(e) => setBudgetRange(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none">
                         <option>€100K – €500K</option>
                         <option>€500K – €1M</option>
@@ -312,7 +310,7 @@ export default function PriceOnRequestPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Message" : "Message"}</label>
                       <textarea rows={3} value={inquiryNotes} onChange={(e) => setInquiryNotes(e.target.value)} className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none resize-none" placeholder="Interest, timeline, special conditions..." />
                     </div>
                     <div className="flex items-start gap-3">
@@ -325,13 +323,13 @@ export default function PriceOnRequestPage() {
                         className="mt-1 accent-gold-leaf"
                       />
                       <label htmlFor="gdpr-consent" className="text-[10px] text-on-surface-variant leading-relaxed">
-                        I consent to the processing of my personal data in accordance with the <span className="text-gold-leaf font-semibold">Privacy Policy</span> and <span className="text-gold-leaf font-semibold">GDPR regulations</span>. I understand my data will be used to respond to this inquiry. *
+                        {lang === "fr" ? "Je consens au traitement de mes données personnelles conformément à la Politique de Confidentialité et aux réglementations RGPD. Je comprends que mes données seront utilisées pour répondre à cette demande. *" : "I consent to the processing of my personal data in accordance with the Privacy Policy and GDPR regulations. I understand my data will be used to respond to this inquiry. *"}
                       </label>
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-ebony-deep/5">
-                      <button type="button" onClick={resetModal} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Cancel</button>
+                      <button type="button" onClick={resetModal} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
                       <button type="submit" disabled={submitting || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center gap-2">
-                        {submitting ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> Submitting...</>) : "Submit Inquiry"}
+                        {submitting ? (<><Clock className="w-3.5 h-3.5 animate-spin" /> {lang === "fr" ? "Envoi..." : "Submitting..."}</>) : (lang === "fr" ? "Soumettre la Demande" : "Submit Inquiry")}
                       </button>
                     </div>
                   </form>

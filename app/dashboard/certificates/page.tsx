@@ -16,6 +16,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
+import { useTranslate } from "@/lib/translations";
 import type { Artwork } from "@/lib/types";
 
 interface Certificate {
@@ -59,6 +60,7 @@ const STATUS_STYLES = {
 };
 
 export default function CertificatesPage() {
+  const { lang } = useTranslate();
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(CERTIFICATES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -104,7 +106,7 @@ export default function CertificatesPage() {
       <div className="bg-ebony-deep border-b border-gold-leaf/20 py-2.5 px-6 text-center">
         <div className="max-w-[1440px] mx-auto flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-parchment-ivory">
           <span className="w-1.5 h-1.5 rounded-full bg-gold-leaf animate-pulse" />
-          Demo mode — Viewing as Mock Collector
+          {lang === "fr" ? "Mode démo — Consultation en tant que collectionnaire simulé" : "Demo mode — Viewing as Mock Collector"}
         </div>
       </div>
 
@@ -114,19 +116,17 @@ export default function CertificatesPage() {
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div>
-                <p className="label-caps text-gold-leaf mb-3">Digital Ownership</p>
-                <h1 className="font-display-lg text-ebony-deep mb-2">Certificates &amp; Status</h1>
+                <p className="label-caps text-gold-leaf mb-3">{lang === "fr" ? "Propriété Numérique" : "Digital Ownership"}</p>
+                <h1 className="font-display-lg text-ebony-deep mb-2">{lang === "fr" ? "Certificats & Statut" : "Certificates &amp; Status"}</h1>
                 <p className="font-sans text-sm text-on-surface-variant max-w-lg">
-                  Track the validity, renewal status, and provenance lineage of your
-                  certificates of authenticity. Access the verification portal and
-                  register new heirlooms.
+                  {lang === "fr" ? "Suivez la validité, le statut de renouvellement et la lignée de provenance de vos certificats d'authenticité. Accédez au portail de vérification et enregistrez de nouveaux héritages." : "Track the validity, renewal status, and provenance lineage of your certificates of authenticity. Access the verification portal and register new heirlooms."}
                 </p>
               </div>
               <button
                 onClick={() => setShowVerifyModal(true)}
                 className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-2 self-start"
               >
-                <Search size={14} /> Verify Certificate
+                <Search size={14} /> {lang === "fr" ? "Vérifier le Certificat" : "Verify Certificate"}
               </button>
             </div>
           </div>
@@ -138,17 +138,17 @@ export default function CertificatesPage() {
             <div className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-on-surface-variant">Valid:</span>
+                <span className="text-on-surface-variant">{lang === "fr" ? "Valide :" : "Valid:"}</span>
                 <span className="font-bold text-ebony-deep">{validCount}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full bg-amber-500" />
-                <span className="text-on-surface-variant">Renewal Due:</span>
+                <span className="text-on-surface-variant">{lang === "fr" ? "Renouvellement Dû :" : "Renewal Due:"}</span>
                 <span className="font-bold text-ebony-deep">{renewalCount}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 rounded-full bg-gold-leaf" />
-                <span className="text-on-surface-variant">Total:</span>
+                <span className="text-on-surface-variant">{lang === "fr" ? "Total :" : "Total:"}</span>
                 <span className="font-bold text-ebony-deep">{CERTIFICATES.length}</span>
               </div>
               <div className="flex-1" />
@@ -161,7 +161,7 @@ export default function CertificatesPage() {
                       filterStatus === s ? "border-ebony-deep bg-ebony-deep text-parchment-ivory" : "border-on-surface/10 text-on-surface-variant hover:border-gold-leaf/50"
                     }`}
                   >
-                    {s === "All" ? "All" : s === "VALID" ? "Valid" : "Renewal"}
+                    {s === "All" ? (lang === "fr" ? "Tous" : "All") : s === "VALID" ? (lang === "fr" ? "Valide" : "Valid") : (lang === "fr" ? "Renouvellement" : "Renewal")}
                   </button>
                 ))}
               </div>
@@ -181,7 +181,7 @@ export default function CertificatesPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by title, certificate #, or origin..."
+                    placeholder={lang === "fr" ? "Rechercher par titre, n° de certificat ou origine..." : "Search by title, certificate #, or origin..."}
                     className="w-full border border-on-surface/15 pl-9 pr-3 py-2.5 text-xs focus:border-gold-leaf focus:outline-none bg-surface"
                   />
                 </div>
@@ -219,7 +219,7 @@ export default function CertificatesPage() {
                 })}
                 {filtered.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-xs text-on-surface-variant">No certificates match your search.</p>
+                    <p className="text-xs text-on-surface-variant">{lang === "fr" ? "Aucun certificat ne correspond à votre recherche." : "No certificates match your search."}</p>
                   </div>
                 )}
               </div>
@@ -233,7 +233,7 @@ export default function CertificatesPage() {
                   <div className="bg-surface-container-low border border-on-surface/5 p-6 md:p-8 mb-6">
                     <div className="flex items-start justify-between mb-6">
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf mb-1">Certificate of Authenticity</p>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf mb-1">{lang === "fr" ? "Certificat d'Authenticité" : "Certificate of Authenticity"}</p>
                         <p className="font-mono text-sm text-ebony-deep font-semibold">{selectedCert.certificateNumber}</p>
                       </div>
                       <div className={`px-3 py-1.5 border ${STATUS_STYLES[selectedCert.status].color} flex items-center gap-1.5`}>
@@ -248,20 +248,20 @@ export default function CertificatesPage() {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Artwork</p>
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Œuvre" : "Artwork"}</p>
                           <p className="text-sm font-bold text-ebony-deep">{selectedCert.artwork.title}</p>
                           <p className="text-[10px] text-on-surface-variant">{selectedCert.artwork.origin} · {selectedCert.artwork.material}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Period</p>
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Période" : "Period"}</p>
                           <p className="text-xs text-ebony-deep">{selectedCert.artwork.period}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Dimensions</p>
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Dimensions" : "Dimensions"}</p>
                           <p className="text-xs text-ebony-deep">{selectedCert.artwork.dimensions}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Authentication Level</p>
+                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Niveau d'Authentification" : "Authentication Level"}</p>
                           <p className="text-xs text-ebony-deep font-semibold">{selectedCert.authenticationLevel}</p>
                         </div>
                       </div>
@@ -269,20 +269,20 @@ export default function CertificatesPage() {
 
                     <div className="border-t border-on-surface/5 pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Issue Date</p>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Date d'Émission" : "Issue Date"}</p>
                         <p className="text-xs text-ebony-deep">{selectedCert.issueDate}</p>
                       </div>
                       <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Expiry Date</p>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Date d'Expiration" : "Expiry Date"}</p>
                         <p className="text-xs text-ebony-deep">{selectedCert.expiryDate}</p>
                       </div>
                       <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Last Verified</p>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Dernière Vérification" : "Last Verified"}</p>
                         <p className="text-xs text-ebony-deep">{selectedCert.lastVerified}</p>
                       </div>
                       <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">Issuer</p>
-                        <p className="text-xs text-ebony-deep">Aduna Gallery</p>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Émetteur" : "Issuer"}</p>
+                        <p className="text-xs text-ebony-deep">{lang === "fr" ? "Galerie Aduna" : "Aduna Gallery"}</p>
                       </div>
                     </div>
                   </div>
@@ -291,7 +291,7 @@ export default function CertificatesPage() {
                   <div className="bg-surface-container border border-on-surface/5 p-5 mb-6">
                     <div className="flex items-center gap-2 mb-2">
                       <ShieldCheck size={14} className="text-gold-leaf" />
-                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">Blockchain Verification</p>
+                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Vérification Blockchain" : "Blockchain Verification"}</p>
                     </div>
                     <p className="font-mono text-[10px] text-on-surface-variant break-all leading-relaxed bg-surface p-3 border border-on-surface/5">{selectedCert.blockchainHash}</p>
                   </div>
@@ -299,13 +299,13 @@ export default function CertificatesPage() {
                   {/* Actions */}
                   <div className="flex flex-wrap gap-3">
                     <button className="bg-ebony-deep text-parchment-ivory px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
-                      <Download size={12} /> Download COA (PDF)
+                      <Download size={12} /> {lang === "fr" ? "Télécharger COA (PDF)" : "Download COA (PDF)"}
                     </button>
                     <button className="border border-on-surface/20 text-on-surface-variant px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
-                      <QrCode size={12} /> Generate QR Code
+                      <QrCode size={12} /> {lang === "fr" ? "Générer un Code QR" : "Generate QR Code"}
                     </button>
                     <button className="border border-on-surface/20 text-on-surface-variant px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
-                      <ExternalLink size={12} /> View on Explorer
+                      <ExternalLink size={12} /> {lang === "fr" ? "Voir sur l'Explorateur" : "View on Explorer"}
                     </button>
                     {selectedCert.status === "RENEWAL DUE" && (
                       <button
@@ -316,14 +316,14 @@ export default function CertificatesPage() {
                         }}
                         className="border border-amber-300 text-amber-700 px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-amber-50 transition-colors cursor-pointer bg-transparent flex items-center gap-1.5"
                       >
-                        <RefreshCw size={12} /> Renew Certificate
+                        <RefreshCw size={12} /> {lang === "fr" ? "Renouveler le Certificat" : "Renew Certificate"}
                       </button>
                     )}
                   </div>
                 </motion.div>
               ) : (
                 <div className="flex items-center justify-center h-64 border border-dashed border-on-surface/10">
-                  <p className="text-xs text-on-surface-variant/40 uppercase tracking-widest">Select a certificate to view details</p>
+                  <p className="text-xs text-on-surface-variant/40 uppercase tracking-widest">{lang === "fr" ? "Sélectionnez un certificat pour voir les détails" : "Select a certificate to view details"}</p>
                 </div>
               )}
             </div>
@@ -342,8 +342,8 @@ export default function CertificatesPage() {
 
               <div className="text-center mb-6">
                 <ShieldCheck className="w-12 h-12 text-gold-leaf mx-auto mb-3" />
-                <h3 className="font-serif text-xl font-medium uppercase tracking-wide">Verify Certificate</h3>
-                <p className="text-xs text-on-surface-variant mt-1">Enter a certificate number or blockchain hash to verify authenticity.</p>
+                <h3 className="font-serif text-xl font-medium uppercase tracking-wide">{lang === "fr" ? "Vérifier le Certificat" : "Verify Certificate"}</h3>
+                <p className="text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Entrez un numéro de certificat ou un hash blockchain pour vérifier l'authenticité." : "Enter a certificate number or blockchain hash to verify authenticity."}</p>
               </div>
 
               <div className="space-y-4">
@@ -359,7 +359,7 @@ export default function CertificatesPage() {
                   disabled={!verifyInput.trim()}
                   className="w-full bg-ebony-deep text-parchment-ivory py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity disabled:opacity-30 cursor-pointer border-0 flex items-center justify-center gap-2"
                 >
-                  <Search size={14} /> Verify Authenticity
+                  <Search size={14} /> {lang === "fr" ? "Vérifier l'Authenticité" : "Verify Authenticity"}
                 </button>
               </div>
 
@@ -368,14 +368,14 @@ export default function CertificatesPage() {
                   {verifyResult === "valid" ? (
                     <div className="bg-emerald-50 border border-emerald-200 p-4 text-center">
                       <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-                      <p className="text-sm font-bold text-emerald-800">Certificate Verified</p>
-                      <p className="text-xs text-emerald-700 mt-1">This certificate is authentic and currently valid in the Aduna Registry.</p>
+                      <p className="text-sm font-bold text-emerald-800">{lang === "fr" ? "Certificat Vérifié" : "Certificate Verified"}</p>
+                      <p className="text-xs text-emerald-700 mt-1">{lang === "fr" ? "Ce certificat est authentique et actuellement valide dans le Registre Aduna." : "This certificate is authentic and currently valid in the Aduna Registry."}</p>
                     </div>
                   ) : (
                     <div className="bg-red-50 border border-red-200 p-4 text-center">
                       <AlertTriangle className="w-10 h-10 text-red-500 mx-auto mb-2" />
-                      <p className="text-sm font-bold text-red-800">Certificate Not Found</p>
-                      <p className="text-xs text-red-700 mt-1">No matching certificate was found in the Aduna Registry. Please check the number and try again.</p>
+                      <p className="text-sm font-bold text-red-800">{lang === "fr" ? "Certificat Non Trouvé" : "Certificate Not Found"}</p>
+                      <p className="text-xs text-red-700 mt-1">{lang === "fr" ? "Aucun certificat correspondant n'a été trouvé dans le Registre Aduna. Veuillez vérifier le numéro et réessayer." : "No matching certificate was found in the Aduna Registry. Please check the number and try again."}</p>
                     </div>
                   )}
                 </motion.div>
@@ -394,30 +394,29 @@ export default function CertificatesPage() {
               {renewalConfirmed ? (
                 <div className="text-center">
                   <CheckCircle className="w-14 h-14 text-emerald-500 mx-auto mb-4" />
-                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Certificate Renewal Submitted</h3>
+                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">{lang === "fr" ? "Renouvellement de Certificat Soumis" : "Certificate Renewal Submitted"}</h3>
                   <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    Your renewal request for <strong>{renewalArtwork}</strong> has been submitted.
-                    Our authentication team will process the renewal within 2-3 business days and issue a new certificate.
+                    {lang === "fr" ? "Votre demande de renouvellement pour" : "Your renewal request for"} <strong>{renewalArtwork}</strong> {lang === "fr" ? "a été soumise. Notre équipe d'authentification traitera le renouvellement sous 2-3 jours ouvrés et délivrera un nouveau certificat." : "has been submitted. Our authentication team will process the renewal within 2-3 business days and issue a new certificate."}
                   </p>
-                  <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">Close</button>
+                  <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">{lang === "fr" ? "Fermer" : "Close"}</button>
                 </div>
               ) : (
                 <>
                   <div className="text-center mb-6">
                     <RefreshCw className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">Renew Certificate</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">Confirm renewal for: <strong>{renewalArtwork}</strong></p>
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">{lang === "fr" ? "Renouvellement de Certificat" : "Renew Certificate"}</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Confirmer le renouvellement pour :" : "Confirm renewal for:"} <strong>{renewalArtwork}</strong></p>
                   </div>
                   <div className="bg-surface-container-low border border-on-surface/5 p-4 mb-6 text-xs space-y-2">
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Renewal Fee</span><span className="font-medium">€450.00</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">Processing Time</span><span className="font-medium">2-3 Business Days</span></div>
-                    <div className="flex justify-between"><span className="text-on-surface-variant">New Certificate Validity</span><span className="font-medium">5 Years</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">{lang === "fr" ? "Frais de Renouvellement" : "Renewal Fee"}</span><span className="font-medium">€450.00</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">{lang === "fr" ? "Délai de Traitement" : "Processing Time"}</span><span className="font-medium">{lang === "fr" ? "2-3 Jours Ouvrés" : "2-3 Business Days"}</span></div>
+                    <div className="flex justify-between"><span className="text-on-surface-variant">{lang === "fr" ? "Validité du Nouveau Certificat" : "New Certificate Validity"}</span><span className="font-medium">{lang === "fr" ? "5 Ans" : "5 Years"}</span></div>
                   </div>
                   <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    By confirming, you authorize the renewal of this certificate of authenticity. A new certificate with updated verification data and blockchain record will be issued.
+                    {lang === "fr" ? "En confirmant, vous autorisez le renouvellement de ce certificat d'authenticité. Un nouveau certificat avec des données de vérification et un enregistrement blockchain mis à jour sera délivré." : "By confirming, you authorize the renewal of this certificate of authenticity. A new certificate with updated verification data and blockchain record will be issued."}
                   </p>
                   <div className="flex gap-3">
-                    <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Cancel</button>
+                    <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
                     <button
                       onClick={() => {
                         setRenewalLoading(true);
@@ -429,7 +428,7 @@ export default function CertificatesPage() {
                       disabled={renewalLoading}
                       className="flex-1 bg-amber-500 text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-amber-600 transition-colors disabled:opacity-50 cursor-pointer border-0 flex items-center justify-center gap-2"
                     >
-                      {renewalLoading ? "Processing..." : "Confirm Renewal"}
+                      {renewalLoading ? (lang === "fr" ? "Traitement en cours..." : "Processing...") : (lang === "fr" ? "Confirmer le Renouvellement" : "Confirm Renewal")}
                     </button>
                   </div>
                 </>

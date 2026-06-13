@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslate } from "@/lib/translations";
 
 interface UserSession {
   email: string;
@@ -19,6 +20,7 @@ const OTP_EXPIRY_SECONDS = 60;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { lang } = useTranslate();
   const [step, setStep] = useState<"login" | "mfa">("login");
   const [email, setEmail] = useState("");
   const [passphrase, setPassphrase] = useState("");
@@ -85,7 +87,7 @@ export default function LoginPage() {
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (lockedOut) {
-      setErrorMsg(`Account temporarily locked. Try again in ${formatTimer(lockoutTimer)}.`);
+      setErrorMsg(`${lang === "fr" ? "Compte temporairement verrouillé. Veuillez réessayer dans" : "Account temporarily locked. Try again in"} ${formatTimer(lockoutTimer)}.`);
       return;
     }
     if (!email) { setErrorMsg("Please specify a valid institutional credential."); return; }
@@ -121,7 +123,7 @@ export default function LoginPage() {
     if (newAttempts >= MAX_ATTEMPTS) {
       setLockedOut(true);
       setLockoutTimer(300); // 5 minutes
-      setErrorMsg(`Too many failed attempts. Account locked for 5 minutes.`);
+      setErrorMsg(`${lang === "fr" ? "Tentatives échouées trop nombreuses. Compte verrouillé pour 5 minutes." : "Too many failed attempts. Account locked for 5 minutes."}`);
       setStep("login");
       return;
     }
@@ -194,25 +196,25 @@ export default function LoginPage() {
                       <div className="mb-6 p-4 bg-red-50 border-l-2 border-red-700 flex items-start gap-3">
                         <AlertCircle size={16} className="text-red-700 shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs font-bold text-red-700">Account Temporarily Locked</p>
-                          <p className="text-[10px] text-red-700/80 mt-1">Too many failed login attempts. Please try again in {formatTimer(lockoutTimer)}.</p>
+                          <p className="text-xs font-bold text-red-700">{lang === "fr" ? "Verrouillage du Compte" : "Account Lockout"}</p>
+                          <p className="text-[10px] text-red-700/80 mt-1">{lang === "fr" ? "Tentatives échouées trop nombreuses. Veuillez réessayer dans " : "Too many failed attempts. Please try again in "}{formatTimer(lockoutTimer)}.</p>
                         </div>
                       </div>
                     )}
 
                     <form className="space-y-8" onSubmit={handleLoginSubmit}>
-                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">Identity / Email</label><input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="institutional@address.com" disabled={lockedOut} /></div>
-                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">Passphrase</label><input type="password" required value={passphrase} onChange={(e) => { setPassphrase(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="••••••••••••••••" disabled={lockedOut} /></div>
+                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">{lang === "fr" ? "Adresse Email" : "Email Address"}</label><input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="institutional@address.com" disabled={lockedOut} /></div>
+                      <div><label className="font-sans text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.16em] block">{lang === "fr" ? "Mot de Passe" : "Password"}</label><input type="password" required value={passphrase} onChange={(e) => { setPassphrase(e.target.value); setErrorMsg(null); }} className="w-full bg-transparent border-0 border-b border-ebony-deep/15 text-ebony-deep font-sans text-sm md:text-base py-2.5 focus:ring-0 focus:border-gold-leaf transition-colors placeholder:text-on-surface-variant/35 outline-none" placeholder="••••••••••••••••" disabled={lockedOut} /></div>
                       {errorMsg && <div className="text-xs text-red-700 bg-red-100/60 p-3 border-l-2 border-red-700">{errorMsg}</div>}
                       <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="bg-transparent border-ebony-deep/30 text-ebony-deep focus:ring-gold-leaf rounded-none w-4 h-4" /><span className="font-sans text-xs text-on-surface-variant">Remember Device</span></label>
-                        <a href="#" onClick={(e) => { e.preventDefault(); setErrorMsg("Please contact institutional security at desk@aduna.com"); }} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf transition-colors underline underline-offset-4">Forgot Passphrase?</a>
+                        <label className="flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="bg-transparent border-ebony-deep/30 text-ebony-deep focus:ring-gold-leaf rounded-none w-4 h-4" /><span className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Se souvenir de moi" : "Remember me"}</span></label>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setErrorMsg("Please contact institutional security at desk@aduna.com"); }} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf transition-colors underline underline-offset-4">{lang === "fr" ? "Mot de Passe Oublié ?" : "Forgot Password?"}</a>
                       </div>
-                      <button type="submit" disabled={lockedOut} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Authenticate</button>
+                      <button type="submit" disabled={lockedOut} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">{lang === "fr" ? "Se Connecter" : "Sign In"}</button>
                     </form>
                   </div>
                   <div className="mt-10 text-center border-t border-ebony-deep/5 pt-6">
-                    <p className="font-sans text-xs text-on-surface-variant">Not yet a member? <Link href="/register" className="text-ebony-deep font-medium hover:text-gold-leaf underline transition-colors">Apply for Access</Link></p>
+                    <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Vous n'avez pas de compte ?" : "Don't have an account?"} <Link href="/register" className="text-ebony-deep font-medium hover:text-gold-leaf underline transition-colors">{lang === "fr" ? "S'inscrire" : "Register"}</Link></p>
                   </div>
                   <div className="mt-6 flex flex-col items-center justify-center gap-1.5 border-t border-dashed border-ebony-deep/5 pt-4">
                     <span className="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant/40">Sovereign Sandbox Clearance Bypass</span>

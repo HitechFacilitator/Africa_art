@@ -15,6 +15,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
+import { useTranslate } from "@/lib/translations";
 
 interface Specialist {
   id: string;
@@ -92,6 +93,7 @@ const TIME_SLOTS = [
 ];
 
 export default function BookingPage() {
+  const { lang } = useTranslate();
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -144,20 +146,19 @@ export default function BookingPage() {
         <section className="bg-ebony-deep py-16 md:py-20 relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_30%_50%,_#C5A059_0%,_transparent_70%)]" />
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 relative z-10">
-            <p className="label-caps text-gold-leaf mb-3">Advisory Services</p>
+            <p className="label-caps text-gold-leaf mb-3">{lang === "fr" ? "Services Conseil" : "Advisory Services"}</p>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <h1 className="font-display-lg text-parchment-ivory mb-4">Private Consultation Booking</h1>
+              <h1 className="font-display-lg text-parchment-ivory mb-4">{lang === "fr" ? "Réservation de Consultation Privée" : "Private Consultation Booking"}</h1>
             </motion.div>
             <p className="font-sans text-sm text-parchment-ivory/60 max-w-xl">
-              Schedule a confidential consultation with our art advisors, curators,
-              or investment specialists. Available to registered collectors by appointment.
+              {lang === "fr" ? "Planifiez une consultation confidentielle avec nos conseillers en art, conservateurs ou spécialistes en investissement. Disponible pour les collectionneurs enregistrés sur rendez-vous." : "Schedule a confidential consultation with our art advisors, curators, or investment specialists. Available to registered collectors by appointment."}
             </p>
             <div className="flex items-center gap-4 mt-6">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-semibold text-parchment-ivory/40">
-                <ShieldCheck size={12} className="text-gold-leaf/70" /> End-to-end encrypted
+                <ShieldCheck size={12} className="text-gold-leaf/70" /> {lang === "fr" ? "Chiffrement de bout en bout" : "End-to-end encrypted"}
               </div>
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-semibold text-parchment-ivory/40">
-                <Clock size={12} className="text-gold-leaf/70" /> Response within 24 hours
+                <Clock size={12} className="text-gold-leaf/70" /> {lang === "fr" ? "Réponse dans les 24 heures" : "Response within 24 hours"}
               </div>
             </div>
           </div>
@@ -168,9 +169,9 @@ export default function BookingPage() {
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-4">
             <div className="flex items-center justify-center gap-0">
               {[
-                { num: 1, label: "Select Specialist" },
-                { num: 2, label: "Date & Topic" },
-                { num: 3, label: "Confirm Details" },
+                { num: 1, label: lang === "fr" ? "Choisir le Spécialiste" : "Select Specialist" },
+                { num: 2, label: lang === "fr" ? "Date & Sujet" : "Date & Topic" },
+                { num: 3, label: lang === "fr" ? "Confirmer les Détails" : "Confirm Details" },
               ].map((s, idx) => (
                 <div key={s.num} className="flex items-center">
                   <button
@@ -208,23 +209,23 @@ export default function BookingPage() {
           {submitted ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg mx-auto text-center py-16">
               <CheckCircle className="w-16 h-16 text-gold-leaf mx-auto mb-6" />
-              <h2 className="font-serif text-2xl text-ebony-deep mb-3">Consultation Confirmed</h2>
+              <h2 className="font-serif text-2xl text-ebony-deep mb-3">{lang === "fr" ? "Consultation Confirmée" : "Consultation Confirmed"}</h2>
               <p className="font-sans text-sm text-on-surface-variant mb-2">
-                Your private consultation with <strong>{selectedSpecialist?.name}</strong> has been scheduled.
+                {lang === "fr" ? "Votre consultation privée avec" : "Your private consultation with"} <strong>{selectedSpecialist?.name}</strong> {lang === "fr" ? "a été planifiée." : "has been scheduled."}
               </p>
               <p className="font-sans text-xs text-on-surface-variant/60 mb-8">
-                {formatDate(selectedDate)} at {selectedTime} · {consultationMode === "video" ? "Video Conference" : consultationMode === "phone" ? "Phone Call" : "In-Person"}
+                {formatDate(selectedDate)} {lang === "fr" ? "à" : "at"} {selectedTime} · {consultationMode === "video" ? (lang === "fr" ? "Visioconférence" : "Video Conference") : consultationMode === "phone" ? (lang === "fr" ? "Appel Téléphonique" : "Phone Call") : (lang === "fr" ? "En Personne" : "In-Person")}
               </p>
               <div className="bg-surface-container-low border border-on-surface/5 p-6 mb-8 text-left">
-                <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">Booking Reference</p>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-3">{lang === "fr" ? "Référence de Réservation" : "Booking Reference"}</p>
                 <p className="font-mono text-sm text-ebony-deep">{bookingRef}</p>
               </div>
               <div className="flex gap-3 justify-center">
                 <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
-                  Go to Dashboard
+                  {lang === "fr" ? "Aller au Tableau de Bord" : "Go to Dashboard"}
                 </a>
                 <a href="/catalogue" className="border border-ebony-deep/20 text-ebony-deep px-6 py-3 text-xs uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors inline-block">
-                  Browse Collection
+                  {lang === "fr" ? "Parcourir la Collection" : "Browse Collection"}
                 </a>
               </div>
             </motion.div>
@@ -235,7 +236,7 @@ export default function BookingPage() {
                 <AnimatePresence mode="wait">
                   {step === 1 && (
                     <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                      <h2 className="font-serif text-xl text-ebony-deep mb-6">Select Your Specialist</h2>
+                      <h2 className="font-serif text-xl text-ebony-deep mb-6">{lang === "fr" ? "Choisissez Votre Spécialiste" : "Select Your Specialist"}</h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {SPECIALISTS.map((s) => (
                           <button
@@ -263,7 +264,7 @@ export default function BookingPage() {
                             </div>
                             <div className="flex items-center justify-between">
                               <span className={`text-[10px] font-semibold uppercase tracking-widest ${s.available ? "text-emerald-600" : "text-on-surface-variant/40"}`}>
-                                {s.available ? `Available · ${s.nextSlot}` : "Currently Unavailable"}
+                                {s.available ? `${lang === "fr" ? "Disponible" : "Available"} · ${s.nextSlot}` : (lang === "fr" ? "Actuellement Indisponible" : "Currently Unavailable")}
                               </span>
                             </div>
                           </button>
@@ -274,16 +275,16 @@ export default function BookingPage() {
 
                   {step === 2 && (
                     <motion.div key="step2" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                      <h2 className="font-serif text-xl text-ebony-deep mb-6">Select Date, Time & Topic</h2>
+                      <h2 className="font-serif text-xl text-ebony-deep mb-6">{lang === "fr" ? "Sélectionnez la Date, l'Heure & le Sujet" : "Select Date, Time & Topic"}</h2>
 
                       {/* Consultation Mode */}
                       <div className="mb-8">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">Consultation Mode</label>
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">{lang === "fr" ? "Mode de Consultation" : "Consultation Mode"}</label>
                         <div className="flex gap-3">
                           {[
-                            { mode: "video" as const, label: "Video Call", icon: Video },
-                            { mode: "phone" as const, label: "Phone", icon: Phone },
-                            { mode: "in-person" as const, label: "In-Person", icon: MapPin },
+                            { mode: "video" as const, label: lang === "fr" ? "Appel Vidéo" : "Video Call", icon: Video },
+                            { mode: "phone" as const, label: lang === "fr" ? "Téléphone" : "Phone", icon: Phone },
+                            { mode: "in-person" as const, label: lang === "fr" ? "En Personne" : "In-Person", icon: MapPin },
                           ].map(({ mode, label, icon: Icon }) => (
                             <button
                               key={mode}
@@ -300,7 +301,7 @@ export default function BookingPage() {
 
                       {/* Date Selection */}
                       <div className="mb-8">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">Preferred Date</label>
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">{lang === "fr" ? "Date Préférée" : "Preferred Date"}</label>
                         <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-7 gap-2">
                           {generateDates().map((d) => (
                             <button
@@ -318,7 +319,7 @@ export default function BookingPage() {
 
                       {/* Time Selection */}
                       <div className="mb-8">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">Preferred Time</label>
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">{lang === "fr" ? "Heure Préférée" : "Preferred Time"}</label>
                         <div className="flex flex-wrap gap-2">
                           {TIME_SLOTS.map((t) => (
                             <button
@@ -336,7 +337,7 @@ export default function BookingPage() {
 
                       {/* Topic Selection */}
                       <div className="mb-8">
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">Consultation Topic</label>
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-3">{lang === "fr" ? "Sujet de Consultation" : "Consultation Topic"}</label>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {TOPICS.map((topic) => (
                             <button
@@ -354,13 +355,13 @@ export default function BookingPage() {
 
                       {/* Artwork Interest */}
                       <div>
-                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-2">Artwork of Interest (Optional)</label>
+                        <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-2">{lang === "fr" ? "Œuvre d'Intérêt (Optionnel)" : "Artwork of Interest (Optional)"}</label>
                         <select
                           value={artworkInterest}
                           onChange={(e) => setArtworkInterest(e.target.value)}
                           className="w-full border border-on-surface/15 p-3 text-sm focus:border-gold-leaf focus:outline-none bg-surface"
                         >
-                          <option value="">No specific artwork</option>
+                          <option value="">{lang === "fr" ? "Aucune œuvre spécifique" : "No specific artwork"}</option>
                           {ARTWORKS.map((a) => (
                             <option key={a.id} value={a.id}>{a.title} — {a.origin}</option>
                           ))}
@@ -371,11 +372,11 @@ export default function BookingPage() {
 
                   {step === 3 && (
                     <motion.div key="step3" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                      <h2 className="font-serif text-xl text-ebony-deep mb-6">Confirm Your Details</h2>
+                      <h2 className="font-serif text-xl text-ebony-deep mb-6">{lang === "fr" ? "Confirmez Vos Détails" : "Confirm Your Details"}</h2>
 
                       <div className="space-y-5">
                         <div>
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Full Name *</label>
+                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Nom Complet *" : "Full Name *"}</label>
                           <input
                             type="text"
                             required
@@ -386,7 +387,7 @@ export default function BookingPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Email *</label>
+                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Email *" : "Email *"}</label>
                           <input
                             type="email"
                             required
@@ -397,7 +398,7 @@ export default function BookingPage() {
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">Notes (Optional)</label>
+                          <label className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant block mb-1.5">{lang === "fr" ? "Notes (Optionnel)" : "Notes (Optional)"}</label>
                           <textarea
                             rows={3}
                             value={notes}
@@ -418,7 +419,7 @@ export default function BookingPage() {
                     disabled={step === 1}
                     className="text-xs font-bold uppercase tracking-widest text-on-surface-variant hover:text-ebony-deep transition-colors disabled:opacity-30 cursor-pointer border-0 bg-transparent"
                   >
-                    ← Previous
+                    ← {lang === "fr" ? "Précédent" : "Previous"}
                   </button>
                   {step < 3 ? (
                     <button
@@ -426,7 +427,7 @@ export default function BookingPage() {
                       disabled={!canProceed()}
                       className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors disabled:opacity-30 cursor-pointer border-0 flex items-center gap-2"
                     >
-                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                      {lang === "fr" ? "Continuer" : "Continue"} <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   ) : (
                     <button
@@ -435,9 +436,9 @@ export default function BookingPage() {
                       className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors disabled:opacity-30 cursor-pointer border-0 flex items-center gap-2"
                     >
                       {submitting ? (
-                        <><Clock className="w-3.5 h-3.5 animate-spin" /> Scheduling...</>
+                        <><Clock className="w-3.5 h-3.5 animate-spin" /> {lang === "fr" ? "Planification en cours..." : "Scheduling..."}</>
                       ) : (
-                        <><Send className="w-3.5 h-3.5" /> Book Consultation</>
+                        <><Send className="w-3.5 h-3.5" /> {lang === "fr" ? "Réserver la Consultation" : "Book Consultation"}</>
                       )}
                     </button>
                   )}
@@ -447,7 +448,7 @@ export default function BookingPage() {
               {/* Right: Summary Sidebar */}
               <div className="lg:col-span-4">
                 <div className="bg-surface-container-low border border-on-surface/5 p-6 sticky top-24">
-                  <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">Booking Summary</h3>
+                  <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">{lang === "fr" ? "Résumé de la Réservation" : "Booking Summary"}</h3>
                   {selectedSpecialist ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 pb-4 border-b border-on-surface/5">
@@ -461,39 +462,39 @@ export default function BookingPage() {
                       </div>
                       {selectedDate && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Date</span>
+                          <span className="text-on-surface-variant">{lang === "fr" ? "Date" : "Date"}</span>
                           <span className="text-ebony-deep font-semibold">{formatDate(selectedDate)}</span>
                         </div>
                       )}
                       {selectedTime && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Time</span>
+                          <span className="text-on-surface-variant">{lang === "fr" ? "Heure" : "Time"}</span>
                           <span className="text-ebony-deep font-semibold">{selectedTime}</span>
                         </div>
                       )}
                       <div className="flex justify-between text-xs">
-                        <span className="text-on-surface-variant">Mode</span>
+                        <span className="text-on-surface-variant">{lang === "fr" ? "Mode" : "Mode"}</span>
                         <span className="text-ebony-deep font-semibold capitalize">{consultationMode}</span>
                       </div>
                       {selectedTopic && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Topic</span>
+                          <span className="text-on-surface-variant">{lang === "fr" ? "Sujet" : "Topic"}</span>
                           <span className="text-ebony-deep font-semibold text-right">{selectedTopic}</span>
                         </div>
                       )}
                       {artworkInterest && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-on-surface-variant">Artwork</span>
+                          <span className="text-on-surface-variant">{lang === "fr" ? "Œuvre" : "Artwork"}</span>
                           <span className="text-ebony-deep font-semibold text-right">{ARTWORKS.find(a => a.id === artworkInterest)?.title}</span>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <p className="text-xs text-on-surface-variant/60">Select a specialist to begin.</p>
+                    <p className="text-xs text-on-surface-variant/60">{lang === "fr" ? "Sélectionnez un spécialiste pour commencer." : "Select a specialist to begin."}</p>
                   )}
                   <div className="mt-6 pt-4 border-t border-on-surface/5">
                     <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest font-semibold text-on-surface-variant/40">
-                      <ShieldCheck size={10} className="text-gold-leaf" /> Confidential · Encrypted
+                      <ShieldCheck size={10} className="text-gold-leaf" /> {lang === "fr" ? "Confidentiel · Chiffré" : "Confidential · Encrypted"}
                     </div>
                   </div>
                 </div>

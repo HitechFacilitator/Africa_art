@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { useTranslate } from "@/lib/translations";
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -152,6 +153,8 @@ export default function ProvenancePage() {
   const [verificationError, setVerificationError] = useState("");
   const [isLoadingLedger, setIsLoadingLedger] = useState(false);
 
+  const { lang } = useTranslate();
+
   // Certificate modal state
   const [showCertificate, setShowCertificate] = useState(false);
 
@@ -216,9 +219,9 @@ export default function ProvenancePage() {
         <div className="max-w-[1440px] mx-auto px-6 md:px-20 py-12 md:py-24">
           {/* Hero Header */}
           <header className="text-center max-w-3xl mx-auto mb-20 md:mb-28">
-            <h1 className="font-display-xl text-ebony-deep mb-6">Provenance &amp; Authenticity</h1>
+            <h1 className="font-display-xl text-ebony-deep mb-6">{lang === "fr" ? "Provenance &amp; Authentification" : "Provenance &amp; Authenticity"}</h1>
             <p className="font-sans text-lg leading-relaxed text-on-surface-variant max-w-2xl mx-auto">
-              Establishing institutional trust through rigorous verification, legal compliance, and an unwavering commitment to the ethical preservation of African heritage.
+              {lang === "fr" ? "Établir la confiance institutionnelle grâce à une vérification rigoureuse, à la conformité juridique et à un engagement inébranlable envers la préservation éthique du patrimoine africain." : "Establishing institutional trust through rigorous verification, legal compliance, and an unwavering commitment to the ethical preservation of African heritage."}
             </p>
           </header>
 
@@ -226,13 +229,13 @@ export default function ProvenancePage() {
           <section className="mb-24">
             <div className="flex items-center space-x-4 mb-10">
               <span className="w-12 h-[1px] bg-on-surface/20" />
-              <h2 className="font-serif text-3xl text-ebony-deep font-light">Our Authenticity Protocol</h2>
+              <h2 className="font-serif text-3xl text-ebony-deep font-light">{lang === "fr" ? "Notre Protocole d'Authenticité" : "Our Authenticity Protocol"}</h2>
             </div>
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { icon: Microscope, title: "I. Scientific Analysis", desc: "Utilizing non-destructive material testing, including Carbon-14 dating and thermoluminescence, to establish empirical baseline age and origin.", action: "Simulate Radiocarbon Lab", sim: "scientific" as const },
-                { icon: Users, title: "II. Peer Review", desc: "Each piece is subject to evaluation by our network of independent curators, ethnographers, and institutional academics.", action: "Convene Board", sim: "peer" as const },
-                { icon: Cpu, title: "III. Algorithmic Matching", desc: "Proprietary AI cross-references carving techniques, patina patterns, and stylistic markers against global institutional databases.", action: "Run Neural Registry Search", sim: "ai" as const },
+                { icon: Microscope, title: lang === "fr" ? "I. Analyse Scientifique" : "I. Scientific Analysis", desc: lang === "fr" ? "Utilisation d'essais non destructifs des matériaux, y compris le datation au carbone-14 et la thermoluminescence, pour établir l'âge empirique et l'origine." : "Utilizing non-destructive material testing, including Carbon-14 dating and thermoluminescence, to establish empirical baseline age and origin.", action: lang === "fr" ? "Simuler le Laboratoire de Radiocarbone" : "Simulate Radiocarbon Lab", sim: "scientific" as const },
+                { icon: Users, title: lang === "fr" ? "II. Évaluation par les Pairs" : "II. Peer Review", desc: lang === "fr" ? "Chaque pièce est évaluée par notre réseau de conservateurs indépendants, d'ethnographes et d'universitaires institutionnels." : "Each piece is subject to evaluation by our network of independent curators, ethnographers, and institutional academics.", action: lang === "fr" ? "Convoquer le Conseil" : "Convene Board", sim: "peer" as const },
+                { icon: Cpu, title: lang === "fr" ? "III. Appariement Algorithmique" : "III. Algorithmic Matching", desc: lang === "fr" ? "Notre IA propriétaire croise les techniques de sculpture, les motifs de patine et les marqueurs stylistiques avec des bases de données institutionnelles mondiales." : "Proprietary AI cross-references carving techniques, patina patterns, and stylistic markers against global institutional databases.", action: lang === "fr" ? "Lancer la Recherche du Réseau Neural" : "Run Neural Registry Search", sim: "ai" as const },
               ].map((card) => (
                 <motion.div key={card.sim} variants={fadeUp} onClick={() => setActiveSimulation(card.sim)} className="group bg-parchment-ivory p-8 border border-on-surface/5 flex flex-col h-full cursor-pointer shadow-level-2 hover:shadow-hover-lift hover:border-gold-leaf/20 transition-all duration-300">
                   <div className="mb-6 text-gold-leaf group-hover:scale-105 transition-transform duration-300"><card.icon size={32} strokeWidth={1.5} /></div>
@@ -255,12 +258,12 @@ export default function ProvenancePage() {
 
                     {activeSimulation === "scientific" && (
                       <div className="space-y-6 text-left">
-                        <div className="flex items-center space-x-3 mb-2"><Microscope className="text-gold-leaf" size={24} /><h4 className="font-serif text-2xl text-ebony-deep">Scientific Carbon-14 and TL Simulator</h4></div>
-                        <p className="font-sans text-xs text-on-surface-variant">Simulate direct organic half-life decomposition decay. Adjust hypothetical age below.</p>
+                        <div className="flex items-center space-x-3 mb-2"><Microscope className="text-gold-leaf" size={24} /><h4 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Simulateur Scientifique Carbone-14 et TL" : "Scientific Carbon-14 and TL Simulator"}</h4></div>
+                        <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Simulez la décomposition directe de la demi-vie organique. Ajustez l'âge hypothétique ci-dessous." : "Simulate direct organic half-life decomposition decay. Adjust hypothetical age below."}</p>
                         <div className="bg-surface-container-low p-5 space-y-4 border border-on-surface/5">
                           <div className="flex justify-between items-center text-xs font-semibold tracking-wider uppercase text-on-surface-variant">
-                            <span>Target Hypothesis Age</span>
-                            <span className="font-mono text-ebony-deep text-sm">{c14Age} Years Old</span>
+                            <span>{lang === "fr" ? "Âge Hypothétique Cible" : "Target Hypothesis Age"}</span>
+                            <span className="font-mono text-ebony-deep text-sm">{c14Age} {lang === "fr" ? "Ans" : "Years Old"}</span>
                           </div>
                           <input type="range" min="10" max="600" value={c14Age} onChange={(e) => setC14Age(Number(e.target.value))} className="w-full accent-gold-leaf h-1.5 bg-surface-dim appearance-none cursor-pointer" />
                           <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-on-surface/10">
@@ -277,8 +280,8 @@ export default function ProvenancePage() {
 
                     {activeSimulation === "peer" && (
                       <div className="space-y-6 text-left">
-                        <div className="flex items-center space-x-3 mb-2"><Users className="text-gold-leaf" size={24} /><h4 className="font-serif text-2xl text-ebony-deep">Peer Review Advisory Chamber</h4></div>
-                        <p className="font-sans text-xs text-on-surface-variant">Review evaluation rosters submitted by preeminent regional specialists.</p>
+                        <div className="flex items-center space-x-3 mb-2"><Users className="text-gold-leaf" size={24} /><h4 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Chambre Conseil d'Évaluation par les Pairs" : "Peer Review Advisory Chamber"}</h4></div>
+                        <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Examinez les listes d'évaluation soumises par des spécialistes régionaux éminents." : "Review evaluation rosters submitted by preeminent regional specialists."}</p>
                         <div className="flex border-b border-on-surface/10 font-sans text-xs">
                           {[{ name: "Dr. Olamina", role: "Histology" }, { name: "Prof. Dupris", role: "Ethnology" }, { name: "Amara Ndiaye", role: "Conservation" }].map((curator, idx) => (
                             <button key={idx} onClick={() => setActiveReviewer(idx)} className={`px-4 py-2 border-b-2 font-medium tracking-wide ${activeReviewer === idx ? "border-gold-leaf text-ebony-deep" : "border-transparent text-on-surface-variant/70 hover:text-ebony-deep"}`}>{curator.name} ({curator.role})</button>
@@ -293,8 +296,8 @@ export default function ProvenancePage() {
 
                     {activeSimulation === "ai" && (
                       <div className="space-y-6 text-left">
-                        <div className="flex items-center space-x-3 mb-2"><Cpu className="text-gold-leaf" size={24} /><h4 className="font-serif text-2xl text-ebony-deep">AI Custom Fingerprint Matcher</h4></div>
-                        <p className="font-sans text-xs text-on-surface-variant">Launch our proprietary convolutional analysis on regional carving grooves and volumetric structure coordinates.</p>
+                        <div className="flex items-center space-x-3 mb-2"><Cpu className="text-gold-leaf" size={24} /><h4 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Compareur d'Empreintes Digitales IA" : "AI Custom Fingerprint Matcher"}</h4></div>
+                        <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Lancez notre analyse convolutionnelle propriétaire sur les rainures de sculpture régionales et les coordonnées structurelles volumétriques." : "Launch our proprietary convolutional analysis on regional carving grooves and volumetric structure coordinates."}</p>
                         <div className="bg-ebony-deep text-parchment-ivory p-5 font-mono text-xs min-h-[160px] flex flex-col justify-between">
                           <div>
                             {matchingProgress === null && <div className="text-parchment-ivory/60">&gt; Systems Idle. Ready to scan global institutional databases.</div>}
@@ -307,7 +310,7 @@ export default function ProvenancePage() {
                     )}
 
                     <div className="mt-8 pt-4 border-t border-on-surface/10 flex justify-end">
-                      <button onClick={() => { setActiveSimulation(null); setMatchingProgress(null); }} className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">Close Laboratory</button>
+                      <button onClick={() => { setActiveSimulation(null); setMatchingProgress(null); }} className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">{lang === "fr" ? "Fermer le Laboratoire" : "Close Laboratory"}</button>
                     </div>
                   </motion.div>
                 </div>
@@ -319,8 +322,8 @@ export default function ProvenancePage() {
           <section className="mb-24">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-on-surface/10 pb-6 mb-12 gap-4">
               <div>
-                <h2 className="font-serif text-3xl text-ebony-deep font-light mb-1">Provenance Tracking</h2>
-                <p className="font-sans text-xs text-on-surface-variant">Explore verified dossiers. Select a masterwork below to reconstruct its historic timeline.</p>
+                <h2 className="font-serif text-3xl text-ebony-deep font-light mb-1">{lang === "fr" ? "Traçabilité de la Provenance" : "Provenance Tracking"}</h2>
+                <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Explorez les dossiers vérifiés. Sélectionnez une œuvre ci-dessous pour reconstituer son historique." : "Explore verified dossiers. Select a masterwork below to reconstruct its historic timeline."}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {MASTERPIECES.map((art) => (
@@ -333,7 +336,7 @@ export default function ProvenancePage() {
 
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:gap-16 items-start">
               <div className="lg:col-span-6 space-y-8">
-                <p className="font-sans text-lg leading-relaxed text-on-surface-variant">A documented chain of custody is paramount. We reconstruct the historical journey of every artifact.</p>
+                <p className="font-sans text-lg leading-relaxed text-on-surface-variant">{lang === "fr" ? "Une chaîne de garde documentée est primordiale. Nous reconstituons le parcours historique de chaque artifact." : "A documented chain of custody is paramount. We reconstruct the historical journey of every artifact."}</p>
                 <div className="bg-parchment-ivory p-6 md:p-8 border-l-4 border-terracotta-earth shadow-level-2">
                   <h4 className="font-sans text-[12px] font-semibold text-ebony-deep tracking-[0.1em] uppercase mb-8">{currentArtifact.caseStudyTitle}</h4>
                   <div className="relative pl-2">
@@ -351,7 +354,7 @@ export default function ProvenancePage() {
                             <div className="space-y-1">
                               <div className="flex items-center space-x-2">
                                 <span className={`font-sans text-[11px] font-bold tracking-[0.1em] uppercase ${isLast || isFirst ? "text-gold-leaf" : "text-on-surface-variant/70"}`}>{event.year}</span>
-                                <span className="text-[10px] uppercase font-mono tracking-wider text-on-surface-variant/30 group-hover:text-gold-leaf transition-colors">{isSelected ? "[Collapse Doc]" : "[View Verification]"}</span>
+                                <span className="text-[10px] uppercase font-mono tracking-wider text-on-surface-variant/30 group-hover:text-gold-leaf transition-colors">{isSelected ? (lang === "fr" ? "[Réduire Doc]" : "[Collapse Doc]") : (lang === "fr" ? "[Voir Vérification]" : "[View Verification]")}</span>
                               </div>
                               <h5 className="font-sans text-md font-semibold text-ebony-deep group-hover:text-gold-leaf transition-colors">{event.location}</h5>
                               <p className="font-sans text-sm text-on-surface-variant/90 leading-relaxed max-w-md">{event.description}</p>
@@ -360,15 +363,15 @@ export default function ProvenancePage() {
                               {isSelected && (
                                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden mt-3" onClick={(e) => e.stopPropagation()}>
                                   <div className="bg-background/60 p-4 border border-on-surface/5 font-mono text-xs text-on-surface-variant space-y-3 mt-1 leading-relaxed">
-                                    <div className="flex items-center space-x-2 text-ebony-deep border-b border-on-surface/10 pb-2"><GraduationCap size={14} className="text-gold-leaf" /><span className="font-sans font-bold uppercase tracking-wider text-[10px]">Registry Certificate Seal</span></div>
-                                    <div><span className="block font-sans font-semibold text-ebony-deep text-[11px]">VERIFYING EXPERT</span><span className="text-ebony-deep">{event.verifierName}</span><span className="block italic text-[11px] text-on-surface-variant/70">{event.verifierCredentials}</span></div>
+                                    <div className="flex items-center space-x-2 text-ebony-deep border-b border-on-surface/10 pb-2"><GraduationCap size={14} className="text-gold-leaf" /><span className="font-sans font-bold uppercase tracking-wider text-[10px]">{lang === "fr" ? "Sceau du Certificat de Registre" : "Registry Certificate Seal"}</span></div>
+                                    <div><span className="block font-sans font-semibold text-ebony-deep text-[11px]">{lang === "fr" ? "EXPERT VÉRIFICATEUR" : "VERIFYING EXPERT"}</span><span className="text-ebony-deep">{event.verifierName}</span><span className="block italic text-[11px] text-on-surface-variant/70">{event.verifierCredentials}</span></div>
                                     {event.scientificData && (
                                       <div className="pt-2 border-t border-on-surface/5 space-y-1">
-                                        <div className="flex items-center space-x-1 font-sans font-semibold text-ebony-deep text-[10px] uppercase"><Microscope size={12} className="text-gold-leaf" /><span>FORENSIC PROTOCOL LAB DATA</span></div>
+                                        <div className="flex items-center space-x-1 font-sans font-semibold text-ebony-deep text-[10px] uppercase"><Microscope size={12} className="text-gold-leaf" /><span>{lang === "fr" ? "DONNÉES DU PROTOCOLE FORENSIQUE" : "FORENSIC PROTOCOL LAB DATA"}</span></div>
                                         <div><span className="text-[10px] uppercase tracking-wider text-on-surface-variant/50 block">Laboratory Facility:</span><span>{event.scientificData.labFacility}</span></div>
                                         <div><span className="text-[10px] uppercase tracking-wider text-on-surface-variant/50 block">Analytical Testing:</span><span>{event.scientificData.testMethod}</span></div>
                                         <div><span className="text-[10px] uppercase tracking-wider text-on-surface-variant/50 block">Result:</span><span className="text-ebony-deep leading-snug block mt-0.5">{event.scientificData.resultValue}</span></div>
-                                        <div className="flex justify-between items-center text-[10px] pt-1.5 text-emerald-700"><span className="flex items-center space-x-1"><ShieldCheck size={12} /><span>VALID COGNITIVE CONSENSUS ID</span></span><span className="font-mono">{event.scientificData.signatureHash}</span></div>
+                                        <div className="flex justify-between items-center text-[10px] pt-1.5 text-emerald-700"><span className="flex items-center space-x-1"><ShieldCheck size={12} /><span>{lang === "fr" ? "ID DE CONSENSUS COGNITIF VALIDE" : "VALID COGNITIVE CONSENSUS ID"}</span></span><span className="font-mono">{event.scientificData.signatureHash}</span></div>
                                       </div>
                                     )}
                                   </div>
@@ -412,12 +415,12 @@ export default function ProvenancePage() {
             <div className="bg-ebony-deep text-parchment-ivory p-8 md:p-12 flex flex-col justify-between shadow-level-2">
               <div>
                 <div className="text-gold-leaf mb-6"><Gavel size={40} strokeWidth={1.5} /></div>
-                <h2 className="font-serif text-3xl font-light text-parchment-ivory mb-6">Legal Compliance</h2>
-                <p className="font-sans text-sm md:text-base text-parchment-ivory/80 leading-relaxed mb-8">Aduna Gallery operates in strict accordance with international cultural heritage laws. We enforce a zero-tolerance policy for illicitly traded antiquities.</p>
+                <h2 className="font-serif text-3xl font-light text-parchment-ivory mb-6">{lang === "fr" ? "Conformité Juridique" : "Legal Compliance"}</h2>
+                <p className="font-sans text-sm md:text-base text-parchment-ivory/80 leading-relaxed mb-8">{lang === "fr" ? "La Galerie Aduna opère en stricte conformité avec les lois internationales sur le patrimoine culturel. Nous appliquons une politique de tolérance zéro pour les antiquités négociées illicitement." : "Aduna Gallery operates in strict accordance with international cultural heritage laws. We enforce a zero-tolerance policy for illicitly traded antiquities."}</p>
                 <ul className="space-y-6 font-sans text-sm text-parchment-ivory/80">
-                  <li className="flex items-start"><CheckCircle2 size={18} className="text-gold-leaf shrink-0 mr-4 mt-1" /><span>Full compliance with the <strong className="text-parchment-ivory font-semibold">UNESCO 1970 Convention</strong> on the Means of Prohibiting and Preventing the Illicit Import, Export and Transfer of Ownership of Cultural Property.</span></li>
-                  <li className="flex items-start"><CheckCircle2 size={18} className="text-gold-leaf shrink-0 mr-4 mt-1" /><span>Adherence to the <strong className="text-parchment-ivory font-semibold">UNIDROIT Convention</strong> on Stolen or Illegally Exported Cultural Objects.</span></li>
-                  <li className="flex items-start"><CheckCircle2 size={18} className="text-gold-leaf shrink-0 mr-4 mt-1" /><span>Rigorous ALM (Anti-Money Laundering) checks on all high-value transactions conducted transparently.</span></li>
+                  <li className="flex items-start"><CheckCircle2 size={18} className="text-gold-leaf shrink-0 mr-4 mt-1" /><span>{lang === "fr" ? "Pleine conformité avec la " : "Full compliance with the "}<strong className="text-parchment-ivory font-semibold">{lang === "fr" ? "Convention de l'UNESCO de 1970" : "UNESCO 1970 Convention"}</strong>{lang === "fr" ? " sur les moyens d'interdire et de prévenir l'importation, l'exportation et le transfert illicites de biens culturels." : " on the Means of Prohibiting and Preventing the Illicit Import, Export and Transfer of Ownership of Cultural Property."}</span></li>
+                  <li className="flex items-start"><CheckCircle2 size={18} className="text-gold-leaf shrink-0 mr-4 mt-1" /><span>{lang === "fr" ? "Respect de la " : "Adherence to the "}<strong className="text-parchment-ivory font-semibold">{lang === "fr" ? "Convention d'UNIDROIT" : "UNIDROIT Convention"}</strong>{lang === "fr" ? " sur les objets culturels volés ou exportés illégalement." : " on Stolen or Illegally Exported Cultural Objects."}</span></li>
+                  <li className="flex items-start"><CheckCircle2 size={18} className="text-gold-leaf shrink-0 mr-4 mt-1" /><span>{lang === "fr" ? "Contrôles ALM (Anti-Blanchiment d'Argent) rigoureux sur toutes les transactions de grande valeur effectuées de manière transparente." : "Rigorous ALM (Anti-Money Laundering) checks on all high-value transactions conducted transparently."}</span></li>
                 </ul>
               </div>
               <div className="mt-12 pt-6 border-t border-parchment-ivory/10 flex flex-wrap gap-4 items-center justify-between font-mono text-[10px] text-parchment-ivory/40">
@@ -431,19 +434,19 @@ export default function ProvenancePage() {
               <div className="relative z-10 space-y-6">
                 <div className="text-ebony-deep"><Cpu size={40} strokeWidth={1.5} /></div>
                 <div>
-                  <h2 className="font-serif text-3xl font-light text-ebony-deep mb-4">Certificate of Digital Ownership</h2>
-                  <p className="font-sans text-sm text-on-surface-variant leading-relaxed">Every physical acquisition is paired with a cryptographic token minted on an eco-friendly blockchain.</p>
+                  <h2 className="font-serif text-3xl font-light text-ebony-deep mb-4">{lang === "fr" ? "Certificat de Propriété Numérique" : "Certificate of Digital Ownership"}</h2>
+                  <p className="font-sans text-sm text-on-surface-variant leading-relaxed">{lang === "fr" ? "Chaque acquisition physique est associée à un jeton cryptographique frappé sur une chaîne de blocs écologique." : "Every physical acquisition is paired with a cryptographic token minted on an eco-friendly blockchain."}</p>
                 </div>
                 <div className="grid grid-cols-3 gap-2 border-t border-b border-on-surface/10 py-5 font-sans">
-                  <div className="text-center border-r border-on-surface/10 px-2"><span className="block font-serif text-lg font-bold text-ebony-deep leading-none">SHA-256</span><span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/75 mt-1 block">Encryption</span></div>
-                  <div className="text-center border-r border-on-surface/10 px-2"><span className="block font-serif text-lg font-bold text-ebony-deep leading-none">Immutable</span><span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/75 mt-1 block">Ledger Record</span></div>
-                  <div className="text-center px-2"><span className="block font-serif text-lg font-bold text-ebony-deep leading-none">Instant</span><span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/75 mt-1 block">Transfer</span></div>
+                  <div className="text-center border-r border-on-surface/10 px-2"><span className="block font-serif text-lg font-bold text-ebony-deep leading-none">SHA-256</span><span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/75 mt-1 block">{lang === "fr" ? "Chiffrement" : "Encryption"}</span></div>
+                  <div className="text-center border-r border-on-surface/10 px-2"><span className="block font-serif text-lg font-bold text-ebony-deep leading-none">{lang === "fr" ? "Inaltérable" : "Immutable"}</span><span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/75 mt-1 block">{lang === "fr" ? "Registre de la Chaîne" : "Ledger Record"}</span></div>
+                  <div className="text-center px-2"><span className="block font-serif text-lg font-bold text-ebony-deep leading-none">{lang === "fr" ? "Instantané" : "Instant"}</span><span className="text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant/75 mt-1 block">{lang === "fr" ? "Transfert" : "Transfer"}</span></div>
                 </div>
                 <div className="bg-background/80 border border-on-surface/5 p-4 space-y-3">
-                  <span className="flex items-center space-x-1.5 text-[11px] font-semibold uppercase tracking-wider text-ebony-deep"><Terminal size={12} className="text-gold-leaf" /><span>Verifier Terminal SCANNER</span></span>
+                  <span className="flex items-center space-x-1.5 text-[11px] font-semibold uppercase tracking-wider text-ebony-deep"><Terminal size={12} className="text-gold-leaf" /><span>{lang === "fr" ? "Terminal Vérificateur SCANNER" : "Verifier Terminal SCANNER"}</span></span>
                   <form onSubmit={handleVerifyLedger} className="flex gap-2">
                     <input type="text" placeholder="Search artifact key e.g. ADUNA-OWO" value={ledgerInputValue} onChange={(e) => setLedgerInputValue(e.target.value)} className="bg-surface-container-lowest border border-on-surface/10 text-xs px-3 py-2 text-ebony-deep font-mono focus:outline-none focus:border-gold-leaf w-full placeholder:text-on-surface-variant/30" />
-                    <button type="submit" disabled={isLoadingLedger} className="bg-ebony-deep text-parchment-ivory px-3 text-xs font-semibold uppercase tracking-wide hover:bg-gold-leaf hover:text-ebony-deep transition-all disabled:opacity-50">{isLoadingLedger ? "Wait..." : "Scan"}</button>
+                    <button type="submit" disabled={isLoadingLedger} className="bg-ebony-deep text-parchment-ivory px-3 text-xs font-semibold uppercase tracking-wide hover:bg-gold-leaf hover:text-ebony-deep transition-all disabled:opacity-50">{isLoadingLedger ? (lang === "fr" ? "Patientez..." : "Wait...") : (lang === "fr" ? "Scanner" : "Scan")}</button>
                   </form>
                   {isLoadingLedger && <div className="text-[11px] font-mono font-semibold tracking-wider text-gold-leaf animate-pulse">&gt; CONNECTING SECURE GENEVA LEDGER NODE...</div>}
                   {verifyingBlock && !isLoadingLedger && (
@@ -459,7 +462,7 @@ export default function ProvenancePage() {
                 </div>
               </div>
               <div className="pt-8 relative z-10 text-left">
-                <button type="button" onClick={() => setShowCertificate(true)} className="text-ebony-deep font-sans text-xs font-semibold uppercase tracking-[0.1em] border-b border-gold-leaf pb-1 hover:text-gold-leaf transition-colors inline-flex items-center">View Sample Certificate <ArrowRight size={14} className="ml-2" /></button>
+                <button type="button" onClick={() => setShowCertificate(true)} className="text-ebony-deep font-sans text-xs font-semibold uppercase tracking-[0.1em] border-b border-gold-leaf pb-1 hover:text-gold-leaf transition-colors inline-flex items-center">{lang === "fr" ? "Voir un Certificat Exemple" : "View Sample Certificate"} <ArrowRight size={14} className="ml-2" /></button>
               </div>
             </div>
           </motion.section>
@@ -478,7 +481,7 @@ export default function ProvenancePage() {
                 <div className="space-y-8 text-center">
                   <div className="space-y-2">
                     <span className="block font-sans text-[10px] md:text-[11px] font-bold uppercase tracking-[0.2em] text-gold-leaf">Institutional Ledger Registry Compliance</span>
-                    <h3 className="font-serif text-3xl md:text-4xl font-light text-ebony-deep tracking-tight uppercase">Certificate of Authenticity</h3>
+                    <h3 className="font-serif text-3xl md:text-4xl font-light text-ebony-deep tracking-tight uppercase">{lang === "fr" ? "Certificat d'Authenticité" : "Certificate of Authenticity"}</h3>
                     <div className="font-sans text-[10px] tracking-widest text-on-surface-variant/50 uppercase">Consign Signature Secure Node ID: ADUNA-{currentArtifact.id.split("-").pop()}</div>
                   </div>
                   <div className="flex items-center justify-center space-x-4"><span className="h-[1px] w-20 bg-ebony-deep/10" /><Landmark size={16} className="text-gold-leaf" /><span className="h-[1px] w-20 bg-ebony-deep/10" /></div>
@@ -505,7 +508,7 @@ export default function ProvenancePage() {
                 </div>
               </div>
               <div className="mt-8 flex justify-end">
-                <button onClick={() => setShowCertificate(false)} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">Close</button>
+                <button onClick={() => setShowCertificate(false)} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">{lang === "fr" ? "Fermer" : "Close"}</button>
               </div>
             </motion.div>
           </div>
@@ -522,19 +525,19 @@ export default function ProvenancePage() {
                 <div className="space-y-6">
                   <div className="space-y-2 text-left">
                     <span className="flex items-center space-x-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-gold-leaf"><Shield size={12} /><span>CONFIDENTIAL COLLECTOR VERIFICATION</span></span>
-                    <h3 className="font-serif text-2xl md:text-3xl text-ebony-deep font-light uppercase">Request Private Access</h3>
+                    <h3 className="font-serif text-2xl md:text-3xl text-ebony-deep font-light uppercase">{lang === "fr" ? "Demander un Accès Privé" : "Request Private Access"}</h3>
                   </div>
                   <form onSubmit={handleSubmitInquiry} className="space-y-4 font-sans text-xs">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">Full Name</label><input type="text" required placeholder="Lord Alistair Vance" value={inquiryForm.fullName} onChange={(e) => setInquiryForm({ ...inquiryForm, fullName: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30" /></div>
-                      <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">Secure Email</label><input type="email" required placeholder="name@institution.org" value={inquiryForm.email} onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30" /></div>
+                      <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Nom Complet" : "Full Name"}</label><input type="text" required placeholder="Lord Alistair Vance" value={inquiryForm.fullName} onChange={(e) => setInquiryForm({ ...inquiryForm, fullName: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30" /></div>
+                      <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "E-mail Sécurisé" : "Secure Email"}</label><input type="email" required placeholder="name@institution.org" value={inquiryForm.email} onChange={(e) => setInquiryForm({ ...inquiryForm, email: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30" /></div>
                     </div>
-                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">Collector Tier</label><select value={inquiryForm.collectorLevel} onChange={(e) => setInquiryForm({ ...inquiryForm, collectorLevel: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer"><option value="Novice">Sovereign Cultivating Enthusiast</option><option value="Institutional">Museum Trustee / Heritage Fund</option><option value="Private-VVIP">High-Value Venture Family Office</option></select></div>
-                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">Target Artifact</label><select value={inquiryForm.artifactSelection} onChange={(e) => setInquiryForm({ ...inquiryForm, artifactSelection: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer">{MASTERPIECES.map(art => <option key={art.id} value={art.id}>{art.name}</option>)}<option value="ALL">Entire Portfolio</option></select></div>
-                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">Intent Statement</label><textarea required rows={3} placeholder="Summarize your acquisition intent..." value={inquiryForm.interestReason} onChange={(e) => setInquiryForm({ ...inquiryForm, interestReason: e.target.value })} className="w-full bg-white border border-ebony-deep/10 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30 leading-relaxed resize-none" /></div>
+                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Niveau de Collectionneur" : "Collector Tier"}</label><select value={inquiryForm.collectorLevel} onChange={(e) => setInquiryForm({ ...inquiryForm, collectorLevel: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer"><option value="Novice">{lang === "fr" ? "Enthousiaste Souverain Cultivateur" : "Sovereign Cultivating Enthusiast"}</option><option value="Institutional">{lang === "fr" ? "Administrateur de Musée / Fonds Patrimonial" : "Museum Trustee / Heritage Fund"}</option><option value="Private-VVIP">{lang === "fr" ? "Bureau Familial à Grande Valeur" : "High-Value Venture Family Office"}</option></select></div>
+                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Artifact Cible" : "Target Artifact"}</label><select value={inquiryForm.artifactSelection} onChange={(e) => setInquiryForm({ ...inquiryForm, artifactSelection: e.target.value })} className="w-full bg-white border-b border-ebony-deep/20 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none cursor-pointer">{MASTERPIECES.map(art => <option key={art.id} value={art.id}>{art.name}</option>)}<option value="ALL">{lang === "fr" ? "Portfolio Complet" : "Entire Portfolio"}</option></select></div>
+                    <div className="space-y-1 text-left"><label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider">{lang === "fr" ? "Déclaration d'Intention" : "Intent Statement"}</label><textarea required rows={3} placeholder={lang === "fr" ? "Résumez votre intention d'acquisition..." : "Summarize your acquisition intent..."} value={inquiryForm.interestReason} onChange={(e) => setInquiryForm({ ...inquiryForm, interestReason: e.target.value })} className="w-full bg-white border border-ebony-deep/10 focus:border-gold-leaf px-3 py-2.5 text-ebony-deep text-sm focus:outline-none placeholder:text-on-surface-variant/30 leading-relaxed resize-none" /></div>
                     <div className="pt-4 flex justify-end space-x-3">
-                      <button type="button" onClick={() => setShowInquiry(false)} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70 hover:text-ebony-deep transition-colors">Cancel</button>
-                      <button type="submit" disabled={isSubmittingInquiry} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-flex items-center gap-2"><span>{isSubmittingInquiry ? "Anchoring..." : "Submit Inquiry"}</span><Send size={12} /></button>
+                      <button type="button" onClick={() => setShowInquiry(false)} className="px-5 py-3 text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70 hover:text-ebony-deep transition-colors">{lang === "fr" ? "Annuler" : "Cancel"}</button>
+                      <button type="submit" disabled={isSubmittingInquiry} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-flex items-center gap-2"><span>{isSubmittingInquiry ? (lang === "fr" ? "Ancrage en cours..." : "Anchoring...") : (lang === "fr" ? "Soumettre la Demande" : "Submit Inquiry")}</span><Send size={12} /></button>
                     </div>
                   </form>
                 </div>
@@ -543,7 +546,7 @@ export default function ProvenancePage() {
                   <div className="flex justify-center text-emerald-600 mb-2"><CheckCircle2 size={44} strokeWidth={1.5} /></div>
                   <div className="space-y-2">
                     <span className="block font-sans text-[10px] font-bold uppercase tracking-[0.25em] text-gold-leaf">LEDGER NODE TRANSACTION COMPLETE</span>
-                    <h3 className="font-serif text-2xl text-ebony-deep font-semibold">Application Received</h3>
+                    <h3 className="font-serif text-2xl text-ebony-deep font-semibold">{lang === "fr" ? "Demande Reçue" : "Application Received"}</h3>
                   </div>
                   <div className="bg-white border border-gold-leaf/30 p-6 text-left max-w-sm mx-auto font-mono text-[10px] space-y-3 leading-relaxed border-double border-4">
                     <div className="flex justify-between items-center text-ebony-deep font-sans font-bold text-[11px] border-b border-ebony-deep/5 pb-2"><span className="flex items-center space-x-1.5 uppercase"><Award size={12} className="text-gold-leaf" /><span>PRE-VERIFIED ACCESS TICKET</span></span><span className="text-[10px] text-emerald-600">SEAL_OK</span></div>
@@ -551,7 +554,7 @@ export default function ProvenancePage() {
                     <div><span className="block font-sans font-semibold text-ebony-deep uppercase text-[9px] text-on-surface-variant/60">TARGET WORK:</span><span className="text-gold-leaf">{MASTERPIECES.find(m => m.id === inquiryForm.artifactSelection)?.name || "Portfolio"}</span></div>
                     <div className="pt-2 border-t border-on-surface/5"><span className="flex items-center space-x-1 font-sans font-semibold text-ebony-deep text-[9px] uppercase mb-1"><Terminal size={10} className="text-gold-leaf" /><span>TRANSACTION SEED KEY:</span></span><span className="break-all font-mono text-ebony-deep leading-snug">{generatedPassHash}</span></div>
                   </div>
-                  <button onClick={() => { setShowInquiry(false); setInquirySuccess(false); }} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">Close Portal</button>
+                  <button onClick={() => { setShowInquiry(false); setInquirySuccess(false); }} className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-semibold uppercase tracking-wider hover:bg-gold-leaf hover:text-ebony-deep transition-colors">{lang === "fr" ? "Fermer le Portail" : "Close Portal"}</button>
                 </div>
               )}
             </motion.div>
@@ -562,7 +565,7 @@ export default function ProvenancePage() {
       {/* Inquiry FAB */}
       <button onClick={() => setShowInquiry(true)} className="fixed bottom-8 right-8 z-40 bg-ebony-deep text-parchment-ivory shadow-level-3 px-6 py-4 flex items-center gap-3 transition-all hover:bg-gold-leaf hover:text-ebony-deep group">
         <ShieldCheck className="w-4 h-4 text-gold-leaf group-hover:text-ebony-deep transition-colors" />
-        <span className="font-sans text-xs uppercase tracking-widest font-bold">Request Private Access</span>
+        <span className="font-sans text-xs uppercase tracking-widest font-bold">{lang === "fr" ? "Demander un Accès Privé" : "Request Private Access"}</span>
       </button>
     </>
   );

@@ -22,6 +22,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ARTWORKS } from "@/lib/mockData";
+import { useTranslate } from "@/lib/translations";
 import type { Artwork } from "@/lib/types";
 
 interface VaultHolding {
@@ -65,6 +66,7 @@ const PRIVATE_CATALOGUES = [
 
 export default function PrivateCataloguePage() {
   const router = useRouter();
+  const { lang } = useTranslate();
   const [selectedHolding, setSelectedHolding] = useState<VaultHolding | null>(VAULT_HOLDINGS[0]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [activeTab, setActiveTab] = useState<"holdings" | "catalogues">("holdings");
@@ -104,7 +106,7 @@ export default function PrivateCataloguePage() {
       <div className="bg-ebony-deep border-b border-gold-leaf/20 py-2.5 px-6 text-center">
         <div className="max-w-[1440px] mx-auto flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-parchment-ivory">
           <span className="w-1.5 h-1.5 rounded-full bg-gold-leaf animate-pulse" />
-          Authenticated Session · Private Collector Portal
+          {lang === "fr" ? "Session Authentifiée · Portail du Collectionneur Privé" : "Authenticated Session · Private Collector Portal"}
         </div>
       </div>
 
@@ -114,18 +116,17 @@ export default function PrivateCataloguePage() {
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20">
             <div className="flex items-center gap-2 mb-3">
               <Lock size={12} className="text-gold-leaf" />
-              <span className="label-caps text-gold-leaf">Authenticated Access</span>
+              <span className="label-caps text-gold-leaf">{lang === "fr" ? "Accès Authentifié" : "Authenticated Access"}</span>
             </div>
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div>
-                <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="font-display-lg text-ebony-deep mb-2">Private Catalogue</motion.h1>
+                <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="font-display-lg text-ebony-deep mb-2">{lang === "fr" ? "Catalogue Privé" : "Private Catalogue"}</motion.h1>
                 <p className="font-sans text-sm text-on-surface-variant max-w-lg">
-                  Your exclusive collection of privately curated artworks, vault holdings,
-                  and confidential acquisition records. All data is encrypted and access-logged.
+                  {lang === "fr" ? "Votre collection exclusive d'œuvres d'art sélectionnées en privé, de détentions en coffre-fort et d'enregistrements d'acquisition confidentiels. Toutes les données sont chiffrées et les accès sont enregistrés." : "Your exclusive collection of privately curated artworks, vault holdings, and confidential acquisition records. All data is encrypted and access-logged."}
                 </p>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{VAULT_HOLDINGS.length} Holdings</span>
+                <span className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{VAULT_HOLDINGS.length} {lang === "fr" ? "Détentions" : "Holdings"}</span>
                 <div className="flex border border-on-surface/10">
                   <button onClick={() => setViewMode("grid")} className={`px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold cursor-pointer border-0 transition-colors ${viewMode === "grid" ? "bg-ebony-deep text-parchment-ivory" : "bg-transparent text-on-surface-variant hover:text-ebony-deep"}`}>Grid</button>
                   <button onClick={() => setViewMode("list")} className={`px-3 py-1.5 text-[10px] uppercase tracking-widest font-bold cursor-pointer border-0 transition-colors ${viewMode === "list" ? "bg-ebony-deep text-parchment-ivory" : "bg-transparent text-on-surface-variant hover:text-ebony-deep"}`}>List</button>
@@ -147,7 +148,7 @@ export default function PrivateCataloguePage() {
                     : "text-on-surface-variant border-transparent hover:text-ebony-deep"
                 }`}
               >
-                Vault Holdings
+                {lang === "fr" ? "Actions en Coffre-fort" : "Vault Holdings"}
               </button>
               <button
                 onClick={() => setActiveTab("catalogues")}
@@ -157,7 +158,7 @@ export default function PrivateCataloguePage() {
                     : "text-on-surface-variant border-transparent hover:text-ebony-deep"
                 }`}
               >
-                Private Catalogues
+                {lang === "fr" ? "Catalogues Privés" : "Private Catalogues"}
               </button>
             </div>
           </div>
@@ -196,12 +197,12 @@ export default function PrivateCataloguePage() {
                           )}
                           <div className="absolute top-1.5 right-1.5">
                             {h.certStatus === "Renewal Due" && (
-                              <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold uppercase tracking-wider">Renewal</span>
+                              <span className="px-1.5 py-0.5 bg-amber-500 text-white text-[8px] font-bold uppercase tracking-wider">{lang === "fr" ? "Renouvellement" : "Renewal"}</span>
                             )}
                           </div>
                           {!h.isPublic && (
                             <div className="absolute bottom-1.5 left-1.5">
-                              <span className="px-1.5 py-0.5 bg-terracotta-earth text-white text-[8px] font-bold uppercase tracking-wider">Confidential</span>
+                              <span className="px-1.5 py-0.5 bg-terracotta-earth text-white text-[8px] font-bold uppercase tracking-wider">{lang === "fr" ? "Confidentiel" : "Confidential"}</span>
                             </div>
                           )}
                         </div>
@@ -242,7 +243,7 @@ export default function PrivateCataloguePage() {
                           <div className="flex items-center gap-2">
                             <p className="text-[11px] font-bold text-ebony-deep truncate">{h.artwork.title}</p>
                             {!h.isPublic && (
-                              <span className="px-1 py-0.5 bg-terracotta-earth text-white text-[7px] font-bold uppercase tracking-wider shrink-0">Confidential</span>
+                              <span className="px-1 py-0.5 bg-terracotta-earth text-white text-[7px] font-bold uppercase tracking-wider shrink-0">{lang === "fr" ? "Confidentiel" : "Confidential"}</span>
                             )}
                           </div>
                           <p className="text-[9px] text-on-surface-variant">{h.artwork.origin} · {h.artwork.material}</p>
@@ -264,12 +265,12 @@ export default function PrivateCataloguePage() {
                         <img src={selectedHolding.artwork.imageUrl} alt={selectedHolding.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         <div className="absolute top-3 left-3 bg-ebony-deep/80 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5 border border-gold-leaf/20">
                           <Lock size={9} className="text-gold-leaf" />
-                          <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">Private Holding</span>
+                          <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">{lang === "fr" ? "Détention Privée" : "Private Holding"}</span>
                         </div>
                         {!selectedHolding.isPublic && (
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <span className="text-parchment-ivory/10 font-serif text-5xl font-bold uppercase rotate-[-30deg] tracking-widest select-none">
-                              CONFIDENTIAL
+                              {lang === "fr" ? "CONFIDENTIEL" : "CONFIDENTIAL"}
                             </span>
                           </div>
                         )}
@@ -282,35 +283,35 @@ export default function PrivateCataloguePage() {
                         </div>
                         <div className="space-y-2.5 border-t border-on-surface/5 pt-4">
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Dimensions</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "Dimensions" : "Dimensions"}</span>
                             <span className="text-ebony-deep font-medium">{selectedHolding.artwork.dimensions}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Estimated Value</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "Valeur Estimée" : "Estimated Value"}</span>
                             <span className="text-ebony-deep font-semibold">{selectedHolding.insuranceValue}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Acquisition Date</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "Date d'Acquisition" : "Acquisition Date"}</span>
                             <span className="text-ebony-deep font-medium">{selectedHolding.acquisitionDate}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Condition</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "État" : "Condition"}</span>
                             <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${CONDITION_COLORS[selectedHolding.condition]}`}>{selectedHolding.condition}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-on-surface-variant">Certificate Status</span>
+                            <span className="text-on-surface-variant">{lang === "fr" ? "Statut du Certificat" : "Certificate Status"}</span>
                             <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${selectedHolding.certStatus === "Valid" ? "text-emerald-600 bg-emerald-50" : "text-amber-600 bg-amber-50"}`}>{selectedHolding.certStatus}</span>
                           </div>
                         </div>
                         <div className="flex gap-2 pt-2">
                           <button onClick={() => router.push(`/artwork/${selectedHolding.artwork.id}`)} className="flex-1 bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center justify-center gap-1.5">
-                            <Eye size={10} /> Full Details
+                            <Eye size={10} /> {lang === "fr" ? "Détails Complets" : "Full Details"}
                           </button>
                           <button
                             onClick={() => handleExpressInterest(selectedHolding.artwork.title)}
                             className="flex-1 border border-gold-leaf text-gold-leaf px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors cursor-pointer bg-transparent flex items-center justify-center gap-1.5"
                           >
-                            <Send size={10} /> Express Interest
+                            <Send size={10} /> {lang === "fr" ? "Exprimer l'Intérêt" : "Express Interest"}
                           </button>
                         </div>
                       </div>
@@ -318,33 +319,33 @@ export default function PrivateCataloguePage() {
 
                     {/* Vault Status */}
                     <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                      <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">Vault Storage Status</h3>
+                      <h3 className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-4">{lang === "fr" ? "État du Stockage en Coffre-fort" : "Vault Storage Status"}</h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-surface p-3 border border-on-surface/5">
                           <div className="flex items-center gap-1.5 mb-1">
                             <MapPin size={11} className="text-gold-leaf" />
-                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Location</span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Emplacement" : "Location"}</span>
                           </div>
                           <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.vaultLocation}</p>
                         </div>
                         <div className="bg-surface p-3 border border-on-surface/5">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Thermometer size={11} className="text-gold-leaf" />
-                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Temperature</span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Température" : "Temperature"}</span>
                           </div>
                           <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.temperature}</p>
                         </div>
                         <div className="bg-surface p-3 border border-on-surface/5">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Droplets size={11} className="text-gold-leaf" />
-                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Humidity</span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Humidité" : "Humidity"}</span>
                           </div>
                           <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.humidity}</p>
                         </div>
                         <div className="bg-surface p-3 border border-on-surface/5">
                           <div className="flex items-center gap-1.5 mb-1">
                             <FileCheck size={11} className="text-gold-leaf" />
-                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">Last Inspection</span>
+                            <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Dernière Inspection" : "Last Inspection"}</span>
                           </div>
                           <p className="text-xs text-ebony-deep font-semibold">{selectedHolding.lastInspection}</p>
                         </div>
@@ -353,8 +354,8 @@ export default function PrivateCataloguePage() {
                         <div className="mt-4 bg-amber-50 border border-amber-200 p-3 flex items-start gap-2">
                           <AlertTriangle size={14} className="text-amber-500 shrink-0 mt-0.5" />
                           <div>
-                            <p className="text-xs font-bold text-amber-800">Certificate Renewal Required</p>
-                            <p className="text-[11px] text-amber-700 mt-0.5">Your certificate of authenticity for this piece is due for renewal. Contact our curatorial team to initiate the renewal process.</p>
+                            <p className="text-xs font-bold text-amber-800">{lang === "fr" ? "Renouvellement de Certificat Requis" : "Certificate Renewal Required"}</p>
+                            <p className="text-[11px] text-amber-700 mt-0.5">{lang === "fr" ? "Votre certificat d'authenticité pour cette pièce est à renouveler. Contactez notre équipe de conservateurs pour initier le processus de renouvellement." : "Your certificate of authenticity for this piece is due for renewal. Contact our curatorial team to initiate the renewal process."}</p>
                           </div>
                         </div>
                       )}
@@ -362,7 +363,7 @@ export default function PrivateCataloguePage() {
                   </motion.div>
                 ) : (
                   <div className="flex items-center justify-center h-64 border border-dashed border-on-surface/10">
-                    <p className="text-xs text-on-surface-variant/40 uppercase tracking-widest">Select a holding to view details</p>
+                    <p className="text-xs text-on-surface-variant/40 uppercase tracking-widest">{lang === "fr" ? "Sélectionnez une détention pour voir les détails" : "Select a holding to view details"}</p>
                   </div>
                 )}
               </div>
@@ -371,10 +372,9 @@ export default function PrivateCataloguePage() {
             /* Private Catalogues Tab */
             <div className="max-w-3xl">
               <div className="mb-8">
-                <h2 className="font-serif text-2xl text-ebony-deep mb-2">Private Catalogues</h2>
+                <h2 className="font-serif text-2xl text-ebony-deep mb-2">{lang === "fr" ? "Catalogues Privés" : "Private Catalogues"}</h2>
                 <p className="font-sans text-sm text-on-surface-variant">
-                  Access your exclusive curated catalogues. Each catalogue contains privately held artworks
-                  with access restricted to authenticated VIP members.
+                  {lang === "fr" ? "Accédez à vos catalogues exclusifs sélectionnés. Chaque catalogue contient des œuvres d'art détenues en privé avec un accès réservé aux membres VIP authentifiés." : "Access your exclusive curated catalogues. Each catalogue contains privately held artworks with access restricted to authenticated VIP members."}
                 </p>
               </div>
               <div className="space-y-4">
@@ -393,16 +393,16 @@ export default function PrivateCataloguePage() {
                       <div>
                         <h3 className="font-serif text-lg text-ebony-deep">{cat.name}</h3>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">{cat.count} Artworks</span>
+                          <span className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">{cat.count} {lang === "fr" ? "Œuvres" : "Artworks"}</span>
                           <span className="text-[9px] text-on-surface-variant/40">·</span>
-                          <span className="text-[9px] text-on-surface-variant">Updated {cat.lastUpdated}</span>
+                          <span className="text-[9px] text-on-surface-variant">{lang === "fr" ? "Mis à jour " : "Updated "}{cat.lastUpdated}</span>
                           <span className="text-[9px] text-on-surface-variant/40">·</span>
                           <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${cat.accessLevel === "Top Secret" ? "bg-terracotta-earth text-white" : "bg-ebony-deep text-parchment-ivory"}`}>{cat.accessLevel}</span>
                         </div>
                       </div>
                     </div>
                     <button className="border border-gold-leaf text-gold-leaf px-4 py-2 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf/10 transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
-                      <Eye size={10} /> View Catalogue
+                      <Eye size={10} /> {lang === "fr" ? "Voir le Catalogue" : "View Catalogue"}
                     </button>
                   </motion.div>
                 ))}
@@ -421,23 +421,22 @@ export default function PrivateCataloguePage() {
               {porSubmitted ? (
                 <div className="text-center">
                   <CheckCircle className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Interest Registered</h3>
+                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">{lang === "fr" ? "Intérêt Enregistré" : "Interest Registered"}</h3>
                   <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    Your express interest for <strong>{porArtwork}</strong> has been registered.
-                    Our curatorial team will contact you within 24 hours to discuss acquisition options.
+                    {lang === "fr" ? `Votre intérêt exprimé pour ` : "Your express interest for "}<strong>{porArtwork}</strong>{lang === "fr" ? ` a été enregistré. Notre équipe de conservateurs vous contactera dans les 24 heures pour discuter des options d'acquisition.` : " has been registered. Our curatorial team will contact you within 24 hours to discuss acquisition options."}
                   </p>
-                  <button onClick={resetPORExpress} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">Close</button>
+                   <button onClick={resetPORExpress} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">{lang === "fr" ? "Fermer" : "Close"}</button>
                 </div>
               ) : (
                 <>
                   <div className="text-center mb-6">
                     <Send className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
-                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">Express Interest</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">For: {porArtwork}</p>
+                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">{lang === "fr" ? "Exprimer l'Intérêt" : "Express Interest"}</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Pour : " : "For: "}{porArtwork}</p>
                   </div>
                   <form onSubmit={(e) => { e.preventDefault(); if (!porMessage.trim()) return; setPorSubmitted(true); }} className="space-y-4">
                     <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">Message / Conditions</label>
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Message / Conditions" : "Message / Conditions"}</label>
                       <textarea
                         rows={4}
                         required
@@ -450,13 +449,13 @@ export default function PrivateCataloguePage() {
                     <div className="flex items-start gap-3">
                       <input type="checkbox" id="gdpr-private" required className="mt-1 accent-gold-leaf" />
                       <label htmlFor="gdpr-private" className="text-[10px] text-on-surface-variant leading-relaxed">
-                        I consent to the processing of my personal data in accordance with <span className="text-gold-leaf font-semibold">GDPR regulations</span>. *
+                        {lang === "fr" ? "Je consens au traitement de mes données personnelles conformément aux " : "I consent to the processing of my personal data in accordance with "}<span className="text-gold-leaf font-semibold">{lang === "fr" ? "règlement RGPD" : "GDPR regulations"}</span>{lang === "fr" ? "." : ""} *
                       </label>
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-ebony-deep/5">
-                      <button type="button" onClick={resetPORExpress} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Cancel</button>
+                      <button type="button" onClick={resetPORExpress} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
                       <button type="submit" disabled={!porMessage.trim()} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0">
-                        Submit Interest
+                        {lang === "fr" ? "Soumettre l'Intérêt" : "Submit Interest"}
                       </button>
                     </div>
                   </form>
@@ -475,31 +474,31 @@ export default function PrivateCataloguePage() {
               <button onClick={() => setShowAccessDenied(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-6 h-6" /></button>
               <div className="text-center">
                 <Shield className="w-14 h-14 text-terracotta-earth mx-auto mb-4" />
-                <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">Access Restricted</h3>
+                <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">{lang === "fr" ? "Accès Refusé" : "Access Restricted"}</h3>
                 <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
-                  <strong>{deniedArtwork}</strong> is a confidential acquisition not yet available for public viewing.
+                  <strong>{deniedArtwork}</strong> {lang === "fr" ? "est une acquisition confidentielle pas encore disponible pour la visualisation publique." : "is a confidential acquisition not yet available for public viewing."}
                 </p>
                 <div className="bg-surface-container-low border border-on-surface/5 p-4 mb-6 text-left">
-                  <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-2">To access this artwork:</p>
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-2">{lang === "fr" ? "Pour accéder à cette œuvre :" : "To access this artwork:"}</p>
                   <ul className="text-xs text-on-surface-variant space-y-1.5">
                     <li className="flex items-start gap-2">
                       <span className="text-gold-leaf mt-0.5">1.</span>
-                      <span>Contact our curatorial team to request VIP access clearance</span>
+                      <span>{lang === "fr" ? "Contactez notre équipe de conservateurs pour demander un accès VIP" : "Contact our curatorial team to request VIP access clearance"}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-gold-leaf mt-0.5">2.</span>
-                      <span>Complete enhanced KYC verification for confidential holdings</span>
+                      <span>{lang === "fr" ? "Effectuez une vérification KYC renforcée pour les détentions confidentielles" : "Complete enhanced KYC verification for confidential holdings"}</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-gold-leaf mt-0.5">3.</span>
-                      <span>Sign a Non-Disclosure Agreement (NDA) for private collection data</span>
+                      <span>{lang === "fr" ? "Signez un Accord de Confidentialité (NDA) pour les données de la collection privée" : "Sign a Non-Disclosure Agreement (NDA) for private collection data"}</span>
                     </li>
                   </ul>
                 </div>
                 <div className="flex gap-3 justify-center">
-                  <button onClick={() => setShowAccessDenied(false)} className="border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">Close</button>
+                  <button onClick={() => setShowAccessDenied(false)} className="border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Fermer" : "Close"}</button>
                   <a href="mailto:vip@adunagallery.com?subject=VIP%20Access%20Request" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    <ShieldCheck size={12} /> Request VIP Access
+                    <ShieldCheck size={12} /> {lang === "fr" ? "Demander l'Accès VIP" : "Request VIP Access"}
                   </a>
                 </div>
               </div>
