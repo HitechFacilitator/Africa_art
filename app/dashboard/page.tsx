@@ -7,6 +7,7 @@ import { INITIAL_ACQUISITIONS, INITIAL_INQUIRIES, INITIAL_CONSULTATIONS, INITIAL
 import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
+import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardView from "@/components/dashboard/DashboardView";
@@ -23,6 +24,7 @@ export default function DashboardPage() {
   const [selectedAcquisition, setSelectedAcquisition] = useState<Acquisition | null>(INITIAL_ACQUISITIONS[0] ?? null);
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
   const [isOpenMobile, setIsOpenMobile] = useState<boolean>(false);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<string>('light');
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
@@ -58,6 +60,11 @@ export default function DashboardPage() {
   const [security, setSecurity] = useState<SecurityRecord[]>(INITIAL_SECURITY);
   const [profile, setProfile] = useState<CollectorProfile>(INITIAL_PROFILE);
 
+  // Auto-translate dynamic data when language changes
+  const translatedAcquisitions = useTranslatedAcquisitions(acquisitions);
+  const translatedInquiries = useTranslatedInquiries(inquiries);
+  const translatedConsultations = useTranslatedConsultations(consultations);
+
   const handleToggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
@@ -86,7 +93,7 @@ export default function DashboardPage() {
       id: newInquiryId,
       artworkTitle: artworkTitle,
       artworkYear: year,
-      imageUrl: 'https://images.unsplash.com/photo-1618022325802-7e5e732d97a1?auto=format&fit=crop&q=80',
+      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew',
       status: 'Received',
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       messages: [
@@ -240,8 +247,8 @@ This report acts as a legal certifiable token of ownership index.
   const totalValueEur = acquisitions.reduce((acc, item) => acc + item.estimatedValueEur, 0);
 
   return (
-    <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} onLogout={() => {
+    <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
         if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
           alert(lang === "fr" ? "Session fermée en toute sécurité. Identifiants du collectionneur authentifiés détachés." : 'Session closed safely. Authenticated collector credentials detached.');
         }
@@ -283,20 +290,20 @@ This report acts as a legal certifiable token of ownership index.
         </div>
       </div>
 
-      <main className="flex-1 lg:ml-64 bg-background min-h-screen px-6 sm:px-12 py-12 lg:py-16 pt-32 lg:pt-16 max-w-7xl mx-auto w-full">
+      <main className={`flex-1 bg-background min-h-screen px-6 sm:px-10 lg:px-12 py-12 lg:py-16 pt-28 lg:pt-16 w-full overflow-hidden transition-all duration-300 ${sidebarOpen ? "blur-sm pointer-events-none" : ""}`}>
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
             {activeTab === ActiveTab.Dashboard && (
-              <DashboardView acquisitions={acquisitions} onExpressInterest={handleExpressInterest} setActiveTab={setActiveTab} setSelectedAcquisition={(acq) => { setSelectedAcquisition(acq); setActiveTab(ActiveTab.Portfolio); }} onExportReport={handleExportReport} />
+              <DashboardView acquisitions={translatedAcquisitions} onExpressInterest={handleExpressInterest} setActiveTab={setActiveTab} setSelectedAcquisition={(acq) => { setSelectedAcquisition(acq); setActiveTab(ActiveTab.Portfolio); }} onExportReport={handleExportReport} />
             )}
             {activeTab === ActiveTab.Portfolio && (
-              <PortfolioView acquisitions={acquisitions} onAddAcquisition={handleAddAcquisition} onRemoveAcquisition={handleRemoveAcquisition} selectedAcquisition={selectedAcquisition} setSelectedAcquisition={setSelectedAcquisition} />
+              <PortfolioView acquisitions={translatedAcquisitions} onAddAcquisition={handleAddAcquisition} onRemoveAcquisition={handleRemoveAcquisition} selectedAcquisition={selectedAcquisition} setSelectedAcquisition={setSelectedAcquisition} />
             )}
             {activeTab === ActiveTab.Inquiries && (
-              <InquiriesView inquiries={inquiries} onAddMessage={handleAddMessage} selectedInquiryId={selectedInquiryId} setSelectedInquiryId={setSelectedInquiryId} />
+              <InquiriesView inquiries={translatedInquiries} onAddMessage={handleAddMessage} selectedInquiryId={selectedInquiryId} setSelectedInquiryId={setSelectedInquiryId} />
             )}
             {activeTab === ActiveTab.Consultations && (
-              <ConsultationsView consultations={consultations} onAddConsultation={handleAddConsultation} />
+              <ConsultationsView consultations={translatedConsultations} onAddConsultation={handleAddConsultation} />
             )}
             {activeTab === ActiveTab.Logistics && (
               <LogisticsView shipments={logistics} />

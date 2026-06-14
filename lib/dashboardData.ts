@@ -8,7 +8,7 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
     culture: 'Edo Peoples',
     acquisitionDate: 'Oct 12, 2024',
     status: AcquisitionStatus.Certified,
-    imageUrl: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCJ92I1jZERzyaqiKc3FH4C9WCoalLYXn4QtDJIh9ZxMxNszZAyIVEgqplLCo7hV6V2HH7-BoQadYiRfZZ2rRVU2KyFezQYJuPejkEXFZmCocL68oD0FhhmK9qjLDUo_dGaLRJjMVDik4XNPGjB6Oc9qTanNVOjjccILVz6KJ9t75nNkB6_MXRhluItt8QhY_hJT0f1IjvtTbYQtOVAAFWxowRUhcdAARMvXHJ_EcwLFlZ4EPwj2Hy7iJOq7_ZanC7qnp6Kfj7IvA',
     estimatedValueEur: 8500000,
     description: 'An ancient bronze cast head from the historical Kingdom of Benin. The masterpiece showcases highly detailed facial features gathered in heavy defensive neck collars, pristine scarification marks on the forehead, and an elaborate beaded net crown.',
     provenance: [
@@ -27,7 +27,7 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
     culture: 'Yoruba Peoples',
     acquisitionDate: 'Sep 28, 2024',
     status: AcquisitionStatus.InTransit,
-    imageUrl: 'https://images.unsplash.com/photo-1533250268595-f12792cdd742?auto=format&fit=crop&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCKdiuCw_zTP7WHWHB-xQl16JnOkQSri-8ci20nKnR27BCtmwVuwcbwKQIbr9sAAHFv9NYiL4PCGB4-ewMFWqh7AJtgb05jo4DDtZPr3Y9oZHqvI2Af-K3L53NRUz2v71O6aqjDsl0uWhN882QvAtN53NZqRrjYshqHcr4DfCFJJ2CZjzr63Sa4WPzffRH744uT15yF1UP-xw5XfoKjA_UCf2KG91Cj2mhw_EyMNxG6EYYeHWwNoo-KyTIkrXowWo-mtQf0MtOApw',
     estimatedValueEur: 9200000,
     description: 'A meticulously modeled terracotta head displaying the serene, idealized naturalism characteristic of Ife art. The face bears fine parallel vertical striations representing scarification or ritual veiling.',
     provenance: [
@@ -45,7 +45,7 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
     culture: 'Akan Peoples',
     acquisitionDate: 'Aug 14, 2024',
     status: AcquisitionStatus.Pending,
-    imageUrl: 'https://images.unsplash.com/photo-1600320254374-ce2d293c324e?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/36/Akan_Goldweights.jpg',
     estimatedValueEur: 7100000,
     description: 'A hand-carved single block mahogany ceremonial stool (Sesa Dwa), featuring complex openwork geometric columns that symbolize the structure of state power.',
     provenance: [
@@ -63,7 +63,7 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
     culture: 'Dogon Peoples',
     acquisitionDate: 'May 03, 2024',
     status: AcquisitionStatus.Certified,
-    imageUrl: 'https://images.unsplash.com/photo-1501472312651-726afd116ff1?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Male_Figure_with_Raised_Arms_MET_DP302219.jpg',
     estimatedValueEur: 3200000,
     description: 'A stunning "Sirige" tall mask carved with abstract rectangular geometric divisions. Reflects the multi-tiered structure of the universe and cosmic ordering.',
     provenance: [
@@ -79,7 +79,7 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
     culture: 'Nok Culture',
     acquisitionDate: 'Mar 20, 2025',
     status: AcquisitionStatus.Certified,
-    imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Africa_Nok_Male_Figure_Kimbell.jpg',
     estimatedValueEur: 6500000,
     description: 'A classic Nok sculpture showing large elliptical eyes and a sophisticated, hollow-fired clay body of an aristocratic seated dignitary.',
     provenance: [
@@ -97,7 +97,7 @@ export const INITIAL_ACQUISITIONS: Acquisition[] = [
     culture: 'Luba Peoples',
     acquisitionDate: 'Jan 08, 2026',
     status: AcquisitionStatus.InTransit,
-    imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/WLA_brooklynmuseum_Luba_Staff_19th_century_Wood.jpg',
     estimatedValueEur: 2900000,
     description: 'A carved wooden staff of office displaying a dual-faced female ancestor with intricate geometric scarification and high-sheen black oil finish.',
     provenance: [
@@ -115,7 +115,7 @@ export const INITIAL_INQUIRIES: Inquiry[] = [
     id: 'inq_1',
     artworkTitle: 'Contemporary Weave',
     artworkYear: '2023',
-    imageUrl: 'https://images.unsplash.com/photo-1618022325802-7e5e732d97a1?auto=format&fit=crop&q=80',
+    imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew',
     status: 'In Discussion',
     date: 'Jun 05, 2026',
     messages: [
@@ -140,7 +140,7 @@ export const INITIAL_INQUIRIES: Inquiry[] = [
     id: 'inq_2',
     artworkTitle: 'Kuba Ndop Board',
     artworkYear: '18th Century',
-    imageUrl: 'https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Brooklyn_Museum_61.33_Ndop_Portrait_of_King_Mishe_miShyaang_maMbul_%2810%29.jpg',
     status: 'Received',
     date: 'Jun 08, 2026',
     messages: [
@@ -292,7 +292,7 @@ export const ARTWORK_OPTIONS = [
     era: '500 BC - 200 AD',
     culture: 'Nok Culture',
     value: 6500000,
-    imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/27/Africa_Nok_Male_Figure_Kimbell.jpg',
     description: 'A classic Nok sculpture showing large elliptical eyes and a sophisticated, hollow-fired clay body of an aristocratic seated dignitary.'
   },
   {
@@ -300,7 +300,7 @@ export const ARTWORK_OPTIONS = [
     era: '18th Century',
     culture: 'Fon Peoples',
     value: 1800000,
-    imageUrl: 'https://images.unsplash.com/photo-1569172119333-df9a4a4299b0?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Beaded_crown_%28ade%29_of_Onijagbo_Obasoro_Alowolodu%2C_Ogoga_of_Ikere%2C_reigned_1890-1928%2C_Yoruba%2C_Ikere%2C_Osun_state%2C_Nigeria%2C_late_19th_century%2C_basketry%2C_beads%2C_cloth_-_Brooklyn_Museum_-_Brooklyn%2C_NY_-_DSC08538.JPG',
     description: 'A beautifully hammered royal scepter (Makpo) featuring an embossed lion emblem representing the royal power of King Glele.'
   },
   {
@@ -308,7 +308,7 @@ export const ARTWORK_OPTIONS = [
     era: '19th Century',
     culture: 'Luba Peoples',
     value: 2900000,
-    imageUrl: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/WLA_brooklynmuseum_Luba_Staff_19th_century_Wood.jpg',
     description: 'A carved wooden staff of office displaying a dual-faced female ancestor with intricate geometric scarification and high-sheen black oil finish.'
   },
   {
@@ -316,7 +316,7 @@ export const ARTWORK_OPTIONS = [
     era: '19th Century',
     culture: 'Chokwe Peoples',
     value: 195000,
-    imageUrl: 'https://images.unsplash.com/photo-1569172119333-df9a4a4299b0?auto=format&fit=crop&q=80',
+    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Chokwe_Figur_Chibinda_Ilunga_Museum_Rietberg_2007-1.jpg',
     description: 'A copper-inlaid divination pendant worn by Chokwe spiritual leaders, depicting mythological figures from oral tradition.'
   },
 ];

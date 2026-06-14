@@ -13,10 +13,16 @@ import {
   Eye,
   Award,
   PackageCheck,
-  FileCheck
+  FileCheck,
+  BookOpen,
+  History,
+  TrendingUp,
+  Gavel,
+  Search
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
+import Link from "next/link";
 
 interface DashboardViewProps {
   acquisitions: Acquisition[];
@@ -57,7 +63,7 @@ export default function DashboardView({
           <h2 className="font-serif text-[48px] italic font-medium text-ebony-deep leading-tight mb-2">
             {lang === "fr" ? "Bonjour, Julian." : "Hello, Julian."}
           </h2>
-          <p className="font-sans text-sm text-on-surface-variant">
+          <p className="font-sans text-sm text-on-surface-variant" suppressHydrationWarning>
             {lang === "fr" ? "Dernière mise à jour :" : "Last updated:"} Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {lang === "fr" ? "Compte Prestige Actif" : "Prestige Account Active"}
           </p>
         </div>
@@ -140,7 +146,7 @@ export default function DashboardView({
             {acquisitions.slice(0, 3).map((item) => (
               <div key={item.id} onClick={() => setSelectedAcquisition(item)} className="flex items-center gap-6 group cursor-pointer">
                 <div className="w-24 h-24 bg-surface-container-highest shrink-0 relative overflow-hidden shadow-level-1 border border-ebony-deep/5 transition-all">
-                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                  <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" loading="lazy" />
                   <div className="absolute inset-0 bg-ebony-deep/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Eye className="w-5 h-5 text-parchment-ivory" />
                   </div>
@@ -181,7 +187,7 @@ export default function DashboardView({
               </div>
               <div className="group cursor-pointer">
                 <div className="relative w-full aspect-[4/3] mb-5 overflow-hidden border border-ebony-deep/5">
-                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1618022325802-7e5e732d97a1?auto=format&fit=crop&q=80')` }} />
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/Akan_Goldweights.jpg" alt="Contemporary Weave" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" referrerPolicy="no-referrer" loading="lazy" />
                   <div className="absolute top-4 left-4 bg-ebony-deep/90 text-gold-leaf font-sans text-[9px] font-bold tracking-widest uppercase px-3 py-1.5 shadow-md">Curator&apos;s Premium Choice</div>
                 </div>
                 <h4 className="font-serif text-[20px] text-ebony-deep text-center mb-1 group-hover:text-gold-leaf transition-colors duration-300">Contemporary Weave</h4>
@@ -200,6 +206,34 @@ export default function DashboardView({
           </div>
         </div>
       </div>
+
+      {/* Quick Access — Visitor Pages */}
+      <section className="mt-12">
+        <div className="border-b border-ebony-deep/10 pb-4 mb-6">
+          <h3 className="font-serif text-lg font-medium text-ebony-deep">{lang === "fr" ? "Accès Rapide — Pages du Site" : "Quick Access — Site Pages"}</h3>
+          <p className="font-sans text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Naviguez vers les sections publiques de la galerie." : "Navigate to the public gallery sections."}</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {[
+            { href: "/catalogue", icon: BookOpen, labelEn: "Catalogue", labelFr: "Catalogue" },
+            { href: "/provenance", icon: History, labelEn: "Provenance", labelFr: "Provenance" },
+            { href: "/investment", icon: TrendingUp, labelEn: "Advisory", labelFr: "Conseil" },
+            { href: "/auctions", icon: Gavel, labelEn: "Auctions", labelFr: "Enchères" },
+            { href: "/search", icon: Search, labelEn: "Search", labelFr: "Recherche" },
+          ].map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="group flex items-center gap-3 bg-parchment-ivory border border-ebony-deep/5 p-4 hover:border-gold-leaf/40 hover:shadow-sm transition-all"
+            >
+              <link.icon className="w-4 h-4 text-gold-leaf shrink-0" />
+              <span className="font-sans text-xs font-semibold uppercase tracking-wider text-ebony-deep group-hover:text-gold-leaf transition-colors">
+                {lang === "fr" ? link.labelFr : link.labelEn}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

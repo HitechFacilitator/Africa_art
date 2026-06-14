@@ -42,8 +42,9 @@ import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
+import ProvenanceStage from "@/components/acquisition/ProvenanceStage";
 
-type CheckoutStep = "Summary" | "Billing" | "Payment" | "Confirmation";
+type CheckoutStep = "Summary" | "Provenance" | "Billing" | "Payment" | "Confirmation";
 type PaymentMethod = "swift" | "escrow" | "card";
 
 interface BillingData {
@@ -103,7 +104,7 @@ function AcquisitionContent() {
   const [paymentErrorMsg, setPaymentErrorMsg] = useState("");
   const [copiedSwift, setCopiedSwift] = useState(false);
 
-  const stepOrder: CheckoutStep[] = ["Summary", "Billing", "Payment", "Confirmation"];
+  const stepOrder: CheckoutStep[] = ["Summary", "Provenance", "Billing", "Payment", "Confirmation"];
   const currentIndex = stepOrder.indexOf(currentStep);
 
   const parsePrice = (priceStr: string): number => {
@@ -334,7 +335,7 @@ function AcquisitionContent() {
                       if (isCompleted) setCurrentStep(step);
                     }}
                   >
-                    {idx + 1}. {lang === "fr" ? (step === "Summary" ? "Récapitulatif" : step === "Billing" ? "Facturation" : step === "Payment" ? "Paiement" : "Confirmation") : step}
+                    {idx + 1}.                     {lang === "fr" ? (step === "Summary" ? "Récapitulatif" : step === "Provenance" ? "Provenance" : step === "Billing" ? "Facturation" : step === "Payment" ? "Paiement" : "Confirmation") : step}
                   </div>
                 </div>
               );
@@ -399,10 +400,10 @@ function AcquisitionContent() {
 
                       <div className="pt-4 border-t border-on-surface/5">
                         <button
-                          onClick={() => setCurrentStep("Billing")}
+                          onClick={() => setCurrentStep("Provenance")}
                           className="w-full bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
                         >
-                          {lang === "fr" ? "Passer à la facturation" : "Proceed to Billing"} <ArrowRight className="w-4 h-4" />
+                          {lang === "fr" ? "Passer à la provenance" : "Proceed to Provenance"} <ArrowRight className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -433,7 +434,18 @@ function AcquisitionContent() {
                 </motion.div>
               )}
 
-              {/* ─── STEP 2: BILLING ─── */}
+              {/* ─── STEP 2: PROVENANCE ─── */}
+              {currentStep === "Provenance" && (
+                <motion.div key="provenance" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                  <ProvenanceStage
+                    artwork={artwork}
+                    onBack={() => setCurrentStep("Summary")}
+                    onNext={() => setCurrentStep("Billing")}
+                  />
+                </motion.div>
+              )}
+
+              {/* ─── STEP 3: BILLING ─── */}
               {currentStep === "Billing" && (
                 <motion.div key="billing" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -552,8 +564,8 @@ function AcquisitionContent() {
                       </div>
 
                       <div className="pt-4 border-t border-on-surface/5 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <button onClick={() => setCurrentStep("Summary")} className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 cursor-pointer border-0 bg-transparent">
-                          <ArrowLeft className="w-4 h-4" /> {lang === "fr" ? "Retour au récapitulatif" : "Back to Summary"}
+                        <button onClick={() => setCurrentStep("Provenance")} className="font-sans text-xs font-semibold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 cursor-pointer border-0 bg-transparent">
+                          <ArrowLeft className="w-4 h-4" /> {lang === "fr" ? "Retour à la provenance" : "Back to Provenance"}
                         </button>
                         <button
                           onClick={() => {
@@ -587,7 +599,7 @@ function AcquisitionContent() {
                 </motion.div>
               )}
 
-              {/* ─── STEP 3: PAYMENT ─── */}
+              {/* ─── STEP 4: PAYMENT ─── */}
               {currentStep === "Payment" && (
                 <motion.div key="payment" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <div className="flex flex-col gap-12">
@@ -781,7 +793,7 @@ function AcquisitionContent() {
                 </motion.div>
               )}
 
-              {/* ─── STEP 4: CONFIRMATION ─── */}
+              {/* ─── STEP 5: CONFIRMATION ─── */}
               {currentStep === "Confirmation" && (
                 <motion.div key="confirmation" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                   <div className="flex flex-col gap-10">

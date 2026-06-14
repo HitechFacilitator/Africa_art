@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Compass, ArrowRight, Search } from "lucide-react";
@@ -23,13 +23,24 @@ const fadeUp = {
 
 function SearchResults() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const query = searchParams.get("q") || "";
+  const [localQuery, setLocalQuery] = useState(query);
   const { lang } = useTranslate();
 
-  const results = useMemo(() => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (localQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(localQuery.trim())}`);
+    }
+  };
+
+  const allTranslated = useTranslatedArtworks(ARTWORKS);
+
+  const displayResults = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return ARTWORKS.filter(
+    return allTranslated.filter(
       (art) =>
         art.title.toLowerCase().includes(q) ||
         art.tribe.toLowerCase().includes(q) ||
@@ -39,9 +50,7 @@ function SearchResults() {
         art.period.toLowerCase().includes(q) ||
         art.historicalStory.toLowerCase().includes(q)
     );
-  }, [query]);
-
-  const displayResults = useTranslatedArtworks(results);
+  }, [query, allTranslated]);
 
   return (
     <>
@@ -61,6 +70,24 @@ function SearchResults() {
             <p className="font-sans text-sm text-parchment-ivory/60">
               {displayResults.length} artwork{displayResults.length !== 1 ? "s" : ""} {lang === "fr" ? "résultats trouvés" : "found matching your query."}
             </p>
+            {/* Inline search bar */}
+            <form onSubmit={handleSearchSubmit} className="mt-6 max-w-xl">
+              <div className="flex items-center border border-parchment-ivory/20 bg-parchment-ivory/5 backdrop-blur-sm">
+                <input
+                  type="text"
+                  value={localQuery}
+                  onChange={(e) => setLocalQuery(e.target.value)}
+                  placeholder={lang === "fr" ? "Rechercher par titre, tribu, origine, matériau..." : "Search by title, tribe, origin, material..."}
+                  className="flex-1 bg-transparent px-4 py-3 text-sm text-parchment-ivory placeholder:text-parchment-ivory/30 focus:outline-none font-sans"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-3 bg-gold-leaf/20 text-gold-leaf hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer"
+                >
+                  <Search size={16} />
+                </button>
+              </div>
+            </form>
           </div>
         </section>
 

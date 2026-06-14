@@ -46,7 +46,7 @@ export default function PortfolioView({
   const [customStatus, setCustomStatus] = useState<AcquisitionStatus>(AcquisitionStatus.Certified);
   const [customDesc, setCustomDesc] = useState('');
   const [customProvenance, setCustomProvenance] = useState('');
-  const [customImage, setCustomImage] = useState('https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80');
+  const [customImage, setCustomImage] = useState('https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew');
 
   const filteredAcquisitions = acquisitions.filter(item => {
     const matchesFilter = filter === 'ALL' || (filter === 'CERTIFIED' && item.status === AcquisitionStatus.Certified) || (filter === 'TRANSIT' && item.status === AcquisitionStatus.InTransit) || (filter === 'PENDING' && item.status === AcquisitionStatus.Pending);
@@ -139,7 +139,7 @@ export default function PortfolioView({
                     </button>
                   )}
                   <div className="w-full sm:w-32 h-32 bg-surface-container-highest shrink-0 relative overflow-hidden border border-ebony-deep/5">
-                    <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={{ backgroundImage: `url(${item.imageUrl})` }} />
+                    <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" loading="lazy" />
                   </div>
                   <div className="flex-1 flex flex-col justify-between">
                     <div>

@@ -12,6 +12,9 @@ import {
   Search,
   QrCode,
   ExternalLink,
+  Printer,
+  Eye,
+  Plus,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -19,6 +22,9 @@ import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
+import PrintCertificateModal from "@/components/certificates/PrintCertificateModal";
+import RegisterCertificateDrawer from "@/components/certificates/RegisterCertificateDrawer";
+import ProvenanceDetailModal from "@/components/certificates/ProvenanceDetailModal";
 
 interface Certificate {
   id: string;
@@ -48,20 +54,24 @@ const STATUS_STYLES = {
 export default function CertificatesPage() {
   const { lang } = useTranslate();
   const translatedArtworks = useTranslatedArtworks(ARTWORKS);
-  const CERTIFICATES: Certificate[] = translatedArtworks.map((art, i) => ({
-    id: `cert-${i}`,
-    artwork: art,
-    certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${art.id.substring(0, 6).toUpperCase()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
-    issueDate: CERTIFICATE_ISSUE_DATES[i] || "2024-06-01",
-    expiryDate: CERTIFICATE_ISSUE_DATES[i]
-      ? `${Number(CERTIFICATE_ISSUE_DATES[i].substring(0, 4)) + 5}${CERTIFICATE_ISSUE_DATES[i].substring(4)}`
-      : "2029-06-01",
-    status: CERTIFICATE_STATUSES[i] || "VALID",
-    issuer: "Aduna Gallery Authentication Division",
-    authenticationLevel: CERTIFICATE_LEVELS[i] || "Level IV — Full Scientific",
-    lastVerified: CERTIFICATE_VERIFIED[i] || "2026-06-01",
-    blockchainHash: `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`,
-  }));
+  const CERTIFICATES: Certificate[] = translatedArtworks.map((art, i) => {
+    const numSuffix = ((i * 7 + 3) * 1337 % 9000 + 1000).toString();
+    const hashChars = Array.from({ length: 64 }, (_, j) => ((i * 31 + j * 17) % 16).toString(16)).join("");
+    return {
+      id: `cert-${i}`,
+      artwork: art,
+      certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${art.id.substring(0, 6).toUpperCase()}-${numSuffix}`,
+      issueDate: CERTIFICATE_ISSUE_DATES[i] || "2024-06-01",
+      expiryDate: CERTIFICATE_ISSUE_DATES[i]
+        ? `${Number(CERTIFICATE_ISSUE_DATES[i].substring(0, 4)) + 5}${CERTIFICATE_ISSUE_DATES[i].substring(4)}`
+        : "2029-06-01",
+      status: CERTIFICATE_STATUSES[i] || "VALID",
+      issuer: "Aduna Gallery Authentication Division",
+      authenticationLevel: CERTIFICATE_LEVELS[i] || "Level IV — Full Scientific",
+      lastVerified: CERTIFICATE_VERIFIED[i] || "2026-06-01",
+      blockchainHash: `0x${hashChars}`,
+    };
+  });
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(CERTIFICATES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showVerifyModal, setShowVerifyModal] = useState(false);
@@ -72,6 +82,9 @@ export default function CertificatesPage() {
   const [renewalArtwork, setRenewalArtwork] = useState<string>("");
   const [renewalConfirmed, setRenewalConfirmed] = useState(false);
   const [renewalLoading, setRenewalLoading] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [showRegisterDrawer, setShowRegisterDrawer] = useState(false);
+  const [showProvenanceModal, setShowProvenanceModal] = useState(false);
 
   const filtered = CERTIFICATES.filter((c) => {
     if (filterStatus !== "All" && c.status !== filterStatus) return false;
@@ -123,12 +136,20 @@ export default function CertificatesPage() {
                   {lang === "fr" ? "Suivez la validité, le statut de renouvellement et la lignée de provenance de vos certificats d'authenticité. Accédez au portail de vérification et enregistrez de nouveaux héritages." : "Track the validity, renewal status, and provenance lineage of your certificates of authenticity. Access the verification portal and register new heirlooms."}
                 </p>
               </div>
-              <button
-                onClick={() => setShowVerifyModal(true)}
-                className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-2 self-start"
-              >
-                <Search size={14} /> {lang === "fr" ? "Vérifier le Certificat" : "Verify Certificate"}
-              </button>
+              <div className="flex gap-3 self-start">
+                <button
+                  onClick={() => setShowRegisterDrawer(true)}
+                  className="border border-gold-leaf text-gold-leaf px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer bg-transparent flex items-center gap-2"
+                >
+                  <Plus size={14} /> {lang === "fr" ? "Enregistrer un Certificat" : "Register Certificate"}
+                </button>
+                <button
+                  onClick={() => setShowVerifyModal(true)}
+                  className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-2"
+                >
+                  <Search size={14} /> {lang === "fr" ? "Vérifier le Certificat" : "Verify Certificate"}
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -229,61 +250,80 @@ export default function CertificatesPage() {
             {/* Certificate Detail */}
             <div className="lg:col-span-7">
               {selectedCert ? (
-                <motion.div key={selectedCert.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-                  {/* Certificate Card */}
-                  <div className="bg-surface-container-low border border-on-surface/5 p-6 md:p-8 mb-6">
-                    <div className="flex items-start justify-between mb-6">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf mb-1">{lang === "fr" ? "Certificat d'Authenticité" : "Certificate of Authenticity"}</p>
-                        <p className="font-mono text-sm text-ebony-deep font-semibold">{selectedCert.certificateNumber}</p>
-                      </div>
-                      <div className={`px-3 py-1.5 border ${STATUS_STYLES[selectedCert.status].color} flex items-center gap-1.5`}>
-                        {(() => { const I = STATUS_STYLES[selectedCert.status].icon; return <I size={12} />; })()}
-                        <span className="text-[10px] font-bold uppercase tracking-wider">{STATUS_STYLES[selectedCert.status].label}</span>
-                      </div>
-                    </div>
+                <motion.div key={selectedCert.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+                  {/* Visual Certificate Preview Card */}
+                  <div className="relative bg-ebony-deep p-1 mb-6">
+                    <div className="bg-parchment-ivory p-6 md:p-8 relative overflow-hidden">
+                      {/* Gold corner accents */}
+                      <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-gold-leaf/60" />
+                      <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-gold-leaf/60" />
+                      <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-gold-leaf/60" />
+                      <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-gold-leaf/60" />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div className="aspect-[4/5] bg-ebony-deep overflow-hidden">
-                        <img src={selectedCert.artwork.imageUrl} alt={selectedCert.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      {/* Header */}
+                      <div className="text-center mb-6">
+                        <div className="inline-flex items-center justify-center w-14 h-14 bg-gold-leaf/10 mb-3">
+                          <ShieldCheck className="w-7 h-7 text-gold-leaf" />
+                        </div>
+                        <h3 className="font-serif text-lg text-ebony-deep uppercase tracking-wider">{lang === "fr" ? "Certificat d'Authenticité" : "Certificate of Authenticity"}</h3>
+                        <p className="font-mono text-[11px] text-on-surface-variant mt-1">{selectedCert.certificateNumber}</p>
                       </div>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Œuvre" : "Artwork"}</p>
-                          <p className="text-sm font-bold text-ebony-deep">{selectedCert.artwork.title}</p>
-                          <p className="text-[10px] text-on-surface-variant">{selectedCert.artwork.origin} · {selectedCert.artwork.material}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Période" : "Period"}</p>
-                          <p className="text-xs text-ebony-deep">{selectedCert.artwork.period}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Dimensions" : "Dimensions"}</p>
-                          <p className="text-xs text-ebony-deep">{selectedCert.artwork.dimensions}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Niveau d'Authentification" : "Authentication Level"}</p>
-                          <p className="text-xs text-ebony-deep font-semibold">{selectedCert.authenticationLevel}</p>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="border-t border-on-surface/5 pt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Date d'Émission" : "Issue Date"}</p>
-                        <p className="text-xs text-ebony-deep">{selectedCert.issueDate}</p>
+                      {/* Artwork image + info */}
+                      <div className="flex flex-col md:flex-row gap-5 mb-6">
+                        <div className="w-full md:w-40 aspect-[4/5] md:aspect-auto bg-ebony-deep overflow-hidden shrink-0">
+                          <img src={selectedCert.artwork.imageUrl} alt={selectedCert.artwork.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                        </div>
+                        <div className="flex-1 space-y-2.5">
+                          <div>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-gold-leaf">{lang === "fr" ? "Œuvre" : "Artwork"}</p>
+                            <p className="text-sm font-bold text-ebony-deep">{selectedCert.artwork.title}</p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Origine" : "Origin"}</p>
+                              <p className="text-xs text-ebony-deep">{selectedCert.artwork.origin}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Matériau" : "Material"}</p>
+                              <p className="text-xs text-ebony-deep">{selectedCert.artwork.material}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Période" : "Period"}</p>
+                              <p className="text-xs text-ebony-deep">{selectedCert.artwork.period}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Dimensions" : "Dimensions"}</p>
+                              <p className="text-xs text-ebony-deep">{selectedCert.artwork.dimensions}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Niveau d'Authentification" : "Authentication Level"}</p>
+                            <p className="text-xs text-ebony-deep font-semibold">{selectedCert.authenticationLevel}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Date d'Expiration" : "Expiry Date"}</p>
-                        <p className="text-xs text-ebony-deep">{selectedCert.expiryDate}</p>
+
+                      {/* Status + dates bar */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gold-leaf/20 pt-4">
+                        <div className={`px-3 py-1.5 border ${STATUS_STYLES[selectedCert.status].color} flex items-center gap-1.5`}>
+                          {(() => { const I = STATUS_STYLES[selectedCert.status].icon; return <I size={12} />; })()}
+                          <span className="text-[10px] font-bold uppercase tracking-wider">{STATUS_STYLES[selectedCert.status].label}</span>
+                        </div>
+                        <div className="flex gap-4 text-[10px] text-on-surface-variant">
+                          <span>{lang === "fr" ? "Émis" : "Issued"}: <strong className="text-ebony-deep">{selectedCert.issueDate}</strong></span>
+                          <span>{lang === "fr" ? "Expire" : "Expires"}: <strong className="text-ebony-deep">{selectedCert.expiryDate}</strong></span>
+                          <span>{lang === "fr" ? "Vérifié" : "Verified"}: <strong className="text-ebony-deep">{selectedCert.lastVerified}</strong></span>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Dernière Vérification" : "Last Verified"}</p>
-                        <p className="text-xs text-ebony-deep">{selectedCert.lastVerified}</p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant mb-0.5">{lang === "fr" ? "Émetteur" : "Issuer"}</p>
-                        <p className="text-xs text-ebony-deep">{lang === "fr" ? "Galerie Aduna" : "Aduna Gallery"}</p>
+
+                      {/* Seal watermark */}
+                      <div className="absolute bottom-4 right-4 opacity-[0.04] pointer-events-none select-none">
+                        <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                          <circle cx="40" cy="40" r="38" stroke="currentColor" strokeWidth="2"/>
+                          <circle cx="40" cy="40" r="30" stroke="currentColor" strokeWidth="1"/>
+                          <text x="40" y="42" textAnchor="middle" fontSize="8" fill="currentColor" fontFamily="serif" fontWeight="bold">ADUNA</text>
+                        </svg>
                       </div>
                     </div>
                   </div>
@@ -297,10 +337,34 @@ export default function CertificatesPage() {
                     <p className="font-mono text-[10px] text-on-surface-variant break-all leading-relaxed bg-surface p-3 border border-on-surface/5">{selectedCert.blockchainHash}</p>
                   </div>
 
+                  {/* Issuer Info */}
+                  <div className="bg-surface-container-low border border-on-surface/5 p-5 mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-ebony-deep text-gold-leaf flex items-center justify-center font-serif text-lg font-semibold shrink-0">A</div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Émetteur" : "Issuing Authority"}</p>
+                        <p className="text-xs font-bold text-ebony-deep">{selectedCert.issuer}</p>
+                        <p className="text-[10px] text-on-surface-variant">{lang === "fr" ? "Galerie Aduna, Douala, Cameroun" : "Aduna Gallery, Douala, Cameroon"}</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Actions */}
                   <div className="flex flex-wrap gap-3">
-                    <button className="bg-ebony-deep text-parchment-ivory px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
+                    <button
+                      onClick={() => setShowPrintModal(true)}
+                      className="bg-ebony-deep text-parchment-ivory px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5"
+                    >
+                      <Printer size={12} /> {lang === "fr" ? "Imprimer le Certificat" : "Print Certificate"}
+                    </button>
+                    <button className="border border-on-surface/20 text-on-surface-variant px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
                       <Download size={12} /> {lang === "fr" ? "Télécharger COA (PDF)" : "Download COA (PDF)"}
+                    </button>
+                    <button
+                      onClick={() => setShowProvenanceModal(true)}
+                      className="border border-on-surface/20 text-on-surface-variant px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5"
+                    >
+                      <Eye size={12} /> {lang === "fr" ? "Voir la Provenance" : "View Provenance"}
                     </button>
                     <button className="border border-on-surface/20 text-on-surface-variant px-5 py-3 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
                       <QrCode size={12} /> {lang === "fr" ? "Générer un Code QR" : "Generate QR Code"}
@@ -438,6 +502,99 @@ export default function CertificatesPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Print Certificate Modal */}
+      {showPrintModal && selectedCert && (
+        <PrintCertificateModal
+          certificate={{
+            title: selectedCert.artwork.title,
+            period: selectedCert.artwork.period,
+            region: selectedCert.artwork.origin,
+            referenceId: selectedCert.certificateNumber,
+            certifyingBody: selectedCert.issuer,
+            valuationEstimate: selectedCert.authenticationLevel,
+            imageUrl: selectedCert.artwork.imageUrl,
+          }}
+          onClose={() => setShowPrintModal(false)}
+        />
+      )}
+
+      {/* Register Certificate Drawer */}
+      {showRegisterDrawer && (
+        <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 pt-20 overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-parchment-ivory max-w-5xl w-full shadow-2xl relative mb-20"
+          >
+            <button
+              onClick={() => setShowRegisterDrawer(false)}
+              className="absolute top-4 right-4 z-10 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div className="p-6 md:p-8">
+              <RegisterCertificateDrawer
+                onClose={() => setShowRegisterDrawer(false)}
+                onRegister={(cert) => {
+                  setShowRegisterDrawer(false);
+                  alert(lang === "fr" ? `Certificat « ${cert.title} » enregistré avec succès.` : `Certificate "${cert.title}" registered successfully.`);
+                }}
+              />
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Provenance Detail Modal */}
+      {showProvenanceModal && selectedCert && (
+        <ProvenanceDetailModal
+          certificate={{
+            id: selectedCert.id,
+            title: selectedCert.artwork.title,
+            period: selectedCert.artwork.period,
+            region: selectedCert.artwork.origin,
+            status: selectedCert.status,
+            certifyingBody: selectedCert.issuer,
+            referenceId: selectedCert.certificateNumber,
+            imageUrl: selectedCert.artwork.imageUrl,
+            valuationEstimate: selectedCert.authenticationLevel,
+            medium: selectedCert.artwork.material,
+            provenance: [
+              {
+                id: "p1",
+                year: selectedCert.artwork.period,
+                location: selectedCert.artwork.origin,
+                event: lang === "fr"
+                  ? `Pièce certifiée par ${selectedCert.issuer}. Niveau d'authentification : ${selectedCert.authenticationLevel}. Dernière vérification : ${selectedCert.lastVerified}.`
+                  : `Piece certified by ${selectedCert.issuer}. Authentication level: ${selectedCert.authenticationLevel}. Last verified: ${selectedCert.lastVerified}.`,
+                custodian: lang === "fr" ? "Galerie Aduna" : "Aduna Gallery",
+              },
+              {
+                id: "p2",
+                year: selectedCert.issueDate,
+                location: lang === "fr" ? "Douala, Cameroun" : "Douala, Cameroon",
+                event: lang === "fr"
+                  ? `Certificat émis et enregistré dans le registre cryptographique Aduna. Référence : ${selectedCert.certificateNumber}.`
+                  : `Certificate issued and registered in the Aduna cryptographic ledger. Reference: ${selectedCert.certificateNumber}.`,
+                custodian: lang === "fr" ? "Division d'Authentification" : "Authentication Division",
+              },
+            ],
+          }}
+          onClose={() => setShowProvenanceModal(false)}
+          onRequestRenewal={() => {
+            setShowProvenanceModal(false);
+            setRenewalArtwork(selectedCert.artwork.title);
+            setShowRenewalModal(true);
+            setRenewalConfirmed(false);
+          }}
+          onPrintCertificate={() => {
+            setShowProvenanceModal(false);
+            setShowPrintModal(true);
+          }}
+        />
+      )}
 
       <Footer />
     </>

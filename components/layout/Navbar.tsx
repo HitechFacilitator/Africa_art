@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, Menu, X, Lock, User, ShieldCheck } from "lucide-react";
+import { Search, Menu, X, Lock, User, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 
-const NAV_LINKS = [
-  { href: "/", labelKey: "Home" },
+const EXPLORER_LINKS = [
   { href: "/catalogue", labelKey: "Catalogue" },
   { href: "/auctions", labelKey: "About Us" },
   { href: "/provenance", labelKey: "Provenance" },
@@ -22,6 +21,8 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(false);
+  const explorerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -33,7 +34,18 @@ export default function Navbar() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
     setSearchOpen(false);
+    setExplorerOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (explorerRef.current && !explorerRef.current.contains(e.target as Node)) {
+        setExplorerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,14 +59,18 @@ export default function Navbar() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const isExplorerActive = EXPLORER_LINKS.some((link) => isActive(link.href));
+
   return (
     <>
       <nav
         id="site-navbar"
         role="navigation"
         aria-label="Main navigation"
-        className={`sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-on-surface/5 transition-all duration-300 ${
-          scrolled ? "shadow-level-1" : ""
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-background/90 backdrop-blur-xl border-b border-on-surface/[0.04] shadow-level-1"
+            : "bg-background/60 backdrop-blur-lg border-b border-on-surface/[0.02]"
         }`}
       >
         <div className="flex justify-between items-center w-full px-6 md:px-16 xl:px-20 max-w-[1440px] mx-auto h-20">
@@ -63,39 +79,86 @@ export default function Navbar() {
           <Link
             href="/"
             id="nav-logo"
-            className="font-serif text-2xl md:text-[1.75rem] tracking-tight font-light text-ebony-deep hover:text-gold-leaf transition-colors duration-300 select-none"
+            className="font-serif text-2xl md:text-[1.75rem] tracking-tight font-light text-ebony-deep hover:text-gold-leaf transition-colors duration-300 select-none shrink-0"
             aria-label="Aduna Gallery — Go to homepage"
           >
             ADUNA <span className="text-gold-leaf">GALLERY</span>
           </Link>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center space-x-9" role="menubar">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                role="menuitem"
-                className={`relative font-sans text-[11px] font-semibold uppercase tracking-[0.1em] pb-0.5 transition-all duration-200 group ${
-                  isActive(link.href)
+          {/* Desktop Nav — Home + Explorer */}
+          <div className="hidden md:flex items-center space-x-8" role="menubar">
+            {/* Home */}
+            <Link
+              href="/"
+              role="menuitem"
+              className={`relative font-sans text-[11px] font-semibold uppercase tracking-[0.1em] pb-0.5 transition-all duration-200 group ${
+                isActive("/")
+                  ? "text-ebony-deep"
+                  : "text-on-surface-variant/80 hover:text-ebony-deep"
+              }`}
+            >
+              {t("Home")}
+              <span
+                className={`absolute bottom-0 left-0 right-0 h-[1.5px] bg-gold-leaf transition-transform duration-300 origin-left ${
+                  isActive("/") ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                }`}
+              />
+            </Link>
+
+            {/* Explorer Dropdown */}
+            <div ref={explorerRef} className="relative">
+              <button
+                onClick={() => setExplorerOpen(!explorerOpen)}
+                className={`relative font-sans text-[11px] font-semibold uppercase tracking-[0.1em] pb-0.5 transition-all duration-200 group flex items-center gap-1.5 cursor-pointer ${
+                  isExplorerActive && !explorerOpen
                     ? "text-ebony-deep"
-                    : "text-on-surface-variant/80 hover:text-ebony-deep"
+                    : explorerOpen
+                      ? "text-ebony-deep"
+                      : "text-on-surface-variant/80 hover:text-ebony-deep"
                 }`}
               >
-                {t(link.labelKey)}
+                {t("Explorer")}
+                <ChevronDown
+                  size={12}
+                  className={`transition-transform duration-200 ${explorerOpen ? "rotate-180" : ""}`}
+                />
                 <span
                   className={`absolute bottom-0 left-0 right-0 h-[1.5px] bg-gold-leaf transition-transform duration-300 origin-left ${
-                    isActive(link.href) ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                    isExplorerActive || explorerOpen ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                   }`}
                 />
-              </Link>
-            ))}
+              </button>
+
+              {/* Dropdown */}
+              <div
+                className={`absolute top-full left-0 pt-3 transition-all duration-200 ${
+                  explorerOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-1"
+                }`}
+              >
+                <div className="bg-background/95 backdrop-blur-xl border border-on-surface/[0.06] shadow-xl min-w-[200px] py-2">
+                  {EXPLORER_LINKS.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setExplorerOpen(false)}
+                      className={`block px-5 py-3 font-sans text-[11px] font-medium uppercase tracking-[0.08em] transition-all duration-150 ${
+                        isActive(link.href)
+                          ? "text-gold-leaf bg-gold-leaf/5"
+                          : "text-on-surface-variant/80 hover:text-ebony-deep hover:bg-surface-container-low"
+                      }`}
+                    >
+                      {t(link.labelKey)}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Desktop Right Controls */}
           <div className="hidden md:flex items-center space-x-5">
             {/* Language Toggle */}
-            <div className="flex items-center bg-surface-container-low rounded-full p-0.5">
+            <div className="flex items-center bg-surface-container-low/80 rounded-full p-0.5">
               <button
                 onClick={() => setLang("en")}
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[10px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
@@ -127,9 +190,9 @@ export default function Navbar() {
               id="nav-search-btn"
               onClick={() => setSearchOpen(true)}
               aria-label="Search the collection registry"
-              className="p-1.5 text-on-surface-variant/70 hover:text-gold-leaf transition-colors duration-300 cursor-pointer"
+              className="p-2 text-on-surface-variant/60 hover:text-gold-leaf transition-colors duration-300 cursor-pointer"
             >
-              <Search size={18} strokeWidth={2} />
+              <Search size={17} strokeWidth={1.5} />
             </button>
 
             {/* Collector Login */}
@@ -137,16 +200,19 @@ export default function Navbar() {
               href="/login"
               id="nav-login-btn"
               aria-label="Collector login"
-              className="p-1.5 text-on-surface-variant/70 hover:text-gold-leaf transition-colors duration-300"
+              className="p-2 text-on-surface-variant/60 hover:text-gold-leaf transition-colors duration-300"
             >
-              <User size={18} strokeWidth={2} />
+              <User size={17} strokeWidth={1.5} />
             </Link>
+
+            {/* Divider */}
+            <div className="w-px h-5 bg-on-surface/10" />
 
             {/* Request Private Access CTA */}
             <Link
               href="/price-on-request"
               id="nav-access-btn"
-              className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-3 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 border border-transparent hover:border-gold-leaf/20 shadow-sm whitespace-nowrap"
+              className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-2.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
             >
               {t("Request Private Access")}
             </Link>
@@ -155,7 +221,7 @@ export default function Navbar() {
           {/* Mobile Controls */}
           <div className="flex md:hidden items-center space-x-2">
             {/* Mobile Language Toggle */}
-            <div className="flex items-center bg-surface-container-low rounded-full p-0.5">
+            <div className="flex items-center bg-surface-container-low/80 rounded-full p-0.5">
               <button
                 onClick={() => setLang("en")}
                 className={`flex items-center gap-1 px-2 py-1.5 text-[9px] font-sans font-bold uppercase tracking-wider rounded-full transition-all duration-200 cursor-pointer ${
@@ -186,7 +252,7 @@ export default function Navbar() {
               aria-label="Search"
               className="p-2 text-on-surface-variant hover:text-gold-leaf transition-colors"
             >
-              <Search size={19} strokeWidth={2} />
+              <Search size={19} strokeWidth={1.5} />
             </button>
             <button
               id="nav-mobile-menu-btn"
@@ -227,22 +293,36 @@ export default function Navbar() {
             </div>
 
             <div className="flex-1 flex flex-col px-8 py-10 space-y-1">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`py-4 font-serif text-xl border-b border-on-surface/6 flex justify-between items-center transition-colors duration-200 ${
-                    isActive(link.href)
-                      ? "text-gold-leaf"
-                      : "text-ebony-deep hover:text-gold-leaf"
-                  }`}
-                >
-                  {t(link.labelKey)}
-                  {isActive(link.href) && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-gold-leaf" />
-                  )}
-                </Link>
-              ))}
+              <Link
+                href="/"
+                className={`py-4 font-serif text-xl border-b border-on-surface/6 flex justify-between items-center transition-colors duration-200 ${
+                  isActive("/") ? "text-gold-leaf" : "text-ebony-deep hover:text-gold-leaf"
+                }`}
+              >
+                {t("Home")}
+                {isActive("/") && <span className="w-1.5 h-1.5 rounded-full bg-gold-leaf" />}
+              </Link>
+
+              {/* Explorer Section in Mobile */}
+              <div className="py-4 border-b border-on-surface/6">
+                <p className="font-serif text-xl text-on-surface-variant/50 mb-3">{t("Explorer")}</p>
+                <div className="flex flex-col gap-1 pl-4">
+                  {EXPLORER_LINKS.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className={`py-2.5 font-sans text-sm flex justify-between items-center transition-colors duration-200 ${
+                        isActive(link.href)
+                          ? "text-gold-leaf font-medium"
+                          : "text-ebony-deep/80 hover:text-gold-leaf"
+                      }`}
+                    >
+                      {t(link.labelKey)}
+                      {isActive(link.href) && <span className="w-1.5 h-1.5 rounded-full bg-gold-leaf" />}
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
               <Link
                 href="/dashboard"
