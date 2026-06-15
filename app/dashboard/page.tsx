@@ -4,12 +4,13 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
 import { INITIAL_ACQUISITIONS, INITIAL_INQUIRIES, INITIAL_CONSULTATIONS, INITIAL_LOGISTICS, INITIAL_SECURITY, INITIAL_PROFILE } from "@/lib/dashboardData";
-import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, Gavel, Flame, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
+import CollectorHeader from "@/components/dashboard/CollectorHeader";
 import DashboardView from "@/components/dashboard/DashboardView";
 import PortfolioView from "@/components/dashboard/PortfolioView";
 import InquiriesView from "@/components/dashboard/InquiriesView";
@@ -17,10 +18,12 @@ import ConsultationsView from "@/components/dashboard/ConsultationsView";
 import LogisticsView from "@/components/dashboard/LogisticsView";
 import SecurityView from "@/components/dashboard/SecurityView";
 import SettingsView from "@/components/dashboard/SettingsView";
+import CertificatesView from "@/components/dashboard/CertificatesView";
 
 export default function DashboardPage() {
   const { lang } = useTranslate();
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Dashboard);
+  const [tabHistory, setTabHistory] = useState<ActiveTab[]>([]);
   const [selectedAcquisition, setSelectedAcquisition] = useState<Acquisition | null>(INITIAL_ACQUISITIONS[0] ?? null);
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
   const [isOpenMobile, setIsOpenMobile] = useState<boolean>(false);
@@ -28,6 +31,21 @@ export default function DashboardPage() {
   const [theme, setTheme] = useState<string>('light');
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
+
+  // Tab navigation with history tracking
+  const navigateTab = (tab: ActiveTab) => {
+    setTabHistory(prev => [...prev, activeTab]);
+    setActiveTab(tab);
+  };
+
+  const goBack = () => {
+    if (tabHistory.length === 0) return;
+    const prev = tabHistory[tabHistory.length - 1];
+    setTabHistory(h => h.slice(0, -1));
+    setActiveTab(prev);
+  };
+
+  const canGoBack = tabHistory.length > 0;
 
   const mobileTabs = [
     { id: ActiveTab.Dashboard, label: lang === "fr" ? "Vue d'ensemble" : "Overview" },
@@ -77,6 +95,7 @@ export default function DashboardPage() {
     setSecurity(INITIAL_SECURITY);
     setProfile(INITIAL_PROFILE);
     setSelectedAcquisition(INITIAL_ACQUISITIONS[0]);
+    setTabHistory([]);
     setActiveTab(ActiveTab.Dashboard);
     alert(lang === "fr" ? "Les métriques d'Aduna Gallery ont été initialisées avec succès aux paramètres par défaut." : 'Aduna Gallery metrics initialized successfully to pristine defaults.');
   };
@@ -85,7 +104,7 @@ export default function DashboardPage() {
     const existing = inquiries.find(inq => inq.artworkTitle === artworkTitle);
     if (existing) {
       setSelectedInquiryId(existing.id);
-      setActiveTab(ActiveTab.Inquiries);
+      navigateTab(ActiveTab.Inquiries);
       return;
     }
     const newInquiryId = `inq_${Date.now()}`;
@@ -106,7 +125,7 @@ export default function DashboardPage() {
     };
     setInquiries(prev => [newInquiry, ...prev]);
     setSelectedInquiryId(newInquiryId);
-    setActiveTab(ActiveTab.Inquiries);
+    navigateTab(ActiveTab.Inquiries);
 
     setTimeout(() => {
       setInquiries(prev => prev.map(inq => {
@@ -248,11 +267,13 @@ This report acts as a legal certifiable token of ownership index.
 
   return (
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
+      <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
         if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
           alert(lang === "fr" ? "Session fermée en toute sécurité. Identifiants du collectionneur authentifiés détachés." : 'Session closed safely. Authenticated collector credentials detached.');
         }
       }} />
+
+      <CollectorHeader activeTab={activeTab} onBack={goBack} canGoBack={canGoBack} onMenuToggle={() => setSidebarOpen(true)} />
 
       {/* Mobile Horizontal Tabs */}
       <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-surface border-b border-ebony-deep/5">
@@ -270,7 +291,7 @@ This report acts as a legal certifiable token of ownership index.
             {mobileTabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => navigateTab(tab.id)}
                 className={`px-3 py-3 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap border-b-2 transition-all cursor-pointer bg-transparent shrink-0 ${
                   activeTab === tab.id
                     ? "text-ebony-deep border-gold-leaf"
@@ -294,7 +315,7 @@ This report acts as a legal certifiable token of ownership index.
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
             {activeTab === ActiveTab.Dashboard && (
-              <DashboardView acquisitions={translatedAcquisitions} onExpressInterest={handleExpressInterest} setActiveTab={setActiveTab} setSelectedAcquisition={(acq) => { setSelectedAcquisition(acq); setActiveTab(ActiveTab.Portfolio); }} onExportReport={handleExportReport} />
+              <DashboardView acquisitions={translatedAcquisitions} onExpressInterest={handleExpressInterest} setActiveTab={navigateTab} setSelectedAcquisition={(acq) => { setSelectedAcquisition(acq); navigateTab(ActiveTab.Portfolio); }} onExportReport={handleExportReport} />
             )}
             {activeTab === ActiveTab.Portfolio && (
               <PortfolioView acquisitions={translatedAcquisitions} onAddAcquisition={handleAddAcquisition} onRemoveAcquisition={handleRemoveAcquisition} selectedAcquisition={selectedAcquisition} setSelectedAcquisition={setSelectedAcquisition} />
@@ -315,32 +336,7 @@ This report acts as a legal certifiable token of ownership index.
               <SettingsView profile={profile} setProfile={setProfile} onClearCache={handleClearCache} theme={theme} onToggleTheme={handleToggleTheme} />
             )}
             {activeTab === ActiveTab.Certificates && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Certificats d'Authenticité" : "Certificates of Authenticity"}</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Gérez et téléchargez les certificats de vos œuvres acquises." : "Manage and download certificates for your acquired artworks."}</p>
-                  </div>
-                  <Link href="/dashboard/certificates" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    {lang === "fr" ? "Voir le Tableau de Bord Complet" : "View Full Dashboard"} <ExternalLink size={12} />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { status: "Valid", count: 3, color: "text-emerald-600", bg: "bg-emerald-50" },
-                    { status: "Pending", count: 1, color: "text-amber-600", bg: "bg-amber-50" },
-                    { status: "Renewal Due", count: 0, color: "text-red-600", bg: "bg-red-50" },
-                  ].map((s) => (
-                    <div key={s.status} className={`${s.bg} border border-on-surface/5 p-5`}>
-                      <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? (s.status === "Valid" ? "Valide" : s.status === "Pending" ? "En attente" : "Renouvellement dû") : s.status}</p>
-                      <p className={`font-serif text-3xl font-bold mt-2 ${s.color}`}>{s.count}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                  <p className="text-xs text-on-surface-variant">{lang === "fr" ? "Accédez au tableau de bord complet des certificats pour télécharger les PDF, vérifier l'authenticité et gérer les renouvellements." : "Access the full certificates dashboard to download PDFs, verify authenticity, and manage renewals."}</p>
-                </div>
-              </div>
+              <CertificatesView />
             )}
             {activeTab === ActiveTab.PrivateCatalogues && (
               <div className="space-y-6">
@@ -367,68 +363,238 @@ This report acts as a legal certifiable token of ownership index.
             )}
             {activeTab === ActiveTab.AlertsAuctions && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div>
                     <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Alertes & Ventes aux Enchères" : "Alerts & Auctions"}</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Notifications de ventes aux enchères en direct et activité d'enchères." : "Live auction notifications and bidding activity."}</p>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Notifications de ventes en direct, enchères en cours et pièces correspondant à vos centres d'intérêt." : "Live auction notifications, ongoing bids, and pieces matching your collection interests."}</p>
                   </div>
-                  <Link href="/auctions" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    {lang === "fr" ? "Voir les Ventes" : "View Auctions"} <ExternalLink size={12} />
+                  <Link href="/auctions" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2 self-start">
+                    {lang === "fr" ? "Entrer dans la Salle des Ventes" : "Enter Auction Room"} <ExternalLink size={12} />
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Bell className="w-5 h-5 text-gold-leaf" />
-                      <h3 className="font-serif text-sm font-bold text-ebony-deep">{lang === "fr" ? "Alertes Actives" : "Active Alerts"}</h3>
+
+                {/* Live Auction Hero Banner */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative bg-ebony-deep overflow-hidden"
+                >
+                  <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_70%_50%,_#C5A059_0%,_transparent_60%)]" />
+                  <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-terracotta-earth opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-terracotta-earth"></span>
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-terracotta-earth">{lang === "fr" ? "En Direct Maintenant" : "Live Now"}</span>
+                      </div>
+                      <h3 className="font-serif text-xl text-parchment-ivory mb-1">Benin Bronze Plaque — Lot #1</h3>
+                      <p className="text-xs text-parchment-ivory/50">{lang === "fr" ? "14 offres · 89 observateurs · Se termine dans 2h 14m" : "14 bids · 89 watchers · Ends in 2h 14m"}</p>
                     </div>
-                    <p className="text-xs text-on-surface-variant">{lang === "fr" ? <>Vous avez <strong>2</strong> alertes de vente en attente pour des pièces correspondant à vos centres d'intérêt de collection.</> : <>You have <strong>2</strong> pending auction alerts for pieces matching your collection interests.</>}</p>
+                    <Link href="/auctions" className="bg-terracotta-earth text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-terracotta-earth/90 transition-colors flex items-center gap-2 shrink-0">
+                      <Gavel size={14} /> {lang === "fr" ? "Enchérir" : "Place Bid"}
+                    </Link>
                   </div>
-                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Clock className="w-5 h-5 text-terracotta-earth" />
-                      <h3 className="font-serif text-sm font-bold text-ebony-deep">{lang === "fr" ? "Ventes à Venir" : "Upcoming Sales"}</h3>
-                    </div>
-                    <p className="text-xs text-on-surface-variant">{lang === "fr" ? <>Prochaine vente privée : <strong>Bronzes d'Afrique de l'Ouest</strong> — 3 jours restants pour s'inscrire.</> : <>Next private auction: <strong>West African Bronzes</strong> — 3 days remaining to register.</>}</p>
+                </motion.div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {[
+                    { label: lang === "fr" ? "Ventes Actives" : "Live Lots", value: "3", icon: Flame, color: "text-terracotta-earth", bg: "bg-orange-50" },
+                    { label: lang === "fr" ? "Ventes à Venir" : "Upcoming", value: "2", icon: Clock, color: "text-gold-leaf", bg: "bg-amber-50" },
+                    { label: lang === "fr" ? "Mes Offres" : "My Bids", value: "4", icon: Gavel, color: "text-ebony-deep", bg: "bg-surface-container-low" },
+                    { label: lang === "fr" ? "Pièces Suivies" : "Watching", value: "7", icon: Eye, color: "text-emerald-600", bg: "bg-emerald-50" },
+                  ].map((s, i) => (
+                    <motion.div
+                      key={s.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: i * 0.08 }}
+                      className={`${s.bg} border border-on-surface/5 p-4`}
+                    >
+                      <s.icon size={16} className={`${s.color} mb-2`} />
+                      <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{s.label}</p>
+                      <p className={`font-serif text-2xl font-bold mt-1 ${s.color}`}>{s.value}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Active Alerts */}
+                <div>
+                  <h3 className="font-serif text-lg text-ebony-deep mb-4">{lang === "fr" ? "Alertes Actives" : "Active Alerts"}</h3>
+                  <div className="space-y-3">
+                    {[
+                      { title: "West African Bronzes Collection", match: "92% match", urgency: lang === "fr" ? "3 jours restants" : "3 days left", icon: Bell },
+                      { title: "Central African Sculptures", match: "87% match", urgency: lang === "fr" ? "Inscription ouverte" : "Registration open", icon: ShieldCheck },
+                    ].map((alert, i) => (
+                      <motion.div
+                        key={alert.title}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
+                        className="flex items-center gap-4 p-4 bg-surface-container-low border border-on-surface/5 hover:border-gold-leaf/30 transition-colors"
+                      >
+                        <div className="w-10 h-10 bg-gold-leaf/10 flex items-center justify-center shrink-0">
+                          <alert.icon size={18} className="text-gold-leaf" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-ebony-deep">{alert.title}</p>
+                          <p className="text-[9px] text-on-surface-variant">{alert.match} · {alert.urgency}</p>
+                        </div>
+                        <ArrowRight size={14} className="text-on-surface-variant/40 shrink-0" />
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
-                <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                  <Link href="/auctions" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
-                    {lang === "fr" ? "Entrer dans la Salle des Ventes" : "Enter Auction Room"} <ArrowRight size={12} />
-                  </Link>
+
+                {/* Upcoming Auctions */}
+                <div>
+                  <h3 className="font-serif text-lg text-ebony-deep mb-4">{lang === "fr" ? "Ventes à Venir" : "Upcoming Auctions"}</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { title: "Kuba Ndop Royal Portraits", date: "Jun 28, 2026", lots: 12, image: "https://upload.wikimedia.org/wikipedia/commons/a/a7/Brooklyn_Museum_61.33_Ndop_Portrait_of_King_Mishe_miShyaang_maMbul_%2810%29.jpg" },
+                      { title: "Dogon & Tellem Masterworks", date: "Jul 10, 2026", lots: 8, image: "https://upload.wikimedia.org/wikipedia/commons/8/8e/Male_Figure_with_Raised_Arms_MET_DP302219.jpg" },
+                    ].map((auction, i) => (
+                      <motion.div
+                        key={auction.title}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: 0.4 + i * 0.1 }}
+                        className="relative overflow-hidden border border-on-surface/10 group"
+                      >
+                        <div className="h-32 bg-ebony-deep overflow-hidden">
+                          <img src={auction.image} alt={auction.title} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-105 transition-all duration-700" referrerPolicy="no-referrer" loading="lazy" />
+                        </div>
+                        <div className="p-4 bg-surface-container-low">
+                          <p className="text-[10px] uppercase tracking-widest font-bold text-gold-leaf mb-1">{auction.date}</p>
+                          <p className="text-[11px] font-bold text-ebony-deep">{auction.title}</p>
+                          <p className="text-[9px] text-on-surface-variant">{auction.lots} {lang === "fr" ? "lots" : "lots"}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
+
+                <Link href="/auctions" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
+                  {lang === "fr" ? "Voir Toutes les Ventes" : "View All Auctions"} <ArrowRight size={12} />
+                </Link>
               </div>
             )}
             {activeTab === ActiveTab.Investment && (
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                   <div>
                     <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Conseil en Investissement" : "Investment Advisory"}</h2>
-                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Analyse de portefeuille, aperçus du marché et services de conseil." : "Portfolio analytics, market insights, and advisory services."}</p>
+                    <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Analyse de portefeuille, tendances du marché et recommandations d'experts." : "Portfolio analytics, market trends, and expert recommendations."}</p>
                   </div>
-                  <Link href="/investment" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    {lang === "fr" ? "Conseil Complet" : "Full Advisory"} <ExternalLink size={12} />
+                  <Link href="/investment" className="bg-ebony-deep text-parchment-ivory px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2 self-start">
+                    {lang === "fr" ? "Tableau de Bord Complet" : "Full Dashboard"} <ExternalLink size={12} />
                   </Link>
                 </div>
+
+                {/* Portfolio Performance Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="relative bg-ebony-deep overflow-hidden"
+                >
+                  <div className="absolute inset-0 opacity-15 bg-[radial-gradient(ellipse_at_20%_50%,_#C5A059_0%,_transparent_60%)]" />
+                  <div className="relative z-10 p-8 md:p-10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp size={16} className="text-gold-leaf" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-gold-leaf">{lang === "fr" ? "Performance du Portefeuille" : "Portfolio Performance"}</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-parchment-ivory/40">{lang === "fr" ? "Valeur Totale" : "Total Value"}</p>
+                        <p className="font-serif text-3xl font-bold text-parchment-ivory mt-1">€37.8M</p>
+                        <p className="text-[10px] text-emerald-400 mt-1">+11.4% {lang === "fr" ? "CAGR" : "CAGR"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-parchment-ivory/40">{lang === "fr" ? "Rendement Trimestriel" : "Quarter Return"}</p>
+                        <p className="font-serif text-3xl font-bold text-gold-leaf mt-1">+2.4%</p>
+                        <p className="text-[10px] text-parchment-ivory/40 mt-1">{lang === "fr" ? "ADUNA INDEX" : "ADUNA INDEX"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] uppercase tracking-widest font-bold text-parchment-ivory/40">{lang === "fr" ? "Rang Mondial" : "Global Rank"}</p>
+                        <p className="font-serif text-3xl font-bold text-parchment-ivory mt-1">#12</p>
+                        <p className="text-[10px] text-parchment-ivory/40 mt-1">{lang === "fr" ? "Top 1% collectionneurs" : "Top 1% collectors"}</p>
+                      </div>
+                    </div>
+                    {/* Mini chart line */}
+                    <div className="mt-6 h-12 flex items-end gap-1">
+                      {[35, 42, 38, 55, 48, 62, 58, 71, 68, 80, 75, 88].map((h, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ height: 0 }}
+                          animate={{ height: `${h}%` }}
+                          transition={{ duration: 0.5, delay: i * 0.05 }}
+                          className="flex-1 bg-gold-leaf/30 hover:bg-gold-leaf/60 transition-colors rounded-t-sm"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Market Insights Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "TRI du Portefeuille" : "Portfolio CAGR"}</p>
-                    <p className="font-serif text-2xl font-bold text-gold-leaf mt-1">+11.4%</p>
-                  </div>
-                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Indice du Marché" : "Market Index"}</p>
-                    <p className="font-serif text-2xl font-bold text-ebony-deep mt-1">{lang === "fr" ? "Stable" : "Stable"}</p>
-                  </div>
-                  <div className="bg-surface-container-low border border-on-surface/5 p-5">
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Statut du Conseil" : "Advisory Status"}</p>
-                    <p className="font-serif text-2xl font-bold text-emerald-600 mt-1">{lang === "fr" ? "Actif" : "Active"}</p>
+                  {[
+                    { label: lang === "fr" ? "Indice du Marché" : "Market Index", value: lang === "fr" ? "Stable" : "Stable", sub: lang === "fr" ? "Bronzes: +3.2% ce mois" : "Bronzes: +3.2% this month", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { label: lang === "fr" ? "Statut du Conseil" : "Advisory Status", value: lang === "fr" ? "Actif" : "Active", sub: lang === "fr" ? "Prochaine revue: 28 Jun" : "Next review: Jun 28", icon: ShieldCheck, color: "text-gold-leaf", bg: "bg-amber-50" },
+                    { label: lang === "fr" ? "Alertes Prix" : "Price Alerts", value: "3", sub: lang === "fr" ? "Pièces sous estimation" : "Pieces below estimate", icon: Bell, color: "text-terracotta-earth", bg: "bg-orange-50" },
+                  ].map((card, i) => (
+                    <motion.div
+                      key={card.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: 0.2 + i * 0.08 }}
+                      className={`${card.bg} border border-on-surface/5 p-5 hover:shadow-sm transition-shadow`}
+                    >
+                      <card.icon size={18} className={`${card.color} mb-3`} />
+                      <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{card.label}</p>
+                      <p className={`font-serif text-2xl font-bold mt-1 ${card.color}`}>{card.value}</p>
+                      <p className="text-[10px] text-on-surface-variant mt-1">{card.sub}</p>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Top Holdings */}
+                <div>
+                  <h3 className="font-serif text-lg text-ebony-deep mb-4">{lang === "fr" ? "Principales Positions" : "Top Holdings"}</h3>
+                  <div className="space-y-2">
+                    {[
+                      { title: "Benin Bronze Head", value: "€8.5M", change: "+14.2%", positive: true },
+                      { title: "Ife Terracotta Head", value: "€9.2M", change: "+11.8%", positive: true },
+                      { title: "Nok Terracotta Figure", value: "€6.5M", change: "+9.4%", positive: true },
+                    ].map((holding, i) => (
+                      <motion.div
+                        key={holding.title}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.3 + i * 0.08 }}
+                        className="flex items-center justify-between p-3 bg-surface-container-low border border-on-surface/5 hover:border-gold-leaf/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-ebony-deep/5 flex items-center justify-center shrink-0">
+                            <span className="text-[10px] font-bold text-on-surface-variant">#{i + 1}</span>
+                          </div>
+                          <p className="text-[11px] font-bold text-ebony-deep">{holding.title}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-[11px] font-bold text-ebony-deep">{holding.value}</span>
+                          <span className={`text-[10px] font-bold ${holding.positive ? "text-emerald-600" : "text-red-600"}`}>{holding.change}</span>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
-                <div className="bg-surface-container-low border border-on-surface/5 p-6">
-                  <Link href="/investment" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
-                    {lang === "fr" ? "Voir le Tableau de Bord d'Investissement" : "View Investment Dashboard"} <ArrowRight size={12} />
-                  </Link>
-                </div>
+
+                <Link href="/investment" className="inline-flex items-center gap-2 text-gold-leaf font-sans text-xs font-bold uppercase tracking-widest hover:text-ebony-deep transition-colors">
+                  {lang === "fr" ? "Voir le Tableau de Bord d'Investissement" : "View Investment Dashboard"} <ArrowRight size={12} />
+                </Link>
               </div>
             )}
             {activeTab === ActiveTab.Previews && (

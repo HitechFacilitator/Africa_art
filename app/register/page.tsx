@@ -14,8 +14,6 @@ import {
   ShieldCheck,
   Clock,
 } from "lucide-react";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
 import { useTranslate } from "@/lib/translations";
 
 const PASSWORD_RULES = [
@@ -93,7 +91,6 @@ function RegistrationForm() {
 
   return (
     <>
-      <Navbar />
       <main className="flex-1">
         <section className="bg-ebony-deep py-12 md:py-16 relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_60%_50%,_#C5A059_0%,_transparent_70%)]" />
@@ -369,7 +366,6 @@ function RegistrationForm() {
           </AnimatePresence>
         </div>
       </main>
-      <Footer />
     </>
   );
 }
@@ -379,7 +375,6 @@ export default function RegisterPage() {
     <Suspense
       fallback={
         <>
-          <Navbar />
           <main className="flex-1">
             <section className="bg-ebony-deep py-12 md:py-16">
               <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20">
@@ -390,7 +385,6 @@ export default function RegisterPage() {
               </div>
             </section>
           </main>
-          <Footer />
         </>
       }
     >

@@ -19,11 +19,13 @@ import {
   Shield,
   AlertCircle,
 } from "lucide-react";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import Sidebar from "@/components/dashboard/Sidebar";
+import CollectorHeader from "@/components/dashboard/CollectorHeader";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
+import { INITIAL_PROFILE } from "@/lib/dashboardData";
 import type { Artwork } from "@/lib/types";
 
 interface VaultHolding {
@@ -68,6 +70,9 @@ const PRIVATE_CATALOGUES = [
 export default function PrivateCataloguePage() {
   const router = useRouter();
   const { lang } = useTranslate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isOpenMobile, setIsOpenMobile] = useState(false);
+  const [profile] = useState<CollectorProfile>(INITIAL_PROFILE);
   const translatedArtworks = useTranslatedArtworks(ARTWORKS.slice(0, 4));
   const vaultHoldings: VaultHolding[] = translatedArtworks.map((art, i) => ({
     artwork: art,
@@ -113,18 +118,30 @@ export default function PrivateCataloguePage() {
   const publicHoldings = vaultHoldings.filter(h => h.isPublic);
 
   return (
-    <>
-      <Navbar />
+    <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
+      <Sidebar
+        activeTab={ActiveTab.PrivateCatalogues}
+        setActiveTab={(tab) => router.push("/dashboard")}
+        profile={profile}
+        isOpenMobile={isOpenMobile}
+        setIsOpenMobile={setIsOpenMobile}
+        open={sidebarOpen}
+        setOpen={setSidebarOpen}
+        onLogout={() => {
+          if (confirm(lang === "fr" ? "Révoquer la session ?" : 'De-authorize session?')) {
+            alert(lang === "fr" ? "Session fermée." : 'Session closed.');
+          }
+        }}
+      />
 
-      {/* Auth Banner */}
-      <div className="bg-ebony-deep border-b border-gold-leaf/20 py-2.5 px-6 text-center">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-parchment-ivory">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold-leaf animate-pulse" />
-          {lang === "fr" ? "Session Authentifiée · Portail du Collectionneur Privé" : "Authenticated Session · Private Collector Portal"}
-        </div>
-      </div>
+      <CollectorHeader
+        activeTab={ActiveTab.PrivateCatalogues}
+        onBack={() => router.push("/dashboard")}
+        canGoBack={true}
+        onMenuToggle={() => setSidebarOpen(true)}
+      />
 
-      <main className="flex-1">
+      <main className={`flex-1 bg-background min-h-screen overflow-hidden transition-all duration-300 ${sidebarOpen ? "blur-sm pointer-events-none" : ""}`}>
         {/* Hero */}
         <section className="bg-surface-container-low py-12 md:py-16 border-b border-on-surface/5">
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20">
@@ -425,103 +442,6 @@ export default function PrivateCataloguePage() {
           )}
         </motion.div>
       </main>
-
-      {/* Express Interest POR Modal */}
-      <AnimatePresence>
-        {showPORExpress && (
-          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
-              <button onClick={resetPORExpress} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-6 h-6" /></button>
-              {porSubmitted ? (
-                <div className="text-center">
-                  <CheckCircle className="w-14 h-14 text-gold-leaf mx-auto mb-4" />
-                  <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">{lang === "fr" ? "Intérêt Enregistré" : "Interest Registered"}</h3>
-                  <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
-                    {lang === "fr" ? `Votre intérêt exprimé pour ` : "Your express interest for "}<strong>{porArtwork}</strong>{lang === "fr" ? ` a été enregistré. Notre équipe de conservateurs vous contactera dans les 24 heures pour discuter des options d'acquisition.` : " has been registered. Our curatorial team will contact you within 24 hours to discuss acquisition options."}
-                  </p>
-                   <button onClick={resetPORExpress} className="bg-ebony-deep text-parchment-ivory px-8 py-3 text-xs uppercase tracking-widest font-bold hover:opacity-90 transition-opacity cursor-pointer border-0">{lang === "fr" ? "Fermer" : "Close"}</button>
-                </div>
-              ) : (
-                <>
-                  <div className="text-center mb-6">
-                    <Send className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
-                    <h3 className="font-serif text-xl font-medium uppercase tracking-wide">{lang === "fr" ? "Exprimer l'Intérêt" : "Express Interest"}</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Pour : " : "For: "}{porArtwork}</p>
-                  </div>
-                  <form onSubmit={(e) => { e.preventDefault(); if (!porMessage.trim()) return; setPorSubmitted(true); }} className="space-y-4">
-                    <div>
-                      <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1">{lang === "fr" ? "Message / Conditions" : "Message / Conditions"}</label>
-                      <textarea
-                        rows={4}
-                        required
-                        value={porMessage}
-                        onChange={(e) => setPorMessage(e.target.value)}
-                        className="w-full border border-ebony-deep/15 p-3 text-xs focus:border-gold-leaf focus:outline-none resize-none"
-                        placeholder="Express your interest, budget range, timeline, or specific conditions..."
-                      />
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <input type="checkbox" id="gdpr-private" required className="mt-1 accent-gold-leaf" />
-                      <label htmlFor="gdpr-private" className="text-[10px] text-on-surface-variant leading-relaxed">
-                        {lang === "fr" ? "Je consens au traitement de mes données personnelles conformément aux " : "I consent to the processing of my personal data in accordance with "}<span className="text-gold-leaf font-semibold">{lang === "fr" ? "règlement RGPD" : "GDPR regulations"}</span>{lang === "fr" ? "." : ""} *
-                      </label>
-                    </div>
-                    <div className="flex justify-end gap-3 pt-4 border-t border-ebony-deep/5">
-                      <button type="button" onClick={resetPORExpress} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
-                      <button type="submit" disabled={!porMessage.trim()} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0">
-                        {lang === "fr" ? "Soumettre l'Intérêt" : "Submit Interest"}
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Access Denied Modal */}
-      <AnimatePresence>
-        {showAccessDenied && (
-          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
-              <button onClick={() => setShowAccessDenied(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-6 h-6" /></button>
-              <div className="text-center">
-                <Shield className="w-14 h-14 text-terracotta-earth mx-auto mb-4" />
-                <h3 className="font-serif text-xl font-medium uppercase tracking-wide mb-3">{lang === "fr" ? "Accès Refusé" : "Access Restricted"}</h3>
-                <p className="text-xs text-on-surface-variant mb-4 leading-relaxed">
-                  <strong>{deniedArtwork}</strong> {lang === "fr" ? "est une acquisition confidentielle pas encore disponible pour la visualisation publique." : "is a confidential acquisition not yet available for public viewing."}
-                </p>
-                <div className="bg-surface-container-low border border-on-surface/5 p-4 mb-6 text-left">
-                  <p className="text-[10px] uppercase tracking-widest font-bold text-on-surface-variant mb-2">{lang === "fr" ? "Pour accéder à cette œuvre :" : "To access this artwork:"}</p>
-                  <ul className="text-xs text-on-surface-variant space-y-1.5">
-                    <li className="flex items-start gap-2">
-                      <span className="text-gold-leaf mt-0.5">1.</span>
-                      <span>{lang === "fr" ? "Contactez notre équipe de conservateurs pour demander un accès VIP" : "Contact our curatorial team to request VIP access clearance"}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-gold-leaf mt-0.5">2.</span>
-                      <span>{lang === "fr" ? "Effectuez une vérification KYC renforcée pour les détentions confidentielles" : "Complete enhanced KYC verification for confidential holdings"}</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-gold-leaf mt-0.5">3.</span>
-                      <span>{lang === "fr" ? "Signez un Accord de Confidentialité (NDA) pour les données de la collection privée" : "Sign a Non-Disclosure Agreement (NDA) for private collection data"}</span>
-                    </li>
-                  </ul>
-                </div>
-                <div className="flex gap-3 justify-center">
-                  <button onClick={() => setShowAccessDenied(false)} className="border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Fermer" : "Close"}</button>
-                  <a href="mailto:vip@adunagallery.com?subject=VIP%20Access%20Request" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-gold-leaf hover:text-ebony-deep transition-colors flex items-center gap-2">
-                    <ShieldCheck size={12} /> {lang === "fr" ? "Demander l'Accès VIP" : "Request VIP Access"}
-                  </a>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <Footer />
-    </>
+    </div>
   );
 }
