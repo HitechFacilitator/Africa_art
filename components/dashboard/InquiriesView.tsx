@@ -47,14 +47,14 @@ export default function InquiriesView({
     <div className="animate-fade-in">
       <header className="mb-10 pb-6 border-b border-ebony-deep/10">
         <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Conseil et Placements Privés" : "Advisory & Private Placements"}</h2>
-        <p className="font-sans text-xs text-on-surface-variant mt-1">Maintain encrypted, direct dialogues with your assigned personal art liaison, Helena Sterling. Coordinates private commissions and bid representation.</p>
+        <p className="font-sans text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Maintenez des dialogues cryptés et directs avec votre attaché artistique personnel assigné, Helena Sterling. Coordination des commissions privées et représentation des enchères." : "Maintain encrypted, direct dialogues with your assigned personal art liaison, Helena Sterling. Coordinates private commissions and bid representation."}</p>
       </header>
 
       {inquiries.length === 0 ? (
         <div className="bg-parchment-ivory border border-dashed border-ebony-deep/10 p-16 text-center select-none">
           <MessageSquare className="w-10 h-10 text-gold-leaf mx-auto mb-4" />
           <p className="font-serif text-lg text-ebony-deep">{lang === "fr" ? "Aucune Demande Active" : "No Active Inquiries"}</p>
-          <p className="font-sans text-xs text-zinc-400 max-w-sm mx-auto mt-2">Initiate a confidential inquiry regarding our exclusive curator previews from the main dashboard to establish an active placement ledger.</p>
+          <p className="font-sans text-xs text-zinc-400 max-w-sm mx-auto mt-2">{lang === "fr" ? "Initiez une demande confidentielle concernant nos aperçus exclusifs de conservateur depuis le tableau de bord principal pour établir un registre de placement actif." : "Initiate a confidential inquiry regarding our exclusive curator previews from the main dashboard to establish an active placement ledger."}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch lg:h-[calc(100vh-270px)] min-h-[400px]">
@@ -75,10 +75,10 @@ export default function InquiriesView({
                         <h4 className="font-serif text-sm font-semibold text-ebony-deep truncate leading-none">{inq.artworkTitle}</h4>
                         <span className="text-[9px] font-sans font-medium text-zinc-400 shrink-0">{inq.date.split(',')[0]}</span>
                       </div>
-                      <p className="font-sans text-[11px] text-zinc-500 line-clamp-1 mb-2">{lastMsg ? lastMsg.text : 'No messages yet...'}</p>
+                      <p className="font-sans text-[11px] text-zinc-500 line-clamp-1 mb-2">{lastMsg ? lastMsg.text : (lang === "fr" ? 'Pas encore de messages...' : 'No messages yet...')}</p>
                       <div className="flex justify-between items-center text-[9px] uppercase tracking-widest font-bold">
                         <span className={`px-2 py-0.5 border ${inq.status === 'Offer Presented' ? 'bg-amber-100 text-amber-800 border-amber-300/40' : 'bg-emerald-50 text-emerald-800 border-emerald-350/30'}`}>{inq.status}</span>
-                        <span className="text-zinc-400 italic">Curator: Sterling</span>
+                        <span className="text-zinc-400 italic">{lang === "fr" ? "Conservateur : Sterling" : "Curator: Sterling"}</span>
                       </div>
                     </div>
                   </button>
@@ -99,7 +99,7 @@ export default function InquiriesView({
                       <h4 className="font-serif text-base font-semibold text-ebony-deep flex items-center gap-1.5 leading-none mb-1">
                         Helena Sterling <UserCheck2 className="w-4 h-4 text-emerald-600" />
                       </h4>
-                      <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">Socio-Cultural Advisory • Designated Curator</p>
+                      <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-400 font-semibold">{lang === "fr" ? "Conseil Socioculturel • Conservateur Désigné" : "Socio-Cultural Advisory • Designated Curator"}</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end text-right">
@@ -112,14 +112,14 @@ export default function InquiriesView({
                   <div className="flex items-center justify-center mb-4">
                     <div className="bg-amber-50/50 border border-gold-leaf/30 text-center px-4 py-2.5 max-w-md shadow-sm">
                       <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-gold-leaf mb-0.5 flex items-center justify-center gap-1.5"><Sparkles className="w-3.5 h-3.5" /> {lang === "fr" ? "Canal Crypté Bout en Bout Actif" : "End-to-End Cryptic Channel Active"}</p>
-                      <p className="font-sans text-[10px] text-zinc-400">This discussion acts as a binding provenance register and private placement record.</p>
+                      <p className="font-sans text-[10px] text-zinc-400">{lang === "fr" ? "Cette discussion agit comme un registre de provenance contraignant et un enregistrement de placement privé." : "This discussion acts as a binding provenance register and private placement record."}</p>
                     </div>
                   </div>
                   {activeInquiry.messages.map((msg, idx) => {
                     const isCollector = msg.sender === 'collector';
                     return (
                       <div key={idx} className={`flex flex-col max-w-[80%] ${isCollector ? 'self-end items-end' : 'self-start items-start'}`}>
-                        <p className="font-sans text-[9px] uppercase tracking-wider font-bold text-zinc-400 mb-1">{isCollector ? 'Julian Doe' : 'Helena Sterling • Advisor'}</p>
+                        <p className="font-sans text-[9px] uppercase tracking-wider font-bold text-zinc-400 mb-1">{isCollector ? (lang === "fr" ? 'Julian Doe' : 'Julian Doe') : (lang === "fr" ? 'Helena Sterling • Conseillère' : 'Helena Sterling • Advisor')}</p>
                         <div className={`p-4 font-sans text-xs leading-relaxed ${isCollector ? 'bg-ebony-deep text-parchment-ivory' : 'bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep'}`}>{msg.text}</div>
                         <span className="font-mono text-[9px] text-zinc-400 mt-1">{msg.timestamp}</span>
                       </div>
@@ -128,7 +128,7 @@ export default function InquiriesView({
                 </div>
 
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-ebony-deep/5 bg-white flex items-stretch gap-3">
-                  <input type="text" required value={typedMessage} onChange={(e) => setTypedMessage(e.target.value)} placeholder="Inquire securely about provenance, private pricing, premium transportation logistics..." className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none" />
+                  <input type="text" required value={typedMessage} onChange={(e) => setTypedMessage(e.target.value)} placeholder={lang === "fr" ? "Demandez en toute sécurité sur la provenance, les tarifs privés, la logistique de transport premium..." : "Inquire securely about provenance, private pricing, premium transportation logistics..."} className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none" />
                   <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0"><Send className="w-4.5 h-4.5" /></button>
                 </form>
               </>
@@ -136,7 +136,7 @@ export default function InquiriesView({
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-400">
                 <ShieldAlert className="w-10 h-10 text-gold-leaf mb-3 animate-pulse" />
                 <p className="font-serif italic text-sm mb-1">{lang === "fr" ? "Canal Non Sélectionné" : "Channel Unselected"}</p>
-                <p className="font-sans text-xs">Select any private positioning card on your left cabinet stream to initialize peer advisory lines.</p>
+                <p className="font-sans text-xs">{lang === "fr" ? "Sélectionnez une carte de placement privée sur votre flux de gauche pour initialiser les lignes de conseil pair." : "Select any private positioning card on your left cabinet stream to initialize peer advisory lines."}</p>
               </div>
             )}
           </div>

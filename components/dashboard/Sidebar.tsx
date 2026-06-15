@@ -17,8 +17,12 @@ import {
   LogOut,
   Menu,
   X,
+  MessageSquare,
+  FileText,
+  HelpCircle,
 } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
+import { useAuth } from "@/lib/auth";
 
 interface SidebarProps {
   activeTab: ActiveTab;
@@ -42,7 +46,8 @@ export default function Sidebar({
   onLogout
 }: SidebarProps) {
   const { lang, setLang } = useTranslate();
-  const navItems = [
+  const { canAccessTab, user } = useAuth();
+  const allNavItems = [
     { id: ActiveTab.Dashboard, label: lang === "fr" ? "Tableau de Bord" : "Dashboard", icon: LayoutDashboard },
     { id: ActiveTab.Portfolio, label: lang === "fr" ? "Mes Acquisitions" : "My Acquisitions", icon: Landmark },
     { id: ActiveTab.Certificates, label: lang === "fr" ? "Certificats" : "Certificates", icon: Award },
@@ -54,7 +59,13 @@ export default function Sidebar({
     { id: ActiveTab.Previews, label: lang === "fr" ? "Aperçus Exclusifs" : "Exclusive Previews", icon: Eye },
     { id: ActiveTab.Logistics, label: lang === "fr" ? "Logistique" : "Logistics", icon: Truck },
     { id: ActiveTab.Security, label: lang === "fr" ? "Sécurité" : "Security", icon: ShieldCheck },
+    { id: ActiveTab.Chat, label: lang === "fr" ? "Messages" : "Messages", icon: MessageSquare },
+    { id: ActiveTab.Documentation, label: lang === "fr" ? "Documentation" : "Documentation", icon: FileText },
+    { id: ActiveTab.Support, label: lang === "fr" ? "Support" : "Support", icon: HelpCircle },
   ];
+
+  // Filter nav items based on user role
+  const navItems = allNavItems.filter(item => canAccessTab(item.id));
 
   const handleTabClick = (tabId: ActiveTab) => {
     setActiveTab(tabId);
@@ -82,10 +93,10 @@ export default function Sidebar({
       <div className="px-5 mb-6">
         <div className="flex items-center gap-3 bg-parchment-ivory p-3 border border-ebony-deep/5 shadow-sm">
           <div className="w-9 h-9 rounded-full bg-ebony-deep text-gold-leaf flex items-center justify-center font-serif text-lg font-semibold shrink-0">
-            {profile.name.charAt(0)}
+            {user?.avatar || profile.name.charAt(0)}
           </div>
           <div className="min-w-0">
-            <p className="font-sans font-medium text-xs text-ebony-deep truncate">{profile.name}</p>
+            <p className="font-sans font-medium text-xs text-ebony-deep truncate">{user?.name || profile.name}</p>
             <p className="font-sans text-[10px] font-semibold tracking-wider uppercase text-gold-leaf">{profile.tier}</p>
           </div>
         </div>

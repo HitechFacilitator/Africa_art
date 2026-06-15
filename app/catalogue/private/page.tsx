@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import CollectorHeader from "@/components/dashboard/CollectorHeader";
+import AuthGuard from "@/components/AuthGuard";
 import { ARTWORKS } from "@/lib/mockData";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
@@ -118,6 +119,7 @@ export default function PrivateCataloguePage() {
   const publicHoldings = vaultHoldings.filter(h => h.isPublic);
 
   return (
+    <AuthGuard permission="private_catalogues">
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
       <Sidebar
         activeTab={ActiveTab.PrivateCatalogues}
@@ -443,5 +445,6 @@ export default function PrivateCataloguePage() {
         </motion.div>
       </main>
     </div>
+    </AuthGuard>
   );
 }

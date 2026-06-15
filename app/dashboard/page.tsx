@@ -2,11 +2,14 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
 import { INITIAL_ACQUISITIONS, INITIAL_INQUIRIES, INITIAL_CONSULTATIONS, INITIAL_LOGISTICS, INITIAL_SECURITY, INITIAL_PROFILE } from "@/lib/dashboardData";
-import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, Gavel, Flame, ShieldCheck } from "lucide-react";
+import { INITIAL_CHAT_THREADS } from "@/lib/chatData";
+import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, Gavel, Flame, ShieldCheck, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
+import { useAuth } from "@/lib/auth";
 import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -19,9 +22,12 @@ import LogisticsView from "@/components/dashboard/LogisticsView";
 import SecurityView from "@/components/dashboard/SecurityView";
 import SettingsView from "@/components/dashboard/SettingsView";
 import CertificatesView from "@/components/dashboard/CertificatesView";
+import ChatView from "@/components/dashboard/ChatView";
 
 export default function DashboardPage() {
   const { lang } = useTranslate();
+  const router = useRouter();
+  const { canAccessTab, user } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Dashboard);
   const [tabHistory, setTabHistory] = useState<ActiveTab[]>([]);
   const [selectedAcquisition, setSelectedAcquisition] = useState<Acquisition | null>(INITIAL_ACQUISITIONS[0] ?? null);
@@ -34,6 +40,7 @@ export default function DashboardPage() {
 
   // Tab navigation with history tracking
   const navigateTab = (tab: ActiveTab) => {
+    if (!canAccessTab(tab)) return;
     setTabHistory(prev => [...prev, activeTab]);
     setActiveTab(tab);
   };
@@ -47,7 +54,7 @@ export default function DashboardPage() {
 
   const canGoBack = tabHistory.length > 0;
 
-  const mobileTabs = [
+  const allMobileTabs = [
     { id: ActiveTab.Dashboard, label: lang === "fr" ? "Vue d'ensemble" : "Overview" },
     { id: ActiveTab.Portfolio, label: lang === "fr" ? "Acquisitions" : "Acquisitions" },
     { id: ActiveTab.Certificates, label: lang === "fr" ? "Certificats" : "Certificates" },
@@ -60,6 +67,7 @@ export default function DashboardPage() {
     { id: ActiveTab.Logistics, label: lang === "fr" ? "Logistique" : "Logistics" },
     { id: ActiveTab.Security, label: lang === "fr" ? "Sécurité" : "Security" },
   ];
+  const mobileTabs = allMobileTabs.filter(tab => canAccessTab(tab.id));
 
   const scrollMobileTabs = (direction: "left" | "right") => {
     if (mobileTabsRef.current) {
@@ -77,6 +85,7 @@ export default function DashboardPage() {
   const [logistics, setLogistics] = useState<LogisticsShipment[]>(INITIAL_LOGISTICS);
   const [security, setSecurity] = useState<SecurityRecord[]>(INITIAL_SECURITY);
   const [profile, setProfile] = useState<CollectorProfile>(INITIAL_PROFILE);
+  const [chatThreads, setChatThreads] = useState(INITIAL_CHAT_THREADS);
 
   // Auto-translate dynamic data when language changes
   const translatedAcquisitions = useTranslatedAcquisitions(acquisitions);
@@ -85,6 +94,22 @@ export default function DashboardPage() {
 
   const handleToggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const handleSendMessage = (threadId: string, text: string) => {
+    setChatThreads(prev => prev.map(t => {
+      if (t.id !== threadId) return t;
+      const newMsg = {
+        id: `msg-${Date.now()}`,
+        senderId: user?.id || "collector",
+        senderName: user?.name || "Julian Doe",
+        senderRole: (user?.role || "collector") as "collector",
+        text,
+        timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+        read: true,
+      };
+      return { ...t, messages: [...t.messages, newMsg], lastMessage: text, lastMessageTime: newMsg.timestamp };
+    }));
   };
 
   const handleClearCache = () => {
@@ -337,6 +362,46 @@ This report acts as a legal certifiable token of ownership index.
             )}
             {activeTab === ActiveTab.Certificates && (
               <CertificatesView />
+            )}
+            {activeTab === ActiveTab.Chat && (
+              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} />
+            )}
+            {activeTab === ActiveTab.Documentation && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Documentation" : "Documentation"}</h2>
+                  <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Guides, protocoles et références pour les collectionneurs." : "Guides, protocols, and references for collectors."}</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                    <FileText className="w-8 h-8 text-terracotta-earth mb-3" />
+                    <h3 className="font-serif text-lg text-ebony-deep mb-2">{lang === "fr" ? "Aperçu du Protocole" : "Protocol Overview"}</h3>
+                    <p className="font-sans text-xs text-on-surface-variant leading-relaxed">{lang === "fr" ? "Le système de registre Aduna Gallery utilise un protocole de séquestre à signature multiple pour toutes les transactions de grande valeur." : "The Aduna Gallery ledger system uses a multi-signature escrow protocol for all high-value transactions."}</p>
+                  </div>
+                  <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                    <FileText className="w-8 h-8 text-terracotta-earth mb-3" />
+                    <h3 className="font-serif text-lg text-ebony-deep mb-2">{lang === "fr" ? "Standards de Provenance" : "Provenance Standards"}</h3>
+                    <p className="font-sans text-xs text-on-surface-variant leading-relaxed">{lang === "fr" ? "Tous les enregistrements de provenance doivent être conformes à la Convention de l'UNESCO de 1970 et à la Convention d'UNIDROIT de 1995." : "All provenance records must comply with the UNESCO 1970 Convention and UNIDROIT 1995 Convention."}</p>
+                  </div>
+                  <div className="bg-surface-container-low border border-on-surface/5 p-6">
+                    <FileText className="w-8 h-8 text-terracotta-earth mb-3" />
+                    <h3 className="font-serif text-lg text-ebony-deep mb-2">{lang === "fr" ? "Séquestre Multi-Sig" : "Multi-Sig Escrow"}</h3>
+                    <p className="font-sans text-xs text-on-surface-variant leading-relaxed">{lang === "fr" ? "Les contrats de séquestre nécessitent une double authentification de l'acheteur et du vendeur avant le déblocage des fonds." : "Escrow contracts require dual authentication from both buyer and seller before fund release."}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {activeTab === ActiveTab.Support && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Support" : "Support"}</h2>
+                  <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Contactez l'équipe technique d'Aduna Gallery." : "Contact the Aduna Gallery technical team."}</p>
+                </div>
+                <div className="max-w-xl bg-surface-container-low border border-on-surface/5 p-6">
+                  <p className="font-sans text-xs text-on-surface-variant mb-4">{lang === "fr" ? "Soumettre un ticket de support. Délai de réponse : dans les 24 heures ouvrables." : "Submit a support ticket. Response time: within 24 business hours."}</p>
+                  <SupportTicketForm lang={lang} />
+                </div>
+              </div>
             )}
             {activeTab === ActiveTab.PrivateCatalogues && (
               <div className="space-y-6">
@@ -651,6 +716,38 @@ This report acts as a legal certifiable token of ownership index.
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function SupportTicketForm({ lang }: { lang: string }) {
+  const [message, setMessage] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = () => {
+    if (!message.trim()) return;
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 3000);
+    setMessage("");
+  };
+
+  return (
+    <div>
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        rows={6}
+        placeholder={lang === "fr" ? "Décrivez votre problème ou demande..." : "Describe your issue or request..."}
+        className="w-full px-3 py-2.5 bg-parchment-ivory border border-on-surface/10 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-terracotta-earth/30 resize-none mb-4"
+      />
+      <button
+        onClick={handleSubmit}
+        className="px-4 py-2.5 bg-terracotta-earth text-parchment-ivory text-xs font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/90 transition-opacity cursor-pointer border-0"
+      >
+        {submitted
+          ? (lang === "fr" ? "Ticket Soumis" : "Ticket Submitted")
+          : (lang === "fr" ? "Soumettre le Ticket" : "Submit Ticket")}
+      </button>
     </div>
   );
 }

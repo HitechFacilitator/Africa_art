@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import CollectorHeader from "@/components/dashboard/CollectorHeader";
+import AuthGuard from "@/components/AuthGuard";
 import { useTranslate } from "@/lib/translations";
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
 import { INITIAL_PROFILE } from "@/lib/dashboardData";
@@ -153,6 +154,7 @@ export default function PreviewPage() {
   };
 
   return (
+    <AuthGuard permission="previews">
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
       <Sidebar
         activeTab={ActiveTab.Previews}
@@ -274,5 +276,6 @@ export default function PreviewPage() {
         </div>
       </main>
     </div>
+    </AuthGuard>
   );
 }

@@ -2,18 +2,12 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle } from "lucide-react";
+import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle, User, Crown, Briefcase, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslate } from "@/lib/translations";
-
-interface UserSession {
-  email: string;
-  role: "Private Collector" | "Institutional Member";
-  token: string;
-  institution?: string;
-  securityClearance: string;
-}
+import { useAuth, type Role } from "@/lib/auth";
+import { validateCredentials, MOCK_USERS } from "@/lib/users";
 
 const MAX_ATTEMPTS = 3;
 const OTP_EXPIRY_SECONDS = 60;
@@ -21,6 +15,7 @@ const OTP_EXPIRY_SECONDS = 60;
 export default function LoginPage() {
   const router = useRouter();
   const { lang } = useTranslate();
+  const { login, loginAs, verifyOTP } = useAuth();
   const [step, setStep] = useState<"login" | "mfa">("login");
   const [email, setEmail] = useState("");
   const [passphrase, setPassphrase] = useState("");
@@ -72,16 +67,11 @@ export default function LoginPage() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handleQuickLogin = (role: "Private Collector" | "Institutional Member") => {
-    const session: UserSession = {
-      email: role === "Private Collector" ? "collector@heritagevault.com" : "trustee@louvre.fr",
-      role,
-      token: "HV-SESSION-JWT-99238",
-      institution: role === "Institutional Member" ? "Musaic National Trust" : undefined,
-      securityClearance: "Level-IV (High Sovereign Asset)",
-    };
-    localStorage.setItem("aduna_session", JSON.stringify(session));
-    router.push("/dashboard");
+  const handleQuickLogin = (role: Role) => {
+    loginAs(role);
+    if (role === "admin") router.push("/admin");
+    else if (role === "advisor") router.push("/advisor");
+    else router.push("/dashboard");
   };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -90,9 +80,15 @@ export default function LoginPage() {
       setErrorMsg(`${lang === "fr" ? "Compte temporairement verrouillé. Veuillez réessayer dans" : "Account temporarily locked. Try again in"} ${formatTimer(lockoutTimer)}.`);
       return;
     }
-    if (!email) { setErrorMsg("Please specify a valid institutional credential."); return; }
-    if (!passphrase || passphrase.length < 4) { setErrorMsg("The secret passphrase must be at least 4 characters."); return; }
+    if (!email) { setErrorMsg(lang === "fr" ? "Veuillez entrer une adresse email valide." : "Please specify a valid email address."); return; }
+    if (!passphrase || passphrase.length < 4) { setErrorMsg(lang === "fr" ? "Le mot de passe doit contenir au moins 4 caractères." : "The password must be at least 4 characters."); return; }
     setErrorMsg(null);
+
+    const result = login(email, passphrase);
+    if (!result.success) {
+      setErrorMsg(result.error || "Invalid credentials.");
+      return;
+    }
     setStep("mfa");
     setOtpTimer(OTP_EXPIRY_SECONDS);
     setOtpExpired(false);
@@ -116,28 +112,29 @@ export default function LoginPage() {
 
   const handleConfirmAccess = () => {
     const code = otp.join("");
-    if (code.length < 6) { setErrorMsg("Please enter the complete 6-digit cryptographic key."); return; }
-    if (otpExpired) { setErrorMsg("OTP code has expired. Please request a new code."); return; }
+    if (code.length < 6) { setErrorMsg(lang === "fr" ? "Veuillez entrer le code complet à 6 chiffres." : "Please enter the complete 6-digit code."); return; }
+    if (otpExpired) { setErrorMsg(lang === "fr" ? "Le code OTP a expiré. Veuillez demander un nouveau code." : "OTP code has expired. Please request a new code."); return; }
 
     const newAttempts = failedAttempts + 1;
     if (newAttempts >= MAX_ATTEMPTS) {
       setLockedOut(true);
-      setLockoutTimer(300); // 5 minutes
+      setLockoutTimer(300);
       setErrorMsg(`${lang === "fr" ? "Tentatives échouées trop nombreuses. Compte verrouillé pour 5 minutes." : "Too many failed attempts. Account locked for 5 minutes."}`);
       setStep("login");
       return;
     }
 
-    // Mock validation — accept any 6-digit code
-    const session: UserSession = {
-      email: email || "collector@heritagevault.com",
-      role: email.includes("museum") || email.includes("institute") ? "Institutional Member" : "Private Collector",
-      token: "HV-AUTHTOKEN-" + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      institution: email.includes("museum") ? "Metropolitan Gallery Trust" : undefined,
-      securityClearance: "Clearance level Alpha-V",
-    };
-    localStorage.setItem("aduna_session", JSON.stringify(session));
-    router.push("/dashboard");
+    const success = verifyOTP(code);
+    if (success) {
+      const stored = localStorage.getItem("aduna_session");
+      const session = stored ? JSON.parse(stored) : null;
+      if (session?.role === "admin") router.push("/admin");
+      else if (session?.role === "advisor") router.push("/advisor");
+      else router.push("/dashboard");
+    } else {
+      setFailedAttempts(newAttempts);
+      setErrorMsg(lang === "fr" ? "Code invalide. Veuillez réessayer." : "Invalid code. Please try again.");
+    }
   };
 
   const handleResendOtp = () => {
@@ -217,10 +214,20 @@ export default function LoginPage() {
                     <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Vous n'avez pas de compte ?" : "Don't have an account?"} <Link href="/register" className="text-ebony-deep font-medium hover:text-gold-leaf underline transition-colors">{lang === "fr" ? "S'inscrire" : "Register"}</Link></p>
                   </div>
                   <div className="mt-4 flex flex-col items-center justify-center gap-1.5 border-t border-dashed border-ebony-deep/5 pt-3">
-                    <span className="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant/40">Sovereign Sandbox Clearance Bypass</span>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleQuickLogin("Private Collector")} className="text-[9px] font-sans px-2.5 py-1 bg-gold-leaf/10 text-ebony-deep hover:bg-gold-leaf/20 transition-colors border border-gold-leaf/25">Collector Sandbox</button>
-                      <button onClick={() => handleQuickLogin("Institutional Member")} className="text-[9px] font-sans px-2.5 py-1 bg-ebony-deep/10 text-ebony-deep hover:bg-ebony-deep/20 transition-colors border border-ebony-deep/25">Museum Trustee Sandbox</button>
+                    <span className="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant/40">{lang === "fr" ? "Accès Rapide aux Rôles" : "Quick Role Access"}</span>
+                    <div className="flex flex-wrap gap-1.5 justify-center">
+                      <button onClick={() => handleQuickLogin("collector")} className="text-[9px] font-sans px-2 py-1 bg-gold-leaf/10 text-ebony-deep hover:bg-gold-leaf/20 transition-colors border border-gold-leaf/25 flex items-center gap-1">
+                        <User size={10} /> Collector
+                      </button>
+                      <button onClick={() => handleQuickLogin("prestige")} className="text-[9px] font-sans px-2 py-1 bg-gold-leaf/15 text-ebony-deep hover:bg-gold-leaf/25 transition-colors border border-gold-leaf/30 flex items-center gap-1">
+                        <Crown size={10} /> Prestige
+                      </button>
+                      <button onClick={() => handleQuickLogin("advisor")} className="text-[9px] font-sans px-2 py-1 bg-terracotta-earth/10 text-ebony-deep hover:bg-terracotta-earth/20 transition-colors border border-terracotta-earth/25 flex items-center gap-1">
+                        <Briefcase size={10} /> Advisor
+                      </button>
+                      <button onClick={() => handleQuickLogin("admin")} className="text-[9px] font-sans px-2 py-1 bg-ebony-deep/10 text-ebony-deep hover:bg-ebony-deep/20 transition-colors border border-ebony-deep/25 flex items-center gap-1">
+                        <Shield size={10} /> Admin
+                      </button>
                     </div>
                   </div>
                 </motion.div>

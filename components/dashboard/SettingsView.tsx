@@ -53,7 +53,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
     setTimeout(() => {
       setProfile({ ...profile, name: collectorName, currency: currency, regionsOfInterest: selectedRegions });
       setSavingStatus(false);
-      alert('Collector settings synchronized with Aduna secure mainframes successfully.');
+      alert(lang === "fr" ? 'Paramètres du collectionneur synchronisés avec les serveurs sécurisés Aduna avec succès.' : 'Collector settings synchronized with Aduna secure mainframes successfully.');
     }, 600);
   };
 
@@ -61,7 +61,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
     <div className="animate-fade-in text-on-surface">
       <header className="mb-10 pb-6 border-b border-ebony-deep/10">
         <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Coordonnées Système et Profil" : "System Coordinates & Profile"}</h2>
-        <p className="font-sans text-xs text-on-surface-variant mt-1">Review premium credentials, adjust currency valuation indexes, select curatorial interest directives, and toggle ambient dark mode options.</p>
+        <p className="font-sans text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Examinez les identifiants premium, ajustez les indices de valorisation des devises, sélectionnez les directives d'intérêts curatoriaux et basculez les options de mode sombre ambiant." : "Review premium credentials, adjust currency valuation indexes, select curatorial interest directives, and toggle ambient dark mode options."}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -77,7 +77,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
                 <div className="flex flex-col">
                   <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">{lang === "fr" ? "Standard de Sécurité du Compte" : "Account Security Standard"}</label>
                   <div className="bg-zinc-100 p-3 text-xs text-zinc-500 flex items-center justify-between border-l-2 border-l-gold-leaf">
-                    <span className="font-serif font-medium text-gold-leaf uppercase">Prestige Investment Advisor Tier</span>
+                    <span className="font-serif font-medium text-gold-leaf uppercase">{lang === "fr" ? "Niveau Conseiller d'Investissement Prestige" : "Prestige Investment Advisor Tier"}</span>
                     <Crown className="w-4 h-4 text-gold-leaf" />
                   </div>
                 </div>
@@ -97,7 +97,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
 
             <div className="border-b border-ebony-deep/5 pb-6">
               <h3 className="font-serif text-base font-semibold text-ebony-deep mb-4 flex items-center gap-2"><Sparkles className="w-4.5 h-4.5" /> {lang === "fr" ? "Répertoires d'Intérêts Curatoriaux" : "Curatorial Interest Directories"}</h3>
-              <p className="font-sans text-xs text-zinc-500 mb-3.5 leading-normal">Aduna Gallery&apos;s high-stake algorithms custom-curate private placement recommendations based on chosen regions:</p>
+              <p className="font-sans text-xs text-zinc-500 mb-3.5 leading-normal">{lang === "fr" ? "Les algorithmes à enjeux élevés d'Aduna Gallery sélectionnent personnellement les recommandations de placement privé basées sur les régions choisies :" : "Aduna Gallery's high-stake algorithms custom-curate private placement recommendations based on chosen regions:"}</p>
               <div className="space-y-2.5">
                 {availableRegions.map((rg) => {
                   const isChecked = selectedRegions.includes(rg);
@@ -136,11 +136,11 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
           <div className="bg-parchment-ivory border border-ebony-deep/5 p-8 shadow-level-1 space-y-6">
             <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2"><Lock className="w-4.5 h-4.5 text-gold-leaf" /> {lang === "fr" ? "Sécuriser les Grands Systèmes" : "Secure Mainframes"}</h3>
             <div className="space-y-4 font-sans text-xs text-zinc-500 leading-relaxed">
-              <p>To safeguard the collector identity coordinates, all credentials and system profiles are cryptographically stored locally. No private collections metrics ever traverse clear open HTTP protocols.</p>
+              <p>{lang === "fr" ? "Pour protéger les coordonnées d'identité du collectionneur, tous les identifiants et profils système sont stockés localement de manière cryptographique. Aucune métrique de collections privées ne traverse jamais les protocoles HTTP ouverts." : "To safeguard the collector identity coordinates, all credentials and system profiles are cryptographically stored locally. No private collections metrics ever traverse clear open HTTP protocols."}</p>
               <div className="bg-zinc-100 p-4 border border-ebony-deep/5 space-y-2">
-                <p className="font-bold text-ebony-deep uppercase tracking-wider text-[10px] flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5 text-gold-leaf" /> State Purifying</p>
-                <p className="text-[11px] leading-relaxed">Reset local registry matrices back to pristine factory museum standards. This deletes custom added acquisitions.</p>
-                <button type="button" onClick={() => { if (confirm('Verify: Purify client state caches? Added acquisitions, consultations, and inquiries logs will revert back to default museum standards.')) { onClearCache(); } }} className="bg-amber-100 hover:bg-amber-200 text-[#B35C44] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 mt-2 transition-colors border-0 cursor-pointer">
+                <p className="font-bold text-ebony-deep uppercase tracking-wider text-[10px] flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5 text-gold-leaf" /> {lang === "fr" ? "Purification de l'État" : "State Purifying"}</p>
+                <p className="text-[11px] leading-relaxed">{lang === "fr" ? "Réinitialisez les matrices de registre locales aux normes usine de musée pristine. Cela supprime les acquisitions ajoutées." : "Reset local registry matrices back to pristine factory museum standards. This deletes custom added acquisitions."}</p>
+                <button type="button" onClick={() => { if (confirm(lang === "fr" ? "Vérifier : Purifier les caches de l'état client ? Les journaux d'acquisitions, de consultations et de demandes ajoutés reviendront aux normes par défaut du musée." : "Verify: Purify client state caches? Added acquisitions, consultations, and inquiries logs will revert back to default museum standards.")) { onClearCache(); } }} className="bg-amber-100 hover:bg-amber-200 text-[#B35C44] text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 mt-2 transition-colors border-0 cursor-pointer">
                   {lang === "fr" ? "État de Purification Usine" : "Factory Purify State"}
                 </button>
               </div>

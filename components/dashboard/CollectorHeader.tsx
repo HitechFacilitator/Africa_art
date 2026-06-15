@@ -5,6 +5,7 @@ import { ArrowLeft, Menu, Bell, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ActiveTab } from "@/lib/dashboardTypes";
 import { useTranslate } from "@/lib/translations";
+import { useAuth, ROLE_INFO } from "@/lib/auth";
 
 interface CollectorHeaderProps {
   activeTab: ActiveTab;
@@ -30,8 +31,10 @@ const TAB_LABELS: Record<string, { en: string; fr: string; icon: string }> = {
 
 export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuToggle }: CollectorHeaderProps) {
   const { lang } = useTranslate();
+  const { user } = useAuth();
   const [time, setTime] = useState<string>("");
   const tabInfo = TAB_LABELS[activeTab] || { en: "Dashboard", fr: "Tableau de Bord", icon: "📊" };
+  const roleInfo = user ? ROLE_INFO[user.role] : null;
 
   useEffect(() => {
     const update = () => {
@@ -135,14 +138,14 @@ export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuTo
           {/* Collector badge */}
           <div className="flex items-center gap-2.5">
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gold-leaf">Prestige</span>
-              <span className="text-[9px] text-parchment-ivory/40">{lang === "fr" ? "Collectionneur Privé" : "Private Collector"}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gold-leaf">{roleInfo?.tier || "Prestige"}</span>
+              <span className="text-[9px] text-parchment-ivory/40">{user?.name || (lang === "fr" ? "Collectionneur Privé" : "Private Collector")}</span>
             </div>
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="w-8 h-8 rounded-full bg-gold-leaf/15 flex items-center justify-center border border-gold-leaf/25"
             >
-              <span className="font-serif text-xs font-bold text-gold-leaf">JD</span>
+              <span className="font-serif text-xs font-bold text-gold-leaf">{user?.avatar || "JD"}</span>
             </motion.div>
           </div>
         </div>

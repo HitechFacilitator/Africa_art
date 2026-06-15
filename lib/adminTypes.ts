@@ -5,8 +5,7 @@ export enum AdminView {
   AuditLog = "audit",
   Compliance = "compliance",
   Settings = "settings",
-  Docs = "docs",
-  Support = "support",
+  SupportManagement = "support_mgmt",
 }
 
 export interface AdminArtwork {

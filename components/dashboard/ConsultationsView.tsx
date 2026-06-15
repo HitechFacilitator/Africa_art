@@ -47,7 +47,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
       timeSlot: slot,
       topic: topic,
       status: 'Confirmed',
-      notes: customNotes || 'Vetting of physical artifact images loaded.'
+      notes: customNotes || (lang === "fr" ? 'Vérification des images d\'artefacts physiques chargées.' : 'Vetting of physical artifact images loaded.')
     };
     onAddConsultation(newConsultation);
     setShowBookingModal(false);
@@ -60,7 +60,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
       <header className="mb-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pb-6 border-b border-ebony-deep/10">
         <div>
           <h2 className="font-serif text-3xl font-medium text-ebony-deep leading-tight">{lang === "fr" ? "Consultations et Conseil de Vérification" : "Consultations & Vetting Advisory"}</h2>
-          <p className="font-sans text-xs text-on-surface-variant mt-1">Coordinate with expert conservators to verify carbon-rating indexes, wood compositions, and authorize regional legal export licenses.</p>
+          <p className="font-sans text-xs text-on-surface-variant mt-1">{lang === "fr" ? "Coordonnez avec des conservateurs experts pour vérifier les indices de notation carbone, les compositions de bois et autoriser les licences d'exportation légales régionales." : "Coordinate with expert conservators to verify carbon-rating indexes, wood compositions, and authorize regional legal export licenses."}</p>
         </div>
         <button onClick={() => setShowBookingModal(true)} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-6 py-3.5 hover:opacity-90 transition-all flex items-center gap-2 cursor-pointer border-0 shadow-sm">
           <Plus className="w-4 h-4" /> {lang === "fr" ? "Demander un Appel de Conseil" : "Request Advisory Call"}
@@ -74,7 +74,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
             <div className="bg-parchment-ivory border border-dashed border-ebony-deep/10 p-12 text-center select-none">
               <Gavel className="w-10 h-10 text-gold-leaf mx-auto mb-4" />
               <p className="font-serif text-lg text-ebony-deep">{lang === "fr" ? "Aucune Session de Conseil de Vérification Programmée" : "No Vetting Advisory Sessions Scheduled"}</p>
-              <p className="font-sans text-xs text-zinc-450 mt-1 max-w-sm mx-auto">Schedule an academic review to clear legal export certificate details or prepare carbon audits.</p>
+              <p className="font-sans text-xs text-zinc-450 mt-1 max-w-sm mx-auto">{lang === "fr" ? "Programmez un examen académique pour valider les détails du certificat d'exportation légale ou préparer les audits carbone." : "Schedule an academic review to clear legal export certificate details or prepare carbon audits."}</p>
             </div>
           ) : (
             consultations.map((item) => (
@@ -85,7 +85,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
                     <h4 className="font-serif text-base font-semibold text-ebony-deep">{item.expertName}</h4>
                     <p className="font-sans text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mb-2">{item.expertTitle}</p>
                     <div className="space-y-1 bg-surface-container-low p-3 max-w-md border-l-2 border-l-gold-leaf">
-                      <p className="font-sans text-[10px] uppercase font-bold text-zinc-400">Consultation Focus Topic</p>
+                      <p className="font-sans text-[10px] uppercase font-bold text-zinc-400">{lang === "fr" ? "Sujet Principal de Consultation" : "Consultation Focus Topic"}</p>
                       <p className="font-sans text-xs text-ebony-deep font-medium">{item.topic}</p>
                     </div>
                     {item.notes && <p className="font-sans text-[11px] text-zinc-400 mt-2.5 max-w-md italic leading-normal">Note: &quot;{item.notes}&quot;</p>}
@@ -98,11 +98,11 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
                     <p className="font-sans text-[11px] text-zinc-400 flex items-center gap-1.5 justify-start md:justify-end"><Clock className="w-3.5 h-3.5" /> {item.timeSlot}</p>
                   </div>
                   {item.status === 'Confirmed' ? (
-                    <button onClick={() => alert(`Synchronizing secure premium video feed channel. Room token issued for ${item.expertName}.`)} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer">
+                    <button onClick={() => alert(lang === "fr" ? `Synchronisation du canal vidéo premium sécurisé. Jeton de salle émis pour ${item.expertName}.` : `Synchronizing secure premium video feed channel. Room token issued for ${item.expertName}.`)} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer">
                       <Video className="w-3.5 h-3.5" /> {lang === "fr" ? "Lancer le Conseil Vidéo" : "Launch Video Advisory"}
                     </button>
                   ) : (
-                    <p className="text-[10px] text-zinc-500 font-sans uppercase">Awaiting Specialist Clearance</p>
+                    <p className="text-[10px] text-zinc-500 font-sans uppercase">{lang === "fr" ? "En attente de validation du spécialiste" : "Awaiting Specialist Clearance"}</p>
                   )}
                 </div>
               </div>
@@ -114,19 +114,19 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
           <div className="bg-parchment-ivory border border-ebony-deep/5 p-8 shadow-level-1 space-y-6">
             <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2"><BookmarkCheck className="w-4 h-4 text-gold-leaf" /> {lang === "fr" ? "Engagement de Vérification Académique" : "Academic Vetting Vow"}</h3>
             <div className="space-y-4 font-sans text-xs text-zinc-500 leading-relaxed">
-              <p>Aduna Gallery collaborates exclusively with recognized, credentialed experts from European, American, and continental research centers.</p>
+              <p>{lang === "fr" ? "Aduna Gallery collabore exclusivement avec des experts reconnus et accrédités d'centres de recherche européens, américains et continentaux." : "Aduna Gallery collaborates exclusively with recognized, credentialed experts from European, American, and continental research centers."}</p>
               <div className="bg-zinc-50 p-4 border border-ebony-deep/5">
-                <p className="font-sans text-[10px] font-bold uppercase tracking-wider text-terracotta-earth mb-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> Radiometric Testing Rules</p>
-                <p className="text-[11px] leading-relaxed">Timber and carbon testing is performed using micro-sample spectroscopy. All results are logged on immutable chain registries for dual-verification.</p>
+                <p className="font-sans text-[10px] font-bold uppercase tracking-wider text-terracotta-earth mb-1.5 flex items-center gap-1"><AlertCircle className="w-3.5 h-3.5" /> {lang === "fr" ? "Règles d'Essai Radiométrique" : "Radiometric Testing Rules"}</p>
+                <p className="text-[11px] leading-relaxed">{lang === "fr" ? "Les essais de bois et de carbone sont effectués par spectroscopie de micro-échantillons. Tous les résultats sont enregistrés sur des registres à chaîne immutable pour une double vérification." : "Timber and carbon testing is performed using micro-sample spectroscopy. All results are logged on immutable chain registries for dual-verification."}</p>
               </div>
               <div className="space-y-2">
-                <p className="font-bold text-ebony-deep uppercase tracking-wider text-[10px]">Active Advisory Specialists</p>
+                <p className="font-bold text-ebony-deep uppercase tracking-wider text-[10px]">{lang === "fr" ? "Spécialistes-conseils Actifs" : "Active Advisory Specialists"}</p>
                 <div className="flex -space-x-3 overflow-hidden select-none mb-3">
                   <img className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150&h=150" alt="Specialist" />
                   <img className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150&h=150" alt="Specialist" />
                   <div className="inline-block h-8 w-8 rounded-full bg-slate-300 ring-2 ring-white font-mono text-[10px] flex items-center justify-center font-bold text-zinc-500">+4</div>
                 </div>
-                <p className="text-[11px]">All scheduled conferences are routed via high-definition, encrypted lines, preserving strict customer spatial confidentiality.</p>
+                <p className="text-[11px]">{lang === "fr" ? "Toutes les conférences programmées sont acheminées via des lignes haute définition et cryptées, préservant la confidentialité spatiale stricte du client." : "All scheduled conferences are routed via high-definition, encrypted lines, preserving strict customer spatial confidentiality."}</p>
               </div>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
                   </div>
                   <div className="flex flex-col">
                     <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">{lang === "fr" ? "Sujet Principal de la Conférence" : "Conference Focus Topic"} <span className="text-red-500">*</span></label>
-                    <input type="text" required placeholder="e.g. Benin Bronze authenticity verification" value={topic} onChange={(e) => setTopic(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none w-full" />
+                    <input type="text" required placeholder={lang === "fr" ? "ex. Vérification de l'authenticité du Bronze du Bénin" : "e.g. Benin Bronze authenticity verification"} value={topic} onChange={(e) => setTopic(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none w-full" />
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="flex flex-col">
@@ -177,7 +177,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
                   </div>
                   <div className="flex flex-col">
                     <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5">{lang === "fr" ? "Notes Préparatoires du Conservateur" : "Curator Preparatory Notes"}</label>
-                    <textarea rows={2} placeholder="Indicate special requests, provenance records context, or catalog issues..." value={customNotes} onChange={(e) => setCustomNotes(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none w-full" />
+                    <textarea rows={2} placeholder={lang === "fr" ? "Indiquez les demandes spéciales, le contexte des dossiers de provenance ou les problèmes de catalogue..." : "Indicate special requests, provenance records context, or catalog issues..."} value={customNotes} onChange={(e) => setCustomNotes(e.target.value)} className="bg-white border border-ebony-deep/15 focus:border-gold-leaf p-3 text-xs focus:outline-none w-full" />
                   </div>
                   <div className="flex justify-end gap-4 pt-6 border-t border-ebony-deep/5">
                     <button type="button" onClick={() => setShowBookingModal(false)} className="bg-transparent border border-ebony-deep/12 px-6 py-2.5 text-xs font-sans font-bold uppercase tracking-widest text-zinc-450 hover:text-ebony-deep">{lang === "fr" ? "Passer" : "Bypass"}</button>

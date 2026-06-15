@@ -10,7 +10,10 @@ export enum ActiveTab {
   Previews = 'Previews',
   Logistics = 'Logistics',
   Security = 'Security',
-  Settings = 'Settings'
+  Settings = 'Settings',
+  Chat = 'Chat',
+  Documentation = 'Documentation',
+  Support = 'Support'
 }
 
 export enum AcquisitionStatus {

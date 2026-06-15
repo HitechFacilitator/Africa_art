@@ -1,46 +1,43 @@
 "use client";
 
-import { AdminView } from "@/lib/adminTypes";
+import { AdvisorView } from "@/lib/advisorTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import {
-  Palette,
+  BarChart3,
+  CalendarCheck,
   Users,
-  Shield,
-  History,
-  BadgeCheck,
+  Package,
+  Activity,
   Settings,
-  HelpCircle,
   LogOut,
   ChevronLeft,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-interface AdminSidebarProps {
-  activeView: AdminView;
-  setActiveView: (view: AdminView) => void;
+interface AdvisorSidebarProps {
+  activeView: AdvisorView;
+  setActiveView: (view: AdvisorView) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-export default function AdminSidebar({ activeView, setActiveView, open, setOpen }: AdminSidebarProps) {
+export default function AdvisorSidebar({ activeView, setActiveView, open, setOpen }: AdvisorSidebarProps) {
   const { lang } = useTranslate();
   const { user, logout } = useAuth();
 
   const navItems = [
-    { id: AdminView.Artworks, label: lang === "fr" ? "Œuvres" : "Artworks", icon: Palette },
-    { id: AdminView.Collectors, label: lang === "fr" ? "Collectionneurs" : "Collectors", icon: Users },
-    { id: AdminView.Escrow, label: lang === "fr" ? "Séquestre" : "Escrow", icon: Shield },
-    { id: AdminView.AuditLog, label: lang === "fr" ? "Journal d'Audit" : "Audit Log", icon: History },
-    { id: AdminView.Compliance, label: lang === "fr" ? "Conformité" : "Compliance", icon: BadgeCheck },
-    { id: AdminView.Settings, label: lang === "fr" ? "Paramètres" : "Settings", icon: Settings },
+    { id: AdvisorView.Overview, label: lang === "fr" ? "Vue d'Ensemble" : "Overview", icon: BarChart3 },
+    { id: AdvisorView.Consultations, label: lang === "fr" ? "Consultations" : "Consultations", icon: CalendarCheck },
+    { id: AdvisorView.Clients, label: lang === "fr" ? "Clients" : "Clients", icon: Users },
+    { id: AdvisorView.Placements, label: lang === "fr" ? "Placements" : "Placements", icon: Package },
+    { id: AdvisorView.Activity, label: lang === "fr" ? "Activité" : "Activity", icon: Activity },
+    { id: AdvisorView.Chat, label: lang === "fr" ? "Messages" : "Messages", icon: MessageSquare },
+    { id: AdvisorView.Settings, label: lang === "fr" ? "Paramètres" : "Settings", icon: Settings },
   ];
 
-  const bottomItems = [
-    { id: AdminView.SupportManagement, label: lang === "fr" ? "Support" : "Support", icon: HelpCircle },
-  ];
-
-  const handleNav = (view: AdminView) => {
+  const handleNav = (view: AdvisorView) => {
     setActiveView(view);
     setOpen(false);
   };
@@ -55,7 +52,7 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
               Aduna Gallery
             </h1>
             <p className="text-[10px] font-sans font-bold tracking-[0.12em] uppercase text-ebony-deep/40 mt-1">
-              {lang === "fr" ? "Centre de Contrôle Admin" : "Admin Control Hub"}
+              {lang === "fr" ? "Espace Conseiller" : "Advisor Portal"}
             </p>
           </div>
 
@@ -81,28 +78,9 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
           </nav>
 
           <div className="px-3 mt-auto pt-6 border-t border-ebony-deep/10">
-            {bottomItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeView === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNav(item.id)}
-                  className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-all text-sm font-sans cursor-pointer border-0 ${
-                    isActive
-                      ? "text-terracotta-earth font-semibold border-l-4 border-terracotta-earth bg-terracotta-earth/10"
-                      : "text-ebony-deep/50 hover:bg-terracotta-earth/5 hover:text-ebony-deep border-l-4 border-transparent"
-                  }`}
-                >
-                  <Icon className="w-4 h-4 text-ebony-deep/40" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-
             <button
               onClick={logout}
-              className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/40 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent mt-2"
+              className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/40 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent"
             >
               <LogOut className="w-4 h-4" />
               <span>{lang === "fr" ? "Déconnexion" : "Logout"}</span>
@@ -133,7 +111,7 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
               <div className="flex items-center justify-between px-6 py-5 border-b border-ebony-deep/10">
                 <div>
                   <h1 className="font-serif text-xl font-medium text-terracotta-earth">Aduna Gallery</h1>
-                  <p className="text-[9px] font-sans font-bold tracking-[0.1em] uppercase text-ebony-deep/40">{lang === "fr" ? "Centre de Contrôle" : "Admin Control Hub"}</p>
+                  <p className="text-[9px] font-sans font-bold tracking-[0.1em] uppercase text-ebony-deep/40">{lang === "fr" ? "Espace Conseiller" : "Advisor Portal"}</p>
                 </div>
                 <button onClick={() => setOpen(false)} className="text-ebony-deep/40 hover:text-terracotta-earth transition-colors cursor-pointer bg-transparent border-0">
                   <ChevronLeft className="w-5 h-5" />
@@ -162,25 +140,7 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
               </nav>
 
               <div className="px-3 py-4 border-t border-ebony-deep/10">
-                {bottomItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activeView === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNav(item.id)}
-                      className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-all text-sm font-sans cursor-pointer border-0 ${
-                        isActive
-                          ? "text-terracotta-earth font-semibold border-l-4 border-terracotta-earth bg-terracotta-earth/10"
-                          : "text-ebony-deep/50 hover:bg-terracotta-earth/5 hover:text-ebony-deep border-l-4 border-transparent"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 text-ebony-deep/40" />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-                <button onClick={logout} className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/40 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent mt-2">
+                <button onClick={logout} className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/40 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent">
                   <LogOut className="w-4 h-4" />
                   <span>{lang === "fr" ? "Déconnexion" : "Logout"}</span>
                 </button>

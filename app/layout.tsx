@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { TranslationProvider } from "@/lib/translations";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: {
@@ -40,7 +40,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-ebony-deep font-sans antialiased">
-        <TranslationProvider>{children}</TranslationProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
