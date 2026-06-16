@@ -12,12 +12,14 @@ import {
   Trash2,
   BadgeCheck,
   MoreVertical,
+  Pencil,
 } from "lucide-react";
 
 interface ArtworksViewProps {
   artworks: AdminArtwork[];
   auditLogs: Array<{ id: string; user: string; timestamp: string; action: string }>;
   onAddArtwork: (artwork: AdminArtwork) => void;
+  onEditArtwork: (id: string) => void;
   onDeleteArtwork: (id: string) => void;
   onUpdateStatus: (id: string, status: AdminArtwork["status"]) => void;
   onRiskScan: (artwork: AdminArtwork) => void;
@@ -28,6 +30,7 @@ export default function ArtworksView({
   artworks,
   auditLogs,
   onAddArtwork,
+  onEditArtwork,
   onDeleteArtwork,
   onUpdateStatus,
   onRiskScan,
@@ -72,25 +75,7 @@ export default function ArtworksView({
             {artworks.length} {lang === "fr" ? "Total des Actifs" : "Total Assets"}
           </span>
           <button
-            onClick={() => {
-              const newArtwork: AdminArtwork = {
-                id: `art-${Date.now()}`,
-                title: lang === "fr" ? "Nouvelle Œuvre" : "New Artwork",
-                culture: "",
-                era: "",
-                valuation: 0,
-                status: "Draft",
-                tier: "Standard",
-                imageUrl: "",
-                description: "",
-                provenanceHash: "",
-                dateCreated: new Date().toISOString().split("T")[0],
-                acquiredYear: new Date().getFullYear(),
-                acquiredMethod: "",
-                provenance: [],
-              };
-              onAddArtwork(newArtwork);
-            }}
+            onClick={() => onAddArtwork({} as AdminArtwork)}
             className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-wider px-4 py-2.5 hover:opacity-90 transition-all flex items-center gap-2 cursor-pointer border-0"
           >
             <Plus className="w-4 h-4" />
@@ -162,11 +147,17 @@ export default function ArtworksView({
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-surface-container-high flex-shrink-0 overflow-hidden">
-                          <img
-                            src={artwork.imageUrl}
-                            alt={artwork.title}
-                            className="w-full h-full object-cover"
-                          />
+                          {artwork.imageUrl ? (
+                            <img
+                              src={artwork.imageUrl}
+                              alt={artwork.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-on-surface-variant/30">
+                              <Plus className="w-4 h-4" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="font-sans font-medium text-ebony-deep text-xs">
@@ -264,6 +255,15 @@ export default function ArtworksView({
                                <EyeOff className="w-3 h-3" /> {lang === "fr" ? "Dépublier" : "Unpublish"}
                             </button>
                           )}
+                           <button
+                            onClick={() => {
+                              onEditArtwork(artwork.id);
+                              setOpenDropdown(null);
+                            }}
+                            className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
+                          >
+                             <Pencil className="w-3 h-3" /> {lang === "fr" ? "Modifier" : "Edit"}
+                          </button>
                           <button
                             onClick={() => {
                               onRiskScan(artwork);

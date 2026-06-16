@@ -48,7 +48,7 @@ export interface AdminUser {
   institution: string;
   joinedDate: string;
   lastActive: string;
-  status: "Active" | "Suspended" | "Pending";
+  status: string;
 }
 
 export interface AdminCertificate {

@@ -396,6 +396,15 @@ export const adminApi = {
     }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/artworks${qs ? `?${qs}` : ""}`);
   },
 
+  getArtworkById: (id: string) =>
+    apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/admin/artworks/${id.replace("ART-", "")}`),
+
+  createArtwork: (data: Record<string, unknown>) =>
+    apiRequest<{ success: boolean; data: { id: string; title: string } }>("/admin/artworks", { method: "POST", body: JSON.stringify(data) }),
+
+  updateArtwork: (id: string, data: Record<string, unknown>) =>
+    apiRequest<{ success: boolean; data: { id: string; title: string } }>(`/admin/artworks/${id.replace("ART-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
+
   getCollectors: (params?: { page?: number; limit?: number; search?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
@@ -459,8 +468,13 @@ export const adminApi = {
   verifyAllAuditLogs: () =>
     apiRequest<{ success: boolean }>("/admin/audit-logs/verify-all", { method: "POST" }),
 
-  getUsers: () =>
-    apiRequest<{ success: boolean; data: Array<{
+  getUsers: (params?: { page?: number; limit?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.search) searchParams.set("search", params.search);
+    const qs = searchParams.toString();
+    return apiRequest<{ success: boolean; data: Array<{
       id: string;
       name: string;
       email: string;
@@ -469,7 +483,17 @@ export const adminApi = {
       joinedDate: string;
       lastActive: string;
       status: string;
-    }> }>("/admin/users"),
+    }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/users${qs ? `?${qs}` : ""}`);
+  },
+
+  getUserById: (id: string) =>
+    apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/admin/users/${id.replace("usr-", "")}`),
+
+  createUser: (data: { name: string; email: string; password: string; role?: string; institution?: string; country?: string }) =>
+    apiRequest<{ success: boolean; data: { id: string; name: string } }>("/admin/users", { method: "POST", body: JSON.stringify(data) }),
+
+  updateUser: (id: string, data: { name?: string; email?: string; role?: string; institution?: string; country?: string; status?: string }) =>
+    apiRequest<{ success: boolean; data: { id: string } }>(`/admin/users/${id.replace("usr-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   updateUserStatus: (id: string, status: string) =>
     apiRequest<{ success: boolean }>(`/admin/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
@@ -502,4 +526,13 @@ export const adminApi = {
 
   deleteCertificate: (id: string) =>
     apiRequest<{ success: boolean }>(`/admin/certificates/${id}`, { method: "DELETE" }),
+
+  downloadCertificatePdf: async (id: string) => {
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/admin/certificates/${id.replace("cert-", "")}/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error("Failed to download PDF");
+    return res.blob();
+  },
 };

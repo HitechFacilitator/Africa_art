@@ -19,6 +19,7 @@ import AuditLogView from "@/components/admin/AuditLogView";
 import ComplianceView from "@/components/admin/ComplianceView";
 import SettingsView from "@/components/admin/SettingsView";
 import SupportManagementView from "@/components/admin/SupportManagementView";
+import ArtworkWizard from "@/components/admin/ArtworkWizard";
 
 export default function AdminPage() {
   const { lang } = useTranslate();
@@ -34,6 +35,8 @@ export default function AdminPage() {
   const [escrows, setEscrows] = useState<EscrowTransaction[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [editingArtworkId, setEditingArtworkId] = useState<string | null>(null);
 
   // Fetch real data from API
   useEffect(() => {
@@ -75,8 +78,19 @@ export default function AdminPage() {
   }, []);
 
   const handleAddArtwork = (artwork: AdminArtwork) => {
-    setArtworks((prev) => [artwork, ...prev]);
-    appendAudit("Julien D.", `New artwork added: ${artwork.id}`);
+    setEditingArtworkId(null);
+    setWizardOpen(true);
+  };
+
+  const handleEditArtwork = (id: string) => {
+    setEditingArtworkId(id);
+    setWizardOpen(true);
+  };
+
+  const handleWizardComplete = () => {
+    setWizardOpen(false);
+    setEditingArtworkId(null);
+    adminApi.getArtworks().then(res => setArtworks(res.data as AdminArtwork[])).catch(() => {});
   };
 
   const handleDeleteArtwork = (id: string) => {
@@ -97,7 +111,7 @@ export default function AdminPage() {
     appendAudit("Helena S.", `New collector enrolled: ${collector.id} — ${collector.name}`);
   };
 
-  const handleUpdateUserStatus = (id: string, status: AdminUser["status"]) => {
+  const handleUpdateUserStatus = (id: string, status: string) => {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
     appendAudit("Admin", `User ${id} status changed to ${status}`);
   };
@@ -205,7 +219,7 @@ export default function AdminPage() {
       <div className="bg-parchment-ivory min-h-screen font-sans flex flex-col">
         <AdminSidebar activeView={activeView} setActiveView={(view) => { setViewHistory((prev) => [...prev, activeView]); setActiveView(view); }} open={sidebarOpen} setOpen={setSidebarOpen} />
 
-        <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+        <div className="flex-1 min-h-screen flex flex-col">
           <AdminHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
 
           <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
@@ -222,6 +236,7 @@ export default function AdminPage() {
                     artworks={artworks}
                     auditLogs={auditLogs}
                     onAddArtwork={handleAddArtwork}
+                    onEditArtwork={handleEditArtwork}
                     onDeleteArtwork={handleDeleteArtwork}
                     onUpdateStatus={handleUpdateArtworkStatus}
                     onRiskScan={handleRiskScan}
@@ -286,6 +301,13 @@ export default function AdminPage() {
           </main>
         </div>
       </div>
+      {wizardOpen && (
+        <ArtworkWizard
+          artworkId={editingArtworkId}
+          onClose={() => { setWizardOpen(false); setEditingArtworkId(null); }}
+          onComplete={handleWizardComplete}
+        />
+      )}
     </AuthGuard>
   );
 }

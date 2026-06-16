@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Menu, Bell, Search } from "lucide-react";
+import { ArrowLeft, Bell, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AdminView } from "@/lib/adminTypes";
 import { useTranslate } from "@/lib/translations";
@@ -46,15 +46,8 @@ export default function AdminHeader({ activeView, onMenuToggle, onBack, canGoBac
   return (
     <header className="sticky top-0 z-40 bg-parchment-ivory border-b border-ebony-deep/10 shadow-[0_2px_20px_rgba(0,0,0,0.08)]">
       <div className="max-w-[1440px] mx-auto flex items-center justify-between px-4 md:px-10 h-14">
-        {/* Left: Menu + Back + Branding + Active Tab */}
+        {/* Left: Back + Branding + Active Tab */}
         <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={onMenuToggle}
-            className="flex items-center justify-center w-8 h-8 text-terracotta-earth hover:bg-terracotta-earth/10 rounded-sm transition-all cursor-pointer border-0 bg-transparent group lg:hidden"
-          >
-            <Menu size={16} className="group-hover:rotate-90 transition-transform duration-300" />
-          </button>
-
           <AnimatePresence>
             {canGoBack && (
               <motion.button

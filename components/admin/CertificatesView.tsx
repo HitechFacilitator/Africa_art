@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AdminCertificate } from "@/lib/adminTypes";
 import { useTranslate } from "@/lib/translations";
 import {
@@ -13,7 +13,10 @@ import {
   Pencil,
   Trash2,
   X,
+  Upload,
+  Download,
 } from "lucide-react";
+import { adminApi } from "@/lib/api";
 
 interface CertificatesViewProps {
   certificates: AdminCertificate[];
@@ -23,6 +26,18 @@ interface CertificatesViewProps {
   onDelete: (id: string) => void;
 }
 
+const emptyForm = {
+  artworkTitle: "",
+  artworkId: "",
+  ownerName: "",
+  ownerEmail: "",
+  expiryDate: "",
+  verifiedBy: "Aduna Gallery",
+  description: "",
+  authenticationLevel: "Standard",
+  pdfFileName: "",
+};
+
 export default function CertificatesView({ certificates, onCreate, onUpdate, onRevoke, onDelete }: CertificatesViewProps) {
   const { lang } = useTranslate();
   const [search, setSearch] = useState("");
@@ -31,7 +46,8 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCert, setEditingCert] = useState<AdminCertificate | null>(null);
-  const [form, setForm] = useState({ artworkTitle: "", artworkId: "", ownerName: "", ownerEmail: "", expiryDate: "", verifiedBy: "Aduna Gallery" });
+  const [form, setForm] = useState(emptyForm);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const filtered = certificates.filter((c) => {
     const matchesSearch =
@@ -72,7 +88,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
       verifiedBy: form.verifiedBy || "Aduna Gallery",
     };
     onCreate(newCert);
-    setForm({ artworkTitle: "", artworkId: "", ownerName: "", ownerEmail: "", expiryDate: "", verifiedBy: "Aduna Gallery" });
+    setForm(emptyForm);
     setShowCreateModal(false);
   };
 
@@ -86,55 +102,38 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
       verifiedBy: form.verifiedBy || editingCert.verifiedBy,
     });
     setEditingCert(null);
-    setForm({ artworkTitle: "", artworkId: "", ownerName: "", ownerEmail: "", expiryDate: "", verifiedBy: "Aduna Gallery" });
+    setForm(emptyForm);
   };
 
   const openEditModal = (cert: AdminCertificate) => {
     setEditingCert(cert);
-    setForm({ artworkTitle: cert.artworkTitle, artworkId: cert.artworkId, ownerName: cert.ownerName, ownerEmail: cert.ownerEmail, expiryDate: cert.expiryDate, verifiedBy: cert.verifiedBy });
+    setForm({
+      artworkTitle: cert.artworkTitle,
+      artworkId: cert.artworkId,
+      ownerName: cert.ownerName,
+      ownerEmail: cert.ownerEmail,
+      expiryDate: cert.expiryDate === "N/A" ? "" : cert.expiryDate,
+      verifiedBy: cert.verifiedBy,
+      description: "",
+      authenticationLevel: "Standard",
+      pdfFileName: "",
+    });
     setOpenMenuId(null);
   };
 
-  const FormModal = ({ title, onSubmit, submitLabel }: { title: string; onSubmit: () => void; submitLabel: string }) => (
-    <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div className="bg-parchment-ivory border border-outline-variant/30 w-full max-w-lg p-6 shadow-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-serif text-xl text-ebony-deep">{title}</h3>
-          <button onClick={() => { setShowCreateModal(false); setEditingCert(null); }} className="text-on-surface-variant hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-5 h-5" /></button>
-        </div>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Titre de l'Œuvre" : "Artwork Title"} *</label>
-            <input type="text" value={form.artworkTitle} onChange={(e) => setForm({ ...form, artworkTitle: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Benin Bronze Relief Plaque" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Propriétaire" : "Owner"} *</label>
-              <input type="text" value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Collector Name" />
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "E-mail" : "Email"}</label>
-              <input type="email" value={form.ownerEmail} onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="collector@example.com" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Date d'expiration" : "Expiry Date"}</label>
-              <input type="date" value={form.expiryDate === "N/A" ? "" : form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" />
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Certifié par" : "Verified By"}</label>
-              <input type="text" value={form.verifiedBy} onChange={(e) => setForm({ ...form, verifiedBy: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Aduna Gallery" />
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-outline-variant/30">
-          <button onClick={() => { setShowCreateModal(false); setEditingCert(null); }} className="px-4 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider text-on-surface-variant hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
-          <button onClick={onSubmit} disabled={!form.artworkTitle || !form.ownerName} className="bg-ebony-deep text-parchment-ivory px-6 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-40 cursor-pointer border-0">{submitLabel}</button>
-        </div>
-      </div>
-    </div>
-  );
+  const closeModal = () => {
+    setShowCreateModal(false);
+    setEditingCert(null);
+    setForm(emptyForm);
+  };
+
+  const isModalOpen = showCreateModal || editingCert !== null;
+  const modalTitle = editingCert
+    ? (lang === "fr" ? "Modifier le Certificat" : "Edit Certificate")
+    : (lang === "fr" ? "Créer un Certificat" : "Create Certificate");
+  const modalSubmitLabel = editingCert
+    ? (lang === "fr" ? "Enregistrer" : "Save")
+    : (lang === "fr" ? "Créer" : "Create");
 
   return (
     <div>
@@ -153,7 +152,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
             <option value="Expired">{lang === "fr" ? "Expiré" : "Expired"}</option>
             <option value="Revoked">{lang === "fr" ? "Révoqué" : "Revoked"}</option>
           </select>
-          <button onClick={() => { setForm({ artworkTitle: "", artworkId: "", ownerName: "", ownerEmail: "", expiryDate: "", verifiedBy: "Aduna Gallery" }); setShowCreateModal(true); }} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-wider px-4 py-2 hover:opacity-90 transition-all flex items-center gap-2 cursor-pointer border-0">
+          <button onClick={() => { setForm(emptyForm); setShowCreateModal(true); }} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-wider px-4 py-2 hover:opacity-90 transition-all flex items-center gap-2 cursor-pointer border-0">
             <Plus className="w-4 h-4" /> {lang === "fr" ? "Créer" : "Create"}
           </button>
         </div>
@@ -208,17 +207,25 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
                       </button>
                     </div>
                     {openMenuId === cert.id && (
-                      <div className="absolute right-4 top-full mt-1 bg-parchment-ivory border border-outline-variant/30 shadow-lg z-20 min-w-[160px]">
+                      <div className="absolute right-4 top-full mt-1 bg-parchment-ivory border border-outline-variant/30 shadow-lg z-20 min-w-[180px]">
+                        <button onClick={async () => {
+                          try {
+                            const blob = await adminApi.downloadCertificatePdf(cert.id);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `${cert.artworkTitle.replace(/[^a-zA-Z0-9]/g, "_")}_certificate.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          } catch (err) {
+                            console.error("PDF download failed:", err);
+                          }
+                          setOpenMenuId(null);
+                        }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
+                          <Download className="w-3.5 h-3.5" /> {lang === "fr" ? "Télécharger PDF" : "Download PDF"}
+                        </button>
                         <button onClick={() => openEditModal(cert)} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
                           <Pencil className="w-3.5 h-3.5" /> {lang === "fr" ? "Modifier" : "Edit"}
-                        </button>
-                        {cert.status === "Valid" && (
-                          <button onClick={() => { if (confirm(lang === "fr" ? `Révoquer le certificat ${cert.id} ?` : `Revoke certificate ${cert.id}?`)) { onRevoke(cert.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-amber-700 cursor-pointer border-0 bg-transparent">
-                            <Ban className="w-3.5 h-3.5" /> {lang === "fr" ? "Révoquer" : "Revoke"}
-                          </button>
-                        )}
-                        <button onClick={() => { copyHash(cert.blockchainHash, cert.id); setOpenMenuId(null); }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
-                          <Copy className="w-3.5 h-3.5" /> {lang === "fr" ? "Copier le hash" : "Copy Hash"}
                         </button>
                         <button onClick={() => { if (confirm(lang === "fr" ? `Supprimer le certificat ${cert.id} ? Cette action est irréversible.` : `Delete certificate ${cert.id}? This cannot be undone.`)) { onDelete(cert.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-red-700 cursor-pointer border-0 bg-transparent">
                           <Trash2 className="w-3.5 h-3.5" /> {lang === "fr" ? "Supprimer" : "Delete"}
@@ -245,8 +252,83 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
         <span>{lang === "fr" ? "Total: " : "Total: "}{certificates.length} {lang === "fr" ? "certificats" : "certificates"}</span>
       </div>
 
-      {showCreateModal && <FormModal title={lang === "fr" ? "Créer un Certificat" : "Create Certificate"} onSubmit={handleCreate} submitLabel={lang === "fr" ? "Créer" : "Create"} />}
-      {editingCert && <FormModal title={lang === "fr" ? "Modifier le Certificat" : "Edit Certificate"} onSubmit={handleUpdate} submitLabel={lang === "fr" ? "Enregistrer" : "Save"} />}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-parchment-ivory border border-outline-variant/30 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between mb-6 px-6 pt-6">
+              <h3 className="font-serif text-xl text-ebony-deep">{modalTitle}</h3>
+              <button onClick={closeModal} className="text-on-surface-variant hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-4 px-6">
+              <div>
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Titre de l'Œuvre" : "Artwork Title"} *</label>
+                <input type="text" value={form.artworkTitle} onChange={(e) => setForm({ ...form, artworkTitle: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Benin Bronze Relief Plaque" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "ID de l'Œuvre" : "Artwork ID"}</label>
+                <input type="text" value={form.artworkId} onChange={(e) => setForm({ ...form, artworkId: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="art-2" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Propriétaire" : "Owner"} *</label>
+                  <input type="text" value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Collector Name" />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "E-mail" : "Email"}</label>
+                  <input type="email" value={form.ownerEmail} onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="collector@example.com" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Date d'expiration" : "Expiry Date"}</label>
+                  <input type="date" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Niveau d'Authentification" : "Authentication Level"}</label>
+                  <select value={form.authenticationLevel} onChange={(e) => setForm({ ...form, authenticationLevel: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf cursor-pointer">
+                    <option value="Standard">Standard</option>
+                    <option value="Enhanced">Enhanced</option>
+                    <option value="Premium">Premium</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Certifié par" : "Verified By"}</label>
+                <input type="text" value={form.verifiedBy} onChange={(e) => setForm({ ...form, verifiedBy: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Aduna Gallery" />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Description" : "Description"}</label>
+                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf resize-none" placeholder={lang === "fr" ? "Détails supplémentaires sur le certificat..." : "Additional certificate details..."} />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "PDF du Certificat" : "Certificate PDF"}</label>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-on-surface-variant hover:text-ebony-deep hover:border-gold-leaf transition-colors cursor-pointer">
+                    <Upload className="w-4 h-4" />
+                    <span>{form.pdfFileName || (lang === "fr" ? "Choisir un fichier..." : "Choose file...")}</span>
+                  </button>
+                  <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setForm({ ...form, pdfFileName: file.name });
+                  }} />
+                  {form.pdfFileName && (
+                    <button type="button" onClick={() => setForm({ ...form, pdfFileName: "" })} className="text-on-surface-variant/50 hover:text-red-600 transition-colors cursor-pointer border-0 bg-transparent">
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-on-surface-variant/50 mt-1">
+                  {lang === "fr" ? "PDF facultatif — sera joint au certificat" : "Optional — will be attached to the certificate"}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6 px-6 pb-6 pt-4 border-t border-outline-variant/30">
+              <button onClick={closeModal} className="px-4 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider text-on-surface-variant hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
+              <button onClick={editingCert ? handleUpdate : handleCreate} disabled={!form.artworkTitle || !form.ownerName} className="bg-ebony-deep text-parchment-ivory px-6 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-40 cursor-pointer border-0">{modalSubmitLabel}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
