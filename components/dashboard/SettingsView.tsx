@@ -12,9 +12,12 @@ import {
   Sun,
   Crown,
   Lock,
-  Wallet
+  Wallet,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
+import { adminApi } from "@/lib/api";
 
 interface SettingsViewProps {
   profile: CollectorProfile;
@@ -30,6 +33,15 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
   const [currency, setCurrency] = useState(profile.currency);
   const [selectedRegions, setSelectedRegions] = useState<string[]>(profile.regionsOfInterest);
   const [savingStatus, setSavingStatus] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSaved, setPwSaved] = useState(false);
+  const [pwError, setPwError] = useState("");
 
   const availableRegions = [
     'West Africa (Edo, Yoruba, Akan)',
@@ -55,6 +67,35 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
       setSavingStatus(false);
       alert(lang === "fr" ? 'Paramètres du collectionneur synchronisés avec les serveurs sécurisés Aduna avec succès.' : 'Collector settings synchronized with Aduna secure mainframes successfully.');
     }, 600);
+  };
+
+  const handleChangePassword = async () => {
+    setPwError("");
+    if (!currentPassword || !newPassword) {
+      setPwError(lang === "fr" ? "Veuillez remplir tous les champs" : "Please fill in all fields");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError(lang === "fr" ? "Les mots de passe ne correspondent pas" : "Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwError(lang === "fr" ? "Le mot de passe doit contenir au moins 6 caractères" : "Password must be at least 6 characters");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await adminApi.changePassword({ currentPassword, newPassword });
+      setPwSaved(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPwSaved(false), 2000);
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : (lang === "fr" ? "Échec du changement de mot de passe" : "Failed to change password"));
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   return (
@@ -147,6 +188,37 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
               <div className="space-y-2 border-t border-ebony-deep/5 pt-4">
                 <p className="font-mono text-[10px] text-zinc-400 select-all font-semibold flex items-center gap-1"><Wallet className="w-3.5 h-3.5 text-gold-leaf" /> PRIVATE CHAIN ID: ETH-MAIN-ADUNA-99</p>
               </div>
+            </div>
+          </div>
+
+          {/* Password Change */}
+          <div className="bg-parchment-ivory border border-ebony-deep/5 p-8 shadow-level-1">
+            <h3 className="font-serif text-lg font-medium text-ebony-deep border-b border-gold-leaf/20 pb-4 flex items-center gap-2 mb-4">
+              <Lock className="w-4.5 h-4.5 text-gold-leaf" /> {lang === "fr" ? "Changer le Mot de Passe" : "Change Password"}
+            </h3>
+            <div className="space-y-3">
+              <div className="relative">
+                <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 block">{lang === "fr" ? "Mot de Passe Actuel" : "Current Password"}</label>
+                <input type={showCurrentPw ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full bg-white border border-ebony-deep/15 focus:border-gold-leaf p-2.5 text-xs focus:outline-none text-ebony-deep pr-8" />
+                <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-2.5 top-[26px] text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent">
+                  {showCurrentPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <div className="relative">
+                <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 block">{lang === "fr" ? "Nouveau Mot de Passe" : "New Password"}</label>
+                <input type={showNewPw ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full bg-white border border-ebony-deep/15 focus:border-gold-leaf p-2.5 text-xs focus:outline-none text-ebony-deep pr-8" />
+                <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-2.5 top-[26px] text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent">
+                  {showNewPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <div>
+                <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 block">{lang === "fr" ? "Confirmer" : "Confirm Password"}</label>
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full bg-white border border-ebony-deep/15 focus:border-gold-leaf p-2.5 text-xs focus:outline-none text-ebony-deep" />
+              </div>
+              {pwError && <p className="text-xs text-red-600 font-sans">{pwError}</p>}
+              <button type="button" onClick={handleChangePassword} disabled={pwSaving} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer border-0">
+                {pwSaving ? "..." : pwSaved ? "✓ Saved" : (lang === "fr" ? "Changer" : "Change Password")}
+              </button>
             </div>
           </div>
         </div>

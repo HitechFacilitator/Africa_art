@@ -191,35 +191,54 @@ export default function AdminPage() {
     appendAudit("Helena S.", `AML status cycled for ${id}`);
   };
 
-  const handleReleaseEscrow = (id: string) => {
-    setEscrows((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "Released" as const, notes: t.notes + " Funds released." } : t))
-    );
-    appendAudit("Julien D.", `Escrow ${id} funds released and disbursed`);
+  const handleReleaseEscrow = async (id: string) => {
+    try {
+      await adminApi.releaseEscrow(id);
+      fetchAllData();
+      appendAudit("Julien D.", `Escrow ${id} funds released and disbursed`);
+    } catch (err) {
+      console.error("Release escrow failed:", err);
+    }
   };
 
-  const handleDisputeEscrow = (id: string) => {
-    setEscrows((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "Disputed" as const, notes: t.notes + " Dispute initiated." } : t))
-    );
-    appendAudit("Julien D.", `Escrow ${id} dispute initiated`);
+  const handleDisputeEscrow = async (id: string) => {
+    try {
+      await adminApi.disputeEscrow(id);
+      fetchAllData();
+      appendAudit("Julien D.", `Escrow ${id} dispute initiated`);
+    } catch (err) {
+      console.error("Dispute escrow failed:", err);
+    }
   };
 
-  const handleRefundEscrow = (id: string) => {
-    setEscrows((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "Refunded" as const, notes: t.notes + " Refund processed." } : t))
-    );
-    appendAudit("Julien D.", `Escrow ${id} refund processed`);
+  const handleRefundEscrow = async (id: string) => {
+    try {
+      await adminApi.refundEscrow(id);
+      fetchAllData();
+      appendAudit("Julien D.", `Escrow ${id} refund processed`);
+    } catch (err) {
+      console.error("Refund escrow failed:", err);
+    }
   };
 
-  const handleVerifyLog = (id: string) => {
-    setAuditLogs((prev) =>
-      prev.map((l) => (l.id === id ? { ...l, signed: true } : l))
-    );
+  const handleVerifyLog = async (id: string) => {
+    try {
+      await adminApi.verifyAuditLog(id);
+      setAuditLogs((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, signed: true } : l))
+      );
+    } catch (err) {
+      console.error("Verify log failed:", err);
+    }
   };
 
-  const handleVerifyAll = () => {
-    setAuditLogs((prev) => prev.map((l) => ({ ...l, signed: true })));
+  const handleVerifyAll = async () => {
+    try {
+      await adminApi.verifyAllAuditLogs();
+      setAuditLogs((prev) => prev.map((l) => ({ ...l, signed: true })));
+    } catch (err) {
+      console.error("Verify all failed:", err);
+    }
   };
 
   const handleRiskScan = (artwork: AdminArtwork) => {
@@ -230,20 +249,30 @@ export default function AdminPage() {
     appendAudit("Julien D.", `Compliance scan initiated for ${artwork.id}`);
   };
 
-  const handleUpdateTicketStatus = (id: string, status: SupportTicket["status"]) => {
-    setSupportTickets(prev => prev.map(t => t.id === id ? { ...t, status, lastUpdate: new Date().toISOString().slice(0, 10) } : t));
-    appendAudit("Julien D.", `Support ticket ${id} status changed to ${status}`);
+  const handleUpdateTicketStatus = async (id: string, status: SupportTicket["status"]) => {
+    try {
+      await adminApi.updateSupportTicketStatus(id, status);
+      setSupportTickets(prev => prev.map(t => t.id === id ? { ...t, status, lastUpdate: new Date().toISOString().slice(0, 10) } : t));
+      appendAudit("Julien D.", `Support ticket ${id} status changed to ${status}`);
+    } catch (err) {
+      console.error("Update ticket status failed:", err);
+    }
   };
 
-  const handleAddTicketResponse = (id: string, text: string) => {
-    setSupportTickets(prev => prev.map(t => {
-      if (t.id !== id) return t;
-      return {
-        ...t,
-        responses: [...t.responses, { author: "Admin", text, timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC" }],
-        lastUpdate: new Date().toISOString().slice(0, 10),
-      };
-    }));
+  const handleAddTicketResponse = async (id: string, text: string) => {
+    try {
+      await adminApi.addSupportTicketResponse(id, text);
+      setSupportTickets(prev => prev.map(t => {
+        if (t.id !== id) return t;
+        return {
+          ...t,
+          responses: [...t.responses, { author: "Admin", text, timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC" }],
+          lastUpdate: new Date().toISOString().slice(0, 10),
+        };
+      }));
+    } catch (err) {
+      console.error("Add ticket response failed:", err);
+    }
   };
 
   return (

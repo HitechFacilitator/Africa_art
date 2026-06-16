@@ -17,6 +17,7 @@ import {
   Download,
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
+import SmartDropdown from "@/components/ui/SmartDropdown";
 
 interface CertificatesViewProps {
   certificates: AdminCertificate[];
@@ -74,35 +75,54 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
     });
   };
 
-  const handleCreate = () => {
-    const newCert: AdminCertificate = {
-      id: `cert-${Date.now()}`,
-      artworkTitle: form.artworkTitle,
-      artworkId: form.artworkId || `art-${Date.now()}`,
-      ownerName: form.ownerName,
-      ownerEmail: form.ownerEmail,
-      issuedDate: new Date().toISOString().split("T")[0],
-      expiryDate: form.expiryDate || "N/A",
-      status: "Valid",
-      blockchainHash: `0x${Array.from({ length: 64 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("")}`,
-      verifiedBy: form.verifiedBy || "Aduna Gallery",
-    };
-    onCreate(newCert);
-    setForm(emptyForm);
-    setShowCreateModal(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleCreate = async () => {
+    setSaving(true);
+    try {
+      await adminApi.createCertificate({
+        artworkTitle: form.artworkTitle,
+        artworkId: form.artworkId ? form.artworkId.replace("art-", "") : undefined,
+        ownerName: form.ownerName,
+        ownerEmail: form.ownerEmail,
+        expiryDate: form.expiryDate || undefined,
+        verifiedBy: form.verifiedBy || "Aduna Gallery",
+      });
+      setForm(emptyForm);
+      setShowCreateModal(false);
+      onCreate({} as AdminCertificate);
+    } catch (err) {
+      console.error("Create certificate failed:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editingCert) return;
-    onUpdate(editingCert.id, {
-      artworkTitle: form.artworkTitle || editingCert.artworkTitle,
-      ownerName: form.ownerName || editingCert.ownerName,
-      ownerEmail: form.ownerEmail || editingCert.ownerEmail,
-      expiryDate: form.expiryDate || editingCert.expiryDate,
-      verifiedBy: form.verifiedBy || editingCert.verifiedBy,
-    });
-    setEditingCert(null);
-    setForm(emptyForm);
+    setSaving(true);
+    try {
+      await adminApi.updateCertificate(editingCert.id, {
+        artworkTitle: form.artworkTitle || editingCert.artworkTitle,
+        ownerName: form.ownerName || editingCert.ownerName,
+        ownerEmail: form.ownerEmail || editingCert.ownerEmail,
+        expiryDate: form.expiryDate || editingCert.expiryDate,
+        verifiedBy: form.verifiedBy || editingCert.verifiedBy,
+      });
+      onUpdate(editingCert.id, {
+        artworkTitle: form.artworkTitle || editingCert.artworkTitle,
+        ownerName: form.ownerName || editingCert.ownerName,
+        ownerEmail: form.ownerEmail || editingCert.ownerEmail,
+        expiryDate: form.expiryDate || editingCert.expiryDate,
+        verifiedBy: form.verifiedBy || editingCert.verifiedBy,
+      });
+      setEditingCert(null);
+      setForm(emptyForm);
+    } catch (err) {
+      console.error("Update certificate failed:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openEditModal = (cert: AdminCertificate) => {
@@ -197,41 +217,44 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
                       {cert.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right relative">
+                  <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button onClick={() => copyHash(cert.blockchainHash, cert.id)} className="p-1.5 text-ebony-deep/60 hover:text-gold-leaf transition-colors cursor-pointer border-0 bg-transparent" title={lang === "fr" ? "Copier le hash" : "Copy hash"}>
                         <Copy className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => setOpenMenuId(openMenuId === cert.id ? null : cert.id)} className="p-1.5 text-ebony-deep/60 hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent">
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
+                      <SmartDropdown
+                        open={openMenuId === cert.id}
+                        onClose={() => setOpenMenuId(null)}
+                        trigger={
+                          <button onClick={() => setOpenMenuId(openMenuId === cert.id ? null : cert.id)} className="p-1.5 text-ebony-deep/60 hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent">
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        }
+                      >
+                          <button onClick={async () => {
+                            try {
+                              const blob = await adminApi.downloadCertificatePdf(cert.id);
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = `${cert.artworkTitle.replace(/[^a-zA-Z0-9]/g, "_")}_certificate.pdf`;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            } catch (err) {
+                              console.error("PDF download failed:", err);
+                            }
+                            setOpenMenuId(null);
+                          }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
+                            <Download className="w-3.5 h-3.5" /> {lang === "fr" ? "Télécharger PDF" : "Download PDF"}
+                          </button>
+                          <button onClick={() => openEditModal(cert)} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
+                            <Pencil className="w-3.5 h-3.5" /> {lang === "fr" ? "Modifier" : "Edit"}
+                          </button>
+                          <button onClick={() => { if (confirm(lang === "fr" ? `Supprimer le certificat ${cert.id} ? Cette action est irréversible.` : `Delete certificate ${cert.id}? This cannot be undone.`)) { onDelete(cert.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-red-700 cursor-pointer border-0 bg-transparent">
+                            <Trash2 className="w-3.5 h-3.5" /> {lang === "fr" ? "Supprimer" : "Delete"}
+                          </button>
+                      </SmartDropdown>
                     </div>
-                    {openMenuId === cert.id && (
-                      <div className="absolute right-4 top-full mt-1 bg-parchment-ivory border border-outline-variant/30 shadow-lg z-20 min-w-[180px]">
-                        <button onClick={async () => {
-                          try {
-                            const blob = await adminApi.downloadCertificatePdf(cert.id);
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = `${cert.artworkTitle.replace(/[^a-zA-Z0-9]/g, "_")}_certificate.pdf`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                          } catch (err) {
-                            console.error("PDF download failed:", err);
-                          }
-                          setOpenMenuId(null);
-                        }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
-                          <Download className="w-3.5 h-3.5" /> {lang === "fr" ? "Télécharger PDF" : "Download PDF"}
-                        </button>
-                        <button onClick={() => openEditModal(cert)} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
-                          <Pencil className="w-3.5 h-3.5" /> {lang === "fr" ? "Modifier" : "Edit"}
-                        </button>
-                        <button onClick={() => { if (confirm(lang === "fr" ? `Supprimer le certificat ${cert.id} ? Cette action est irréversible.` : `Delete certificate ${cert.id}? This cannot be undone.`)) { onDelete(cert.id); setOpenMenuId(null); } }} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-red-700 cursor-pointer border-0 bg-transparent">
-                          <Trash2 className="w-3.5 h-3.5" /> {lang === "fr" ? "Supprimer" : "Delete"}
-                        </button>
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}
@@ -324,7 +347,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
             </div>
             <div className="flex justify-end gap-3 mt-6 px-6 pb-6 pt-4 border-t border-outline-variant/30">
               <button onClick={closeModal} className="px-4 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider text-on-surface-variant hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
-              <button onClick={editingCert ? handleUpdate : handleCreate} disabled={!form.artworkTitle || !form.ownerName} className="bg-ebony-deep text-parchment-ivory px-6 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-40 cursor-pointer border-0">{modalSubmitLabel}</button>
+              <button onClick={editingCert ? handleUpdate : handleCreate} disabled={!form.artworkTitle || !form.ownerName || saving} className="bg-ebony-deep text-parchment-ivory px-6 py-2.5 text-xs font-sans font-semibold uppercase tracking-wider hover:opacity-90 transition-all disabled:opacity-40 cursor-pointer border-0">{saving ? "..." : modalSubmitLabel}</button>
             </div>
           </div>
         </div>

@@ -16,6 +16,7 @@ import {
   Loader2,
   UserCog,
 } from "lucide-react";
+import SmartDropdown from "@/components/ui/SmartDropdown";
 
 interface UsersViewProps {
   users: AdminUser[];
@@ -177,15 +178,19 @@ export default function UsersView({ users, onUpdateStatus, onDelete }: UsersView
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right relative">
-                    <button
-                      onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
-                      className="p-1 text-on-surface-variant/50 hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent"
+                  <td className="px-4 py-3 text-right">
+                    <SmartDropdown
+                      open={openMenuId === user.id}
+                      onClose={() => setOpenMenuId(null)}
+                      trigger={
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)}
+                          className="p-1 text-on-surface-variant/50 hover:text-ebony-deep transition-colors cursor-pointer border-0 bg-transparent"
+                        >
+                          <MoreVertical className="w-4 h-4" />
+                        </button>
+                      }
                     >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
-                    {openMenuId === user.id && (
-                      <div className="absolute right-4 top-full mt-1 bg-parchment-ivory border border-outline-variant/30 shadow-lg z-20 min-w-[160px]">
                         <button onClick={() => openEdit(user)} className="w-full text-left px-4 py-2.5 text-xs font-sans flex items-center gap-2 hover:bg-surface-container/40 text-ebony-deep cursor-pointer border-0 bg-transparent">
                           <Pencil className="w-3.5 h-3.5" /> {lang === "fr" ? "Modifier" : "Edit"}
                         </button>
@@ -204,8 +209,7 @@ export default function UsersView({ users, onUpdateStatus, onDelete }: UsersView
                             <Trash2 className="w-3.5 h-3.5" /> {lang === "fr" ? "Supprimer" : "Delete"}
                           </button>
                         )}
-                      </div>
-                    )}
+                    </SmartDropdown>
                   </td>
                 </tr>
               ))}

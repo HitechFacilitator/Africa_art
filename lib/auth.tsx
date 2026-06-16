@@ -285,8 +285,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return TAB_VISIBILITY[user.role] ?? [];
   }, [user]);
 
-  if (loading) return null;
-
   return (
     <AuthContext.Provider value={{
       user,

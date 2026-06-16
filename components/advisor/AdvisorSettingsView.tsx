@@ -4,7 +4,8 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
-import { Settings, User, Bell, Shield, Save } from "lucide-react";
+import { adminApi } from "@/lib/api";
+import { Settings, User, Bell, Shield, Save, Eye, EyeOff, Lock } from "lucide-react";
 
 export default function AdvisorSettingsView() {
   const { lang } = useTranslate();
@@ -13,9 +14,47 @@ export default function AdvisorSettingsView() {
   const [email, setEmail] = useState(user?.email || "dr.fatima@louvre.fr");
   const [saved, setSaved] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSaved, setPwSaved] = useState(false);
+  const [pwError, setPwError] = useState("");
+
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleChangePassword = async () => {
+    setPwError("");
+    if (!currentPassword || !newPassword) {
+      setPwError(lang === "fr" ? "Veuillez remplir tous les champs" : "Please fill in all fields");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwError(lang === "fr" ? "Les mots de passe ne correspondent pas" : "Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwError(lang === "fr" ? "Le mot de passe doit contenir au moins 6 caractères" : "Password must be at least 6 characters");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await adminApi.changePassword({ currentPassword, newPassword });
+      setPwSaved(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPwSaved(false), 2000);
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : (lang === "fr" ? "Échec du changement de mot de passe" : "Failed to change password"));
+    } finally {
+      setPwSaving(false);
+    }
   };
 
   return (
@@ -65,8 +104,30 @@ export default function AdvisorSettingsView() {
 
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-parchment-ivory border border-ebony-deep/10 p-6">
           <h3 className="font-serif text-base font-medium text-ebony-deep mb-4 flex items-center gap-2"><Shield className="w-4 h-4 text-terracotta-earth" /> {lang === "fr" ? "Sécurité" : "Security"}</h3>
-          <p className="font-sans text-xs text-ebony-deep/50 mb-3">{lang === "fr" ? "Dernière connexion : 15 Juin 2026, 09:32 UTC" : "Last login: June 15, 2026, 09:32 UTC"}</p>
-          <button className="px-4 py-2 border border-ebony-deep/20 text-terracotta-earth text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/5 transition-colors cursor-pointer bg-transparent">{lang === "fr" ? "Changer le Mot de Passe" : "Change Password"}</button>
+          <div className="space-y-3">
+            <div className="relative">
+              <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1.5 block">{lang === "fr" ? "Mot de Passe Actuel" : "Current Password"}</label>
+              <input type={showCurrentPw ? "text" : "password"} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full px-3 py-2.5 pr-8 bg-surface-container-low border border-ebony-deep/10 text-sm font-sans text-ebony-deep focus:outline-none focus:border-terracotta-earth/30 transition-colors" />
+              <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-[26px] text-ebony-deep/40 hover:text-ebony-deep cursor-pointer border-0 bg-transparent">
+                {showCurrentPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div className="relative">
+              <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1.5 block">{lang === "fr" ? "Nouveau Mot de Passe" : "New Password"}</label>
+              <input type={showNewPw ? "text" : "password"} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full px-3 py-2.5 pr-8 bg-surface-container-low border border-ebony-deep/10 text-sm font-sans text-ebony-deep focus:outline-none focus:border-terracotta-earth/30 transition-colors" />
+              <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-[26px] text-ebony-deep/40 hover:text-ebony-deep cursor-pointer border-0 bg-transparent">
+                {showNewPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+            <div>
+              <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1.5 block">{lang === "fr" ? "Confirmer" : "Confirm Password"}</label>
+              <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full px-3 py-2.5 bg-surface-container-low border border-ebony-deep/10 text-sm font-sans text-ebony-deep focus:outline-none focus:border-terracotta-earth/30 transition-colors" />
+            </div>
+            {pwError && <p className="text-xs text-red-600 font-sans">{pwError}</p>}
+            <button onClick={handleChangePassword} disabled={pwSaving} className="px-4 py-2 border border-ebony-deep/20 text-terracotta-earth text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/5 transition-colors cursor-pointer bg-transparent disabled:opacity-50">
+              {pwSaving ? "..." : pwSaved ? "✓ Saved" : (lang === "fr" ? "Changer le Mot de Passe" : "Change Password")}
+            </button>
+          </div>
         </motion.div>
 
         <button onClick={handleSave} className="flex items-center gap-2 px-6 py-3 bg-terracotta-earth text-parchment-ivory text-xs font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/90 transition-colors cursor-pointer border-0">

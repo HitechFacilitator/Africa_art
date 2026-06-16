@@ -470,10 +470,28 @@ export const adminApi = {
     }> }>("/admin/escrow"),
 
   verifyAuditLog: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/audit-logs/${id}/verify`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/audit-logs/${id.replace("log-", "")}/verify`, { method: "PATCH" }),
 
   verifyAllAuditLogs: () =>
     apiRequest<{ success: boolean }>("/admin/audit-logs/verify-all", { method: "POST" }),
+
+  releaseEscrow: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/escrow/${id.replace("esc-", "")}/release`, { method: "PATCH" }),
+
+  disputeEscrow: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/escrow/${id.replace("esc-", "")}/dispute`, { method: "PATCH" }),
+
+  refundEscrow: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/escrow/${id.replace("esc-", "")}/refund`, { method: "PATCH" }),
+
+  updateSupportTicketStatus: (id: string, status: string) =>
+    apiRequest<{ success: boolean }>(`/chat/tickets/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+
+  addSupportTicketResponse: (id: string, text: string) =>
+    apiRequest<{ success: boolean; data: { author: string; text: string; timestamp: string } }>(`/chat/tickets/${id}/responses`, { method: "POST", body: JSON.stringify({ author: "Admin", text }) }),
+
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    apiRequest<{ success: boolean }>(`/users/change-password`, { method: "POST", body: JSON.stringify(data) }),
 
   getUsers: (params?: { page?: number; limit?: number; search?: string }) => {
     const searchParams = new URLSearchParams();
@@ -503,10 +521,10 @@ export const adminApi = {
     apiRequest<{ success: boolean; data: { id: string } }>(`/admin/users/${id.replace("usr-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   updateUserStatus: (id: string, status: string) =>
-    apiRequest<{ success: boolean }>(`/admin/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    apiRequest<{ success: boolean }>(`/admin/users/${id.replace("usr-", "")}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 
   deleteUser: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/users/${id}`, { method: "DELETE" }),
+    apiRequest<{ success: boolean }>(`/admin/users/${id.replace("usr-", "")}`, { method: "DELETE" }),
 
   getCertificates: () =>
     apiRequest<{ success: boolean; data: Array<{
@@ -526,13 +544,13 @@ export const adminApi = {
     apiRequest<{ success: boolean }>(`/admin/certificates`, { method: "POST", body: JSON.stringify(data) }),
 
   updateCertificate: (id: string, data: { artworkTitle?: string; ownerName?: string; ownerEmail?: string; expiryDate?: string; verifiedBy?: string }) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    apiRequest<{ success: boolean }>(`/admin/certificates/${id.replace("cert-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   revokeCertificate: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates/${id}/revoke`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/certificates/${id.replace("cert-", "")}/revoke`, { method: "PATCH" }),
 
   deleteCertificate: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates/${id}`, { method: "DELETE" }),
+    apiRequest<{ success: boolean }>(`/admin/certificates/${id.replace("cert-", "")}`, { method: "DELETE" }),
 
   downloadCertificatePdf: async (id: string) => {
     const token = getToken();
