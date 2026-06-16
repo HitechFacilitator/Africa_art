@@ -60,7 +60,7 @@ const PRIVATE_CATALOGUES = [
 export default function PrivateCataloguePage() {
   const router = useRouter();
   const { lang } = useTranslate();
-  const { artworks: apiArtworks } = useArtworks();
+  const { artworks: apiArtworks } = useArtworks({ artworkStatus: "Draft" });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const { user } = useAuth();

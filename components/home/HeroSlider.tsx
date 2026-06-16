@@ -13,7 +13,7 @@ export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
   const { lang } = useTranslate();
-  const { artworks: apiArtworks } = useArtworks();
+  const { artworks: apiArtworks } = useArtworks({ artworkStatus: "Live" });
 
   const SLIDES = (apiArtworks as unknown as Artwork[]).filter((a) => a.imageUrl).slice(0, 5);
   const translatedSlides = useTranslatedArtworks(SLIDES);

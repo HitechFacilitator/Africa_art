@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { artworksApi, type ArtworkData } from "@/lib/api";
 
-export function useArtworks(options?: { page?: number; limit?: number }) {
+export function useArtworks(options?: { page?: number; limit?: number; artworkStatus?: string }) {
   const [artworks, setArtworks] = useState<ArtworkData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function useArtworks(options?: { page?: number; limit?: number }) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [options?.page, options?.limit]);
+  }, [options?.page, options?.limit, options?.artworkStatus]);
 
   return { artworks, loading, error };
 }

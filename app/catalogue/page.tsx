@@ -30,7 +30,7 @@ const fadeUp = {
 };
 
 export default function CataloguePage() {
-  const { artworks: apiArtworks, loading } = useArtworks();
+  const { artworks: apiArtworks, loading } = useArtworks({ artworkStatus: "Live" });
   const artifacts = apiArtworks as unknown as Artwork[];
   const [selectedRegion, setSelectedRegion] = useState("All Regions");
   const [selectedTribe, setSelectedTribe] = useState("All Tribes");

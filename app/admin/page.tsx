@@ -93,10 +93,15 @@ export default function AdminPage() {
     adminApi.getArtworks().then(res => setArtworks(res.data as AdminArtwork[])).catch(() => {});
   };
 
-  const handleDeleteArtwork = (id: string) => {
+  const handleDeleteArtwork = async (id: string) => {
     const art = artworks.find((a) => a.id === id);
-    setArtworks((prev) => prev.filter((a) => a.id !== id));
-    if (art) appendAudit("Julien D.", `Artwork archived: ${art.id} — ${art.title}`);
+    try {
+      await adminApi.deleteArtwork(id);
+      setArtworks((prev) => prev.filter((a) => a.id !== id));
+      if (art) appendAudit("Julien D.", `Artwork archived: ${art.id} — ${art.title}`);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   const handleUpdateArtworkStatus = (id: string, status: AdminArtwork["status"]) => {
@@ -111,20 +116,35 @@ export default function AdminPage() {
     appendAudit("Helena S.", `New collector enrolled: ${collector.id} — ${collector.name}`);
   };
 
-  const handleUpdateUserStatus = (id: string, status: string) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
-    appendAudit("Admin", `User ${id} status changed to ${status}`);
+  const handleUpdateUserStatus = async (id: string, status: string) => {
+    try {
+      await adminApi.updateUserStatus(id, status);
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
+      appendAudit("Admin", `User ${id} status changed to ${status}`);
+    } catch (err) {
+      console.error("Status update failed:", err);
+    }
   };
 
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = async (id: string) => {
     const u = users.find((usr) => usr.id === id);
-    setUsers((prev) => prev.filter((usr) => usr.id !== id));
-    if (u) appendAudit("Admin", `User deleted: ${u.id} — ${u.name}`);
+    try {
+      await adminApi.deleteUser(id);
+      setUsers((prev) => prev.filter((usr) => usr.id !== id));
+      if (u) appendAudit("Admin", `User deleted: ${u.id} — ${u.name}`);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
-  const handleRevokeCertificate = (id: string) => {
-    setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, status: "Revoked" as const } : c)));
-    appendAudit("Admin", `Certificate ${id} revoked`);
+  const handleRevokeCertificate = async (id: string) => {
+    try {
+      await adminApi.revokeCertificate(id);
+      setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, status: "Revoked" as const } : c)));
+      appendAudit("Admin", `Certificate ${id} revoked`);
+    } catch (err) {
+      console.error("Revoke failed:", err);
+    }
   };
 
   const handleCreateCertificate = (cert: AdminCertificate) => {
@@ -137,10 +157,15 @@ export default function AdminPage() {
     appendAudit("Admin", `Certificate ${id} updated`);
   };
 
-  const handleDeleteCertificate = (id: string) => {
+  const handleDeleteCertificate = async (id: string) => {
     const c = certificates.find((cert) => cert.id === id);
-    setCertificates((prev) => prev.filter((cert) => cert.id !== id));
-    if (c) appendAudit("Admin", `Certificate deleted: ${c.id} — ${c.artworkTitle}`);
+    try {
+      await adminApi.deleteCertificate(id);
+      setCertificates((prev) => prev.filter((cert) => cert.id !== id));
+      if (c) appendAudit("Admin", `Certificate deleted: ${c.id} — ${c.artworkTitle}`);
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   const handleToggleAML = (id: string) => {

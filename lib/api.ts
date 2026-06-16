@@ -157,12 +157,13 @@ export interface ArtworkData {
 }
 
 export const artworksApi = {
-  getAll: (params?: { page?: number; limit?: number; category?: string; search?: string }) => {
+  getAll: (params?: { page?: number; limit?: number; category?: string; search?: string; artworkStatus?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));
     if (params?.limit) searchParams.set("limit", String(params.limit));
     if (params?.category) searchParams.set("category", params.category);
     if (params?.search) searchParams.set("search", params.search);
+    if (params?.artworkStatus) searchParams.set("artworkStatus", params.artworkStatus);
     const qs = searchParams.toString();
     return apiRequest<PaginatedResponse<ArtworkData>>(`/artworks${qs ? `?${qs}` : ""}`);
   },
@@ -404,6 +405,9 @@ export const adminApi = {
 
   updateArtwork: (id: string, data: Record<string, unknown>) =>
     apiRequest<{ success: boolean; data: { id: string; title: string } }>(`/admin/artworks/${id.replace("ART-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
+
+  deleteArtwork: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/artworks/${id.replace("ART-", "")}`, { method: "DELETE" }),
 
   getCollectors: (params?: { page?: number; limit?: number; search?: string }) => {
     const searchParams = new URLSearchParams();

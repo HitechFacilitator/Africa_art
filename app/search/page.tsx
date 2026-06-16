@@ -28,7 +28,7 @@ function SearchResults() {
   const query = searchParams.get("q") || "";
   const [localQuery, setLocalQuery] = useState(query);
   const { lang } = useTranslate();
-  const { artworks: apiArtworks } = useArtworks();
+  const { artworks: apiArtworks } = useArtworks({ artworkStatus: "Live" });
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

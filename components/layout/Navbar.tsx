@@ -84,9 +84,9 @@ export default function Navbar() {
               <button
                 onClick={() => window.dispatchEvent(new Event("toggle-admin-sidebar"))}
                 aria-label="Toggle admin sidebar"
-                className="p-2 text-on-surface-variant/60 hover:text-gold-leaf transition-colors duration-300 cursor-pointer border-0 bg-transparent"
+                className="flex items-center justify-center w-10 h-10 -ml-2 text-on-surface-variant/70 hover:text-gold-leaf hover:bg-gold-leaf/10 rounded-sm transition-all duration-200 cursor-pointer border-0 bg-transparent"
               >
-                <PanelLeftOpen size={18} strokeWidth={1.5} />
+                <PanelLeftOpen size={20} strokeWidth={1.5} />
               </button>
             )}
             <Link
