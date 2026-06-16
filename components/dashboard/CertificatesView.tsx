@@ -16,7 +16,7 @@ import {
   Eye,
   Plus,
 } from "lucide-react";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
@@ -51,7 +51,8 @@ const STATUS_STYLES: Record<string, { color: string; icon: React.ElementType; la
 
 export default function CertificatesView() {
   const { lang } = useTranslate();
-  const translatedArtworks = useTranslatedArtworks(ARTWORKS);
+  const { artworks: apiArtworks } = useArtworks();
+  const translatedArtworks = useTranslatedArtworks(apiArtworks as unknown as Artwork[]);
   const CERTIFICATES: Certificate[] = translatedArtworks.map((art, i) => {
     const numSuffix = ((i * 7 + 3) * 1337 % 9000 + 1000).toString();
     const hashChars = Array.from({ length: 64 }, (_, j) => ((i * 31 + j * 17) % 16).toString(16)).join("");

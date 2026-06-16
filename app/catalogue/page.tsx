@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork, AdvisorMessage } from "@/lib/types";
@@ -30,7 +30,8 @@ const fadeUp = {
 };
 
 export default function CataloguePage() {
-  const [artifacts] = useState<Artwork[]>(ARTWORKS);
+  const { artworks: apiArtworks, loading } = useArtworks();
+  const artifacts = apiArtworks as unknown as Artwork[];
   const [selectedRegion, setSelectedRegion] = useState("All Regions");
   const [selectedTribe, setSelectedTribe] = useState("All Tribes");
   const [selectedMaterial, setSelectedMaterial] = useState("All");

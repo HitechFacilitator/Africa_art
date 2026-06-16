@@ -11,7 +11,7 @@ export default function Footer() {
     [t("Collections")]: [
       { label: t("Browse Catalogue"), href: "/catalogue" },
       { label: t("Private Catalogue"), href: "/catalogue/private" },
-      { label: t("About Us"), href: "/auctions" },
+      { label: t("About Us"), href: "/about" },
       { label: t("Price on Request"), href: "/price-on-request" },
     ],
     [t("Advisory")]: [

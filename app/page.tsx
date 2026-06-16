@@ -10,7 +10,7 @@ import HeroSlider from "@/components/home/HeroSlider";
 import ProvenanceModal from "@/components/home/ProvenanceModal";
 import CollectorClubModal from "@/components/home/CollectorClubModal";
 import ReportViewerModal from "@/components/home/ReportViewerModal";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import { T } from "@/components/T";
@@ -32,7 +32,8 @@ export default function HomePage() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [memberApp, setMemberApp] = useState<MemberApplication | null>(null);
   const { lang, t } = useTranslate();
-  const curatedArtworks = useTranslatedArtworks(ARTWORKS.slice(0, 3));
+  const { artworks: apiArtworks } = useArtworks({ limit: 3 });
+  const curatedArtworks = useTranslatedArtworks(apiArtworks as unknown as Artwork[]);
 
   const handleApplicationSuccess = (app: MemberApplication) => {
     setMemberApp(app);

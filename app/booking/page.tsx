@@ -14,9 +14,11 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import type { Artwork } from "@/lib/types";
+import AuthGuard from "@/components/AuthGuard";
 
 interface Specialist {
   id: string;
@@ -95,7 +97,8 @@ const TIME_SLOTS = [
 
 export default function BookingPage() {
   const { lang } = useTranslate();
-  const displayArtworks = useTranslatedArtworks(ARTWORKS);
+  const { artworks: apiArtworks } = useArtworks();
+  const displayArtworks = useTranslatedArtworks(apiArtworks as unknown as Artwork[]);
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -141,9 +144,10 @@ export default function BookingPage() {
   };
 
   return (
-    <>
-      <Navbar />
-      <main className="flex-1">
+    <AuthGuard permission="consultations">
+      <>
+        <Navbar />
+        <main className="flex-1">
         {/* Hero */}
         <section className="bg-ebony-deep py-16 md:py-20 relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_30%_50%,_#C5A059_0%,_transparent_70%)]" />
@@ -505,7 +509,8 @@ export default function BookingPage() {
           )}
         </div>
       </main>
-      <Footer />
-    </>
+        <Footer />
+      </>
+    </AuthGuard>
   );
 }

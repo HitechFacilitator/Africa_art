@@ -31,6 +31,8 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useTranslate } from "@/lib/translations";
+import AuthGuard from "@/components/AuthGuard";
+import { artworksApi, ArtworkData } from "@/lib/api";
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -69,17 +71,7 @@ interface ChartDataPoint {
   beninBronze: number;
 }
 
-const MASTER_ARTIFACTS: InvestmentArtifact[] = [
-  { id: "NOK-9401", title: "Nok Terracotta Seated Dignitary", origin: "Nok Culture (Nok Plateau, Nigeria)", period: "circa 500 BC - 200 BC", medium: "Terracotta (Earthenware)", estimatedValue: "$1,850,000", description: "A highly refined Nok sculptural work presenting a class-distinct seated figure with characteristic triangular eyes and ornate tribal coiffure.", provenance: ["2021: Acquired from the Weyler Antiquities Trust, Brussels.", "1998: Passed by bequest to Jean-Pierre Weyler.", "1974: Exported from West Africa under license No. FED-74-09.", "1968: Authenticated by Dr. R. Fagg, Jos Museum."], imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDXl8RsWXaS06QuUFCcscFyYqLnRvXXbrzCmT3VH_NjE3U4A3_pDqYBTsjsZZpEdGWF0tCV50I4JZnegKAQAKRyyzynYlqBVLCwc8_0RFPEjsVxNpCdM4sGRs81tukRN7junoDVA9cSLbp2y5LEkpMEV9UfZKWeI83noDGsMcJOelpOKU1cAltNgWHcIK792wTWvV5kwFTdWxLrbLRwwVaKlWxlkcMXqs9E_DiGOcs1Ep8B9RydAjXL8-cfJ6Wc3UJfV76zPmHcEA", exhibitions: ["2018: 'Early Iron Age of the Niger Valley' - Museum of Ancient Cultures, Munich.", "1992: 'African Horizons' - Royal Tervuren Museum, Belgium."], carbonDatingDetails: "Thermoluminescence (TL) testing conducted by Oxford Radiocarbon unit in 2022 confirms firing sequence matching 2300 ± 150 years Before Present.", accessionNo: "HV-NOK-9401" },
-  { id: "IFE-2102", title: "Ife Bronze Crowned Head of Ooni", origin: "Ife Kingdom (Yorubaland, Nigeria)", period: "12th - 14th Century AD", medium: "Zinc-Bronze (Lost-Wax Casting)", estimatedValue: "Price on Request", description: "An exceptional and naturalistic cast metal masterpiece displaying idealized royal proportions and vertical facial striations.", provenance: ["2019: Retained on behalf of a consortium of Swiss collectors.", "1985: Handled by Sotheby's Tribal Arts, London.", "1952: Transferred to Lord Alistair Keith, Aberdeenshire.", "1938: Excavated in the royal enclosure of Wunmonije Compound, Ife."], imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuA6mkCvBOxzItgOkwApExBW_UFyCp2xdV2K1XavEntR4o1gfdkwWVL5Ml1Xdv1uoHG5L2CTp44X2h6VrKGp9A_YKn8gLC_dM4kmbV0bmNM3KxKEhhxXjBDBzSBrg4yTwekY9qm6HZ1XEKNA7HyHBL_1Q_6UhgW9DspsydS2Q6U2B781unV6grt2JV2vEeJ6l9Wv1DuTcFhWis-zuXCKeFoKB2oS9BYQ-KTthaL7MRWhQUEVgTw3_QQhnXrg66r-dirF3YK_qxS_aQ", exhibitions: ["2010: 'Kingdom of Ife: Sculptures from West Africa' - British Museum.", "1964: 'Art of Yoruba' - Musée de l'Homme, Paris."], carbonDatingDetails: "Metallurgical copper alloy spectrometry confirms 92.4% copper, 4.3% zinc composition.", accessionNo: "HV-IFE-2102" },
-  { id: "BEN-4021", title: "Benin Ceremonial Oba Mask", origin: "Kingdom of Benin (Edo Culture, Nigeria)", period: "Late 18th Century AD", medium: "Cast Bronze with Iron Inlays", estimatedValue: "$2,240,000", description: "A ceremonial metal pendant mask used during historical tribal purification rituals and ancestral remembrance days.", provenance: ["2015: Sourced from the estate of Antoine de Saint-Amand, Paris.", "1972: Exhibited in the Gaston-Chorier gallery, Brussels.", "1931: Acquired during the Exposition Coloniale Internationale.", "1897: Removed from Benin City via private military transfer."], imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDLS_lGsy6L9Y6D8ONzrL0BVgB7-jIe3liVHJ1_TBw0fZptbynPxOSIgN8djBjliJ4x0puj_z11F_GN_BeR6az5TzfoGJbzOb10LBLE7O11HVs53AtF2UWf69TBZu7Vc-ZeaXcSRvVrxt6vvKYFj126WZMaZJWIxLsS-cjnh8-GF0Z1zaUQ9ZyJZyFikBW0rPvK5JrCDtWUW_9KYwHS2DTWBdFXWRlQhESZ1OkDkyd0a8-fE3Y5WmN8fyd_dfFYQ5Fg5GHHqyLqgg", exhibitions: ["2002: 'Bronzes of the Sacred Forest' - Metropolitan Museum of Art.", "1981: 'Edo court masterpieces' - Tribal Institute, Brussels."], carbonDatingDetails: "X-Ray fluorescence verification validates unique lost-wax process methods.", accessionNo: "HV-BEN-4021" },
-  { id: "BEN-8054", title: "Benin Royal Court Guild Plaque", origin: "Kingdom of Benin (Edo Culture, Nigeria)", period: "circa 16th - 17th Century AD", medium: "Relief Bronze Plate", estimatedValue: "$1,620,000", description: "A heavy bronze plaque depicting a royal official flanked by ivory horn blowers.", provenance: ["2018: Consigned from the Dr. H. Reinhardt collection, Munich.", "1989: Sold at Galerie Fischer, Lucerne.", "1912: Cataloged in the collection of Carl von Maltzan, Berlin.", "1897: Transferred during the British Expedition to Benin."], imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDLS_lGsy6L9Y6D8ONzrL0BVgB7-jIe3liVHJ1_TBw0fZptbynPxOSIgN8djBjliJ4x0puj_z11F_GN_BeR6az5TzfoGJbzOb10LBLE7O11HVs53AtF2UWf69TBZu7Vc-ZeaXcSRvVrxt6vvKYFj126WZMaZJWIxLsS-cjnh8-GF0Z1zaUQ9ZyJZyFikBW0rPvK5JrCDtWUW_9KYwHS2DTWBdFXWRlQhESZ1OkDkyd0a8-fE3Y5WmN8fyd_dfFYQ5Fg5GHHqyLqgg", exhibitions: ["2012: 'Cast in Royalty' - Ethnological Museum, Berlin.", "1995: 'West African Bronze Reliefs' - Museum of Fine Arts, Boston."], carbonDatingDetails: "Spectrographic analysis reveals authentic surface soil traces matching Edo regional earth.", accessionNo: "HV-BEN-8054" },
-];
-
-const CURATED_PACKAGES: InvestmentPackage[] = [
-  { id: "package-1", title: "The Nigerian Masterpieces", tagline: "Focus on Nok and Ife cultural artifacts with impeccable provenance.", description: "An exclusive institutional arrangement grouping the earliest masterpieces of West African figurative sculpture.", imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDXl8RsWXaS06QuUFCcscFyYqLnRvXXbrzCmT3VH_NjE3U4A3_pDqYBTsjsZZpEdGWF0tCV50I4JZnegKAQAKRyyzynYlqBVLCwc8_0RFPEjsVxNpCdM4sGRs81tukRN7junoDVA9cSLbp2y5LEkpMEV9UfZKWeI83noDGsMcJOelpOKU1cAltNgWHcIK792wTWvV5kwFTdWxLrbLRwwVaKlWxlkcMXqs9E_DiGOcs1Ep8B9RydAjXL8-cfJ6Wc3UJfV76zPmHcEA", estimatedValue: "$5,350,000", allocation: "60% Terrakotta Masterpieces, 40% Elite Zinc-Bronze Heads", appreciationRate: "+18.4% Average Compound Annual Return", artifacts: [MASTER_ARTIFACTS[0], MASTER_ARTIFACTS[1]] },
-  { id: "package-2", title: "The Benin Consortium", tagline: "A diversified holding of late 19th-century bronze castings.", description: "A robust financial instrument grouping classic, verified royal cast pieces from the Kingdom of Benin.", imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDLS_lGsy6L9Y6D8ONzrL0BVgB7-jIe3liVHJ1_TBw0fZptbynPxOSIgN8djBjliJ4x0puj_z11F_GN_BeR6az5TzfoGJbzOb10LBLE7O11HVs53AtF2UWf69TBZu7Vc-ZeaXcSRvVrxt6vvKYFj126WZMaZJWIxLsS-cjnh8-GF0Z1zaUQ9ZyJZyFikBW0rPvK5JrCDtWUW_9KYwHS2DTWBdFXWRlQhESZ1OkDkyd0a8-fE3Y5WmN8fyd_dfFYQ5Fg5GHHqyLqgg", estimatedValue: "$3,860,000", allocation: "50% Royal Pendant Masks, 50% Royal Court Relief Plaques", appreciationRate: "+14.8% Average Compound Annual Return", artifacts: [MASTER_ARTIFACTS[2], MASTER_ARTIFACTS[3]] },
-];
+// Investment data is fetched from the API at runtime
 
 const MARKET_CHART_DATA: ChartDataPoint[] = [
   { year: 2016, indexValue: 100, nokTerracotta: 100, beninBronze: 100 },
@@ -147,47 +139,97 @@ export default function InvestmentPage() {
 
   const formRef = useRef<HTMLDivElement>(null);
 
-  const [masterArtifacts, setMasterArtifacts] = useState(MASTER_ARTIFACTS);
-  const [curatedPackages, setCuratedPackages] = useState(CURATED_PACKAGES);
+  const [masterArtifacts, setMasterArtifacts] = useState<InvestmentArtifact[]>([]);
+  const [curatedPackages, setCuratedPackages] = useState<InvestmentPackage[]>([]);
+  const [isLoadingArtifacts, setIsLoadingArtifacts] = useState(true);
   const abortRef = useRef(0);
 
   useEffect(() => {
-    if (lang === "en") { setMasterArtifacts(MASTER_ARTIFACTS); setCuratedPackages(CURATED_PACKAGES); return; }
     let cancelled = false;
     const runId = ++abortRef.current;
 
-    async function translateAll() {
-      const artifacts = await Promise.all(MASTER_ARTIFACTS.map(async (art) => ({
-        ...art,
-        title: await tAsync(art.title),
-        origin: await tAsync(art.origin),
-        period: await tAsync(art.period),
-        medium: await tAsync(art.medium),
-        estimatedValue: await tAsync(art.estimatedValue),
-        description: await tAsync(art.description),
-        provenance: await Promise.all(art.provenance.map((p) => tAsync(p))),
-        exhibitions: await Promise.all(art.exhibitions.map((e) => tAsync(e))),
-        carbonDatingDetails: art.carbonDatingDetails ? await tAsync(art.carbonDatingDetails) : undefined,
-      })));
+    async function fetchData() {
+      setIsLoadingArtifacts(true);
+      try {
+        const res = await artworksApi.getAll({ limit: 50 });
+        const artworks: ArtworkData[] = res.data || [];
+        const artifacts: InvestmentArtifact[] = artworks
+          .filter((art) => art.investment)
+          .map((art, i) => ({
+            id: art.id || `INV-${i}`,
+            title: art.title,
+            origin: art.origin || art.region,
+            period: art.period,
+            medium: art.material,
+            estimatedValue: art.investment?.estimatedValue
+              ? `$${art.investment.estimatedValue.toLocaleString()}`
+              : "Price on Request",
+            provenance: art.provenance || [],
+            imageUrl: art.imageUrl,
+            description: art.investmentThesis || art.historicalStory || "",
+            exhibitions: [],
+            carbonDatingDetails: art.preservationStatus || undefined,
+            accessionNo: art.id,
+          }));
 
-      const packages = await Promise.all(CURATED_PACKAGES.map(async (pkg) => ({
-        ...pkg,
-        title: await tAsync(pkg.title),
-        tagline: await tAsync(pkg.tagline),
-        description: await tAsync(pkg.description),
-        estimatedValue: await tAsync(pkg.estimatedValue),
-        allocation: await tAsync(pkg.allocation),
-        appreciationRate: await tAsync(pkg.appreciationRate),
-      })));
+        // If no investment-flagged artworks, use all artworks
+        const finalArtifacts = artifacts.length > 0 ? artifacts : artworks.slice(0, 4).map((art, i) => ({
+          id: art.id || `INV-${i}`,
+          title: art.title,
+          origin: art.origin || art.region,
+          period: art.period,
+          medium: art.material,
+          estimatedValue: art.investment?.estimatedValue
+            ? `$${art.investment.estimatedValue.toLocaleString()}`
+            : "Price on Request",
+          provenance: art.provenance || [],
+          imageUrl: art.imageUrl,
+          description: art.investmentThesis || art.historicalStory || "",
+          exhibitions: [],
+          accessionNo: art.id,
+        }));
 
-      if (!cancelled && runId === abortRef.current) {
-        setMasterArtifacts(artifacts);
-        setCuratedPackages(packages);
+        const packages: InvestmentPackage[] = finalArtifacts.length >= 2 ? [
+          {
+            id: "package-1",
+            title: "The Nigerian Masterpieces",
+            tagline: "Focus on Nok and Ife cultural artifacts with impeccable provenance.",
+            description: "An exclusive institutional arrangement grouping the earliest masterpieces of West African figurative sculpture.",
+            imageUrl: finalArtifacts[0]?.imageUrl || "",
+            estimatedValue: "$5,350,000",
+            allocation: "60% Terrakotta Masterpieces, 40% Elite Zinc-Bronze Heads",
+            appreciationRate: "+18.4% Average Compound Annual Return",
+            artifacts: finalArtifacts.slice(0, 2),
+          },
+          {
+            id: "package-2",
+            title: "The Benin Consortium",
+            tagline: "A diversified holding of late 19th-century bronze castings.",
+            description: "A robust financial instrument grouping classic, verified royal cast pieces from the Kingdom of Benin.",
+            imageUrl: finalArtifacts[2]?.imageUrl || finalArtifacts[0]?.imageUrl || "",
+            estimatedValue: "$3,860,000",
+            allocation: "50% Royal Pendant Masks, 50% Royal Court Relief Plaques",
+            appreciationRate: "+14.8% Average Compound Annual Return",
+            artifacts: finalArtifacts.slice(2, 4),
+          },
+        ] : [];
+
+        if (!cancelled && runId === abortRef.current) {
+          setMasterArtifacts(finalArtifacts);
+          setCuratedPackages(packages);
+        }
+      } catch {
+        if (!cancelled && runId === abortRef.current) {
+          setMasterArtifacts([]);
+          setCuratedPackages([]);
+        }
+      } finally {
+        if (!cancelled && runId === abortRef.current) setIsLoadingArtifacts(false);
       }
     }
-    translateAll();
+    fetchData();
     return () => { cancelled = true; };
-  }, [lang, tAsync]);
+  }, []);
 
   const activeProvenanceArt = masterArtifacts.find((a) => a.id === selectedProvenanceId) || masterArtifacts[0];
 
@@ -252,9 +294,10 @@ export default function InvestmentPage() {
   ];
 
   return (
-    <>
-      <Navbar />
-      <main className="flex-1">
+    <AuthGuard permission="investment">
+      <>
+        <Navbar />
+        <main className="flex-1">
         {/* Tab Navigation */}
         <div className="bg-surface-container/60 border-b border-on-surface/5 sticky top-16 z-30">
           <div className="max-w-7xl mx-auto px-6 md:px-12 flex gap-0 overflow-x-auto no-scrollbar">
@@ -460,7 +503,12 @@ export default function InvestmentPage() {
                     </div>
                   </div>
 
-                  {filteredArtifacts.length > 0 ? (
+                  {isLoadingArtifacts ? (
+                    <div className="text-center py-20">
+                      <div className="inline-block w-8 h-8 border-2 border-gold-leaf border-t-transparent rounded-full animate-spin mb-4" />
+                      <p className="font-sans text-sm text-on-surface-variant">{lang === "fr" ? "Chargement des artefacts d'investissement..." : "Loading investment artifacts..."}</p>
+                    </div>
+                  ) : filteredArtifacts.length > 0 ? (
                     <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-12">
                       {filteredArtifacts.map((art) => (
                         <motion.div variants={fadeUp} key={art.id} onClick={() => setActiveGalleryArtifact(art)} className="group cursor-pointer bg-surface-container-lowest border border-on-surface/5 shadow-level-2 hover:shadow-hover-lift transition-all duration-300 flex flex-col justify-between">
@@ -488,6 +536,7 @@ export default function InvestmentPage() {
                     <div className="text-center py-20 bg-surface-container-lowest border border-on-surface/5">
                       <Info className="w-10 h-10 text-gold-leaf mx-auto mb-4 stroke-[1.2]" />
                       <h3 className="font-serif text-xl text-ebony-deep">{lang === "fr" ? "Aucune Correspondance Enregistrée" : "No Matches Registered"}</h3>
+                      <p className="font-sans text-xs text-on-surface-variant mt-2 max-w-md mx-auto">{lang === "fr" ? "Aucun artifact trouvé. Veuillez vous assurer que le serveur backend est en cours d'exécution." : "No artifacts found. Please ensure the backend server is running and artworks have been created."}</p>
                     </div>
                   )}
                 </div>
@@ -714,10 +763,10 @@ export default function InvestmentPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
-      <Footer />
+        </main>
+        <Footer />
 
-      {/* Package Detail Modal */}
+        {/* Package Detail Modal */}
       <AnimatePresence>
         {selectedPackage && (
           <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
@@ -775,6 +824,7 @@ export default function InvestmentPage() {
           </div>
         )}
       </AnimatePresence>
-    </>
+      </>
+    </AuthGuard>
   );
 }

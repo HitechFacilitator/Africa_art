@@ -6,15 +6,18 @@ import Link from "next/link";
 import { Clock, ShieldCheck, ArrowRight, CheckCircle, AlertTriangle, Mail } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork } from "@/lib/useTranslatedArtwork";
+import type { Artwork } from "@/lib/types";
+import AuthGuard from "@/components/AuthGuard";
 
 const RESERVATION_DURATION = 48 * 60 * 60;
 
 export default function ReservationPage() {
   const { lang } = useTranslate();
-  const artwork = useTranslatedArtwork(ARTWORKS[0]);
+  const { artworks: apiArtworks } = useArtworks();
+  const artwork = useTranslatedArtwork((apiArtworks as unknown as Artwork[])[0]);
   const [timeLeft, setTimeLeft] = useState(RESERVATION_DURATION);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -40,9 +43,10 @@ export default function ReservationPage() {
   const progress = ((RESERVATION_DURATION - timeLeft) / RESERVATION_DURATION) * 100;
 
   return (
-    <>
-      <Navbar />
-      <main className="flex-1">
+    <AuthGuard permission="reserve_48h">
+      <>
+        <Navbar />
+        <main className="flex-1">
         <section className="bg-ebony-deep py-12 md:py-16 relative overflow-hidden">
           <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_60%_50%,_#C5A059_0%,_transparent_70%)]" />
           <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 relative z-10">
@@ -164,6 +168,7 @@ export default function ReservationPage() {
         </div>
       </main>
       <Footer />
-    </>
+      </>
+    </AuthGuard>
   );
 }

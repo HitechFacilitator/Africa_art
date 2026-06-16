@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork, useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
@@ -37,9 +37,11 @@ interface ChatMessage {
 export default function ArtworkDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const rawArtwork = ARTWORKS.find((a) => a.id === id) || ARTWORKS[0];
-  const artwork = useTranslatedArtwork(rawArtwork);
-  const allArtworks = useTranslatedArtworks(ARTWORKS);
+  const { artworks: apiArtworks, loading } = useArtworks();
+  const artworksList = apiArtworks as unknown as Artwork[];
+  const rawArtwork = artworksList.find((a) => a.id === id) || artworksList[0];
+  const artwork = useTranslatedArtwork(rawArtwork || artworksList[0]);
+  const allArtworks = useTranslatedArtworks(artworksList);
   const { lang, t } = useTranslate();
 
   const [showExhibitionRooms, setShowExhibitionRooms] = useState(false);
@@ -61,6 +63,21 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   const [curatorQuestion, setCuratorQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [curatorLoading, setCuratorLoading] = useState(false);
+
+  if (loading || !rawArtwork) {
+    return (
+      <div className="min-h-screen bg-parchment-ivory">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center py-32">
+            <div className="inline-block w-10 h-10 border-2 border-gold-leaf border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="font-sans text-sm text-on-surface-variant">Loading artwork...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const isPor = typeof artwork.label === "string";
 
@@ -165,7 +182,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                         }`}
                       >
                         <div className="w-10 h-10 bg-gray-200 overflow-hidden shrink-0 border border-ebony-deep/5 relative">
-                          <img src={m.imageUrl} alt={m.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          {m.imageUrl ? <img src={m.imageUrl} alt={m.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div className="w-full h-full bg-surface-container-high" />}
                         </div>
                         <div className="overflow-hidden min-w-0">
                           <p className={`text-[9px] tracking-widest font-bold ${isActive ? "text-gold-leaf" : "text-on-surface-variant"}`}>{m.period}</p>
@@ -186,7 +203,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
           <div className="lg:col-span-7 flex flex-col justify-between">
             <div>
               <div className="relative w-full aspect-[4/5] sm:aspect-square bg-surface-container-high overflow-hidden border border-ebony-deep/5 group">
-                <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.03]" />
+                {artwork.imageUrl ? <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-[1.03]" /> : <div className="w-full h-full bg-surface-container-high" />}
                 <div className="absolute top-4 left-4 bg-ebony-deep/80 backdrop-blur-md px-3 py-1 border border-gold-leaf/20">
                   <p className="text-[10px] text-gold-leaf tracking-widest uppercase font-semibold">{lang === "fr" ? "ACTIF SÉCURISÉ AUTHENTIFIÉ" : "AUTHENTICATED SECURED ASSET"}</p>
                 </div>
@@ -212,7 +229,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                 <h3 className="font-serif text-[20px] font-bold text-ebony-deep">{lang === "fr" ? "Traçabilité de Provenance et d'Authenticité" : "Provenance & Authenticity Trace"}</h3>
               </div>
               <div className="space-y-3 font-sans text-xs text-charcoal-text leading-relaxed">
-                {artwork.provenance.map((provLine, i) => (
+                {(artwork.provenance ?? []).map((provLine, i) => (
                   <div key={i} className="flex items-start space-x-2">
                     <CornerDownRight className="w-3.5 h-3.5 text-terracotta-earth shrink-0 mt-0.5" />
                     <span>{provLine}</span>

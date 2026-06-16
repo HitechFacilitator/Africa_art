@@ -15,6 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
+import { authApi, setToken } from "@/lib/api";
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 12, label_en: "At least 12 characters", label_fr: "Au moins 12 caractères" },
@@ -65,6 +66,7 @@ function RegistrationForm() {
   const [registered, setRegistered] = useState(false);
   const [emailConfirmed, setEmailConfirmed] = useState(false);
   const [resending, setResending] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const passwordValid = PASSWORD_RULES.every((r) => r.test(password));
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
@@ -72,14 +74,23 @@ function RegistrationForm() {
   const canSubmitStep2 = firstName && lastName && email && phone && country;
   const canSubmitStep3 = passwordValid && passwordsMatch && acceptTerms && acceptGdpr;
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmitStep3) return;
     setSubmitting(true);
-    setTimeout(() => {
+    try {
+      const res = await authApi.register({
+        email,
+        password,
+        name: `${firstName} ${lastName}`,
+      });
+      setToken(res.token);
       setSubmitting(false);
       setRegistered(true);
-    }, 2000);
+    } catch {
+      setSubmitting(false);
+      setErrorMsg("Registration failed. Please try again.");
+    }
   };
 
   const handleResendEmail = () => {

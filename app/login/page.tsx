@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslate } from "@/lib/translations";
 import { useAuth, type Role } from "@/lib/auth";
-import { validateCredentials, MOCK_USERS } from "@/lib/users";
 
 const MAX_ATTEMPTS = 3;
 const OTP_EXPIRY_SECONDS = 60;
@@ -67,14 +66,14 @@ export default function LoginPage() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handleQuickLogin = (role: Role) => {
-    loginAs(role);
+  const handleQuickLogin = async (role: Role) => {
+    await loginAs(role);
     if (role === "admin") router.push("/admin");
     else if (role === "advisor") router.push("/advisor");
     else router.push("/dashboard");
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockedOut) {
       setErrorMsg(`${lang === "fr" ? "Compte temporairement verrouillé. Veuillez réessayer dans" : "Account temporarily locked. Try again in"} ${formatTimer(lockoutTimer)}.`);
@@ -84,15 +83,17 @@ export default function LoginPage() {
     if (!passphrase || passphrase.length < 4) { setErrorMsg(lang === "fr" ? "Le mot de passe doit contenir au moins 4 caractères." : "The password must be at least 4 characters."); return; }
     setErrorMsg(null);
 
-    const result = login(email, passphrase);
+    const result = await login(email, passphrase);
     if (!result.success) {
       setErrorMsg(result.error || "Invalid credentials.");
       return;
     }
-    setStep("mfa");
-    setOtpTimer(OTP_EXPIRY_SECONDS);
-    setOtpExpired(false);
-    setOtp(["", "", "", "", "", ""]);
+    if (result.requiresOTP) {
+      setStep("mfa");
+      setOtpTimer(OTP_EXPIRY_SECONDS);
+      setOtpExpired(false);
+      setOtp(["", "", "", "", "", ""]);
+    }
   };
 
   const handleOtpChange = (value: string, index: number) => {
@@ -110,7 +111,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleConfirmAccess = () => {
+  const handleConfirmAccess = async () => {
     const code = otp.join("");
     if (code.length < 6) { setErrorMsg(lang === "fr" ? "Veuillez entrer le code complet à 6 chiffres." : "Please enter the complete 6-digit code."); return; }
     if (otpExpired) { setErrorMsg(lang === "fr" ? "Le code OTP a expiré. Veuillez demander un nouveau code." : "OTP code has expired. Please request a new code."); return; }
@@ -124,12 +125,10 @@ export default function LoginPage() {
       return;
     }
 
-    const success = verifyOTP(code);
-    if (success) {
-      const stored = localStorage.getItem("aduna_session");
-      const session = stored ? JSON.parse(stored) : null;
-      if (session?.role === "admin") router.push("/admin");
-      else if (session?.role === "advisor") router.push("/advisor");
+    const result = await verifyOTP(code);
+    if (result.success && result.user) {
+      if (result.user.role === "admin") router.push("/admin");
+      else if (result.user.role === "advisor") router.push("/advisor");
       else router.push("/dashboard");
     } else {
       setFailedAttempts(newAttempts);

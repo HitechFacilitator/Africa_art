@@ -21,6 +21,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { useTranslate } from "@/lib/translations";
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
 import { INITIAL_PROFILE } from "@/lib/dashboardData";
+import { artworksApi, ArtworkData } from "@/lib/api";
 
 interface PreviewArtwork {
   id: string;
@@ -38,90 +39,52 @@ interface PreviewArtwork {
   isPublished: boolean;
 }
 
-const UPCOMING_ARTWORKS: PreviewArtwork[] = [
-  {
-    id: "preview-1",
-    title: "Makonde Ujamaa Tree of Life",
-    origin: "Mozambique",
-    region: "East Africa",
-    tribe: "Makonde",
-    material: "Black Hardwood",
-    period: "Mid 20th Century",
-    dimensions: "120 cm × 45 cm × 45 cm",
-    imageUrl: "https://images.unsplash.com/photo-1582582621959-48d27397dc69?auto=format&fit=crop&q=80",
-    estimatedValue: "€320K – €450K",
-    scarcityIndex: 91,
-    description: "A monumental Makonde Ujamaa sculpture depicting intertwined figures in communal unity. Exceptional craftsmanship with deep patina from decades of ritual use.",
-    isPublished: false,
-  },
-  {
-    id: "preview-2",
-    title: "Ashanti Gold Fertility Weight",
-    origin: "Ghana",
-    region: "West Africa",
-    tribe: "Ashanti",
-    material: "Gold Alloy",
-    period: "18th Century",
-    dimensions: "12 cm × 8 cm × 6 cm",
-    imageUrl: "https://images.unsplash.com/photo-1590735213920-68192a487bc2?auto=format&fit=crop&q=80",
-    estimatedValue: "€180K – €260K",
-    scarcityIndex: 87,
-    description: "Exquisitely cast gold fertility weight with intricate Adinkra symbolism. Provenance traced through three private European collections since 1892.",
-    isPublished: false,
-  },
-  {
-    id: "preview-3",
-    title: "Songye Kifwebe Mask",
-    origin: "DR Congo",
-    region: "Central Africa",
-    tribe: "Songye",
-    material: "Wood, Pigment, Raffia",
-    period: "Late 19th Century",
-    dimensions: "38 cm × 22 cm × 15 cm",
-    imageUrl: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80",
-    estimatedValue: "€280K – €400K",
-    scarcityIndex: 93,
-    description: "Rare large-scale Songye Kifwebe power mask with dramatic striated polychrome surface. Museum-deaccessioned with full institutional provenance.",
-    isPublished: false,
-  },
-];
-
 export default function PreviewPage() {
   const { lang, tAsync } = useTranslate();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [profile] = useState<CollectorProfile>(INITIAL_PROFILE);
-  const [previewArtworks, setPreviewArtworks] = useState<PreviewArtwork[]>(UPCOMING_ARTWORKS);
+  const [previewArtworks, setPreviewArtworks] = useState<PreviewArtwork[]>([]);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(true);
   const abortRef = useRef(0);
 
   useEffect(() => {
-    if (lang === "en") {
-      setPreviewArtworks(previewArtworks);
-      return;
-    }
     let cancelled = false;
     const runId = ++abortRef.current;
-    async function translate() {
-      const results = await Promise.all(
-        previewArtworks.map(async (art) => ({
-          ...art,
-          title: await tAsync(art.title),
-          origin: await tAsync(art.origin),
-          region: await tAsync(art.region),
-          tribe: await tAsync(art.tribe),
-          material: await tAsync(art.material),
-          period: await tAsync(art.period),
-          dimensions: await tAsync(art.dimensions),
-          description: await tAsync(art.description),
-          estimatedValue: await tAsync(art.estimatedValue),
-        }))
-      );
-      if (!cancelled && runId === abortRef.current) setPreviewArtworks(results);
+
+    async function fetchPreview() {
+      setIsLoadingPreview(true);
+      try {
+        const res = await artworksApi.getAll({ limit: 50 });
+        const artworks: ArtworkData[] = res.data || [];
+        const previews: PreviewArtwork[] = artworks.slice(0, 6).map((art, i) => ({
+          id: art.id || `preview-${i}`,
+          title: art.title,
+          origin: art.origin || art.region,
+          region: art.region,
+          tribe: art.tribe,
+          material: art.material,
+          period: art.period,
+          dimensions: art.dimensions,
+          imageUrl: art.imageUrl,
+          estimatedValue: art.investment?.estimatedValue
+            ? `€${(art.investment.estimatedValue / 1000).toFixed(0)}K`
+            : "Price on Request",
+          scarcityIndex: art.scarcityIndex || 80,
+          description: art.historicalStory || "",
+          isPublished: false,
+        }));
+        if (!cancelled && runId === abortRef.current) setPreviewArtworks(previews);
+      } catch {
+        if (!cancelled && runId === abortRef.current) setPreviewArtworks([]);
+      } finally {
+        if (!cancelled && runId === abortRef.current) setIsLoadingPreview(false);
+      }
     }
-    translate();
+    fetchPreview();
     return () => { cancelled = true; };
-  }, [lang, tAsync]);
+  }, []);
   const [selectedArtwork, setSelectedArtwork] = useState<PreviewArtwork | null>(null);
   const [showPORModal, setShowPORModal] = useState(false);
   const [showReserveModal, setShowReserveModal] = useState(false);
@@ -213,7 +176,18 @@ export default function PreviewPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {previewArtworks.map((artwork, idx) => (
+            {isLoadingPreview ? (
+              <div className="col-span-full text-center py-20">
+                <div className="inline-block w-8 h-8 border-2 border-gold-leaf border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="font-sans text-sm text-on-surface-variant">{lang === "fr" ? "Chargement des aperçus..." : "Loading previews..."}</p>
+              </div>
+            ) : previewArtworks.length === 0 ? (
+              <div className="col-span-full text-center py-20 bg-surface-container-low border border-on-surface/5">
+                <Eye className="mx-auto mb-4 text-on-surface-variant/30" size={48} />
+                <p className="font-serif text-xl text-ebony-deep mb-2">{lang === "fr" ? "Aucun aperçu disponible" : "No Previews Available"}</p>
+                <p className="font-sans text-sm text-on-surface-variant max-w-md mx-auto">{lang === "fr" ? "Aucune œuvre à venir n'a été trouvée. Veuillez vous assurer que le serveur backend est en cours d'exécution." : "No upcoming artworks found. Please ensure the backend server is running and artworks have been created."}</p>
+              </div>
+            ) : previewArtworks.map((artwork, idx) => (
               <motion.div
                 key={artwork.id}
                 initial={{ opacity: 0, y: 20 }}

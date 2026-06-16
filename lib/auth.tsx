@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { ActiveTab } from "@/lib/dashboardTypes";
-import { findUserByEmail, getUserByRole } from "@/lib/users";
+import { authApi, setToken, getToken, removeToken } from "@/lib/api";
 
 // ── Roles ──────────────────────────────────────────────────────────────
 export type Role = "visitor" | "collector" | "prestige" | "advisor" | "admin";
@@ -160,9 +160,9 @@ export interface UserSession {
 interface AuthCtx {
   user: UserSession | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => { success: boolean; error?: string; requiresOTP?: boolean; user?: UserSession };
-  loginAs: (role: Role) => void;
-  verifyOTP: (code: string) => boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOTP?: boolean; pendingEmail?: string }>;
+  loginAs: (role: Role) => Promise<void>;
+  verifyOTP: (code: string) => Promise<{ success: boolean; user?: UserSession }>;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
   canAccessTab: (tab: ActiveTab) => boolean;
@@ -172,9 +172,9 @@ interface AuthCtx {
 const AuthContext = createContext<AuthCtx>({
   user: null,
   isAuthenticated: false,
-  login: () => ({ success: false }),
-  loginAs: () => {},
-  verifyOTP: () => false,
+  login: async () => ({ success: false }),
+  loginAs: async () => {},
+  verifyOTP: async () => ({ success: false }),
   logout: () => {},
   hasPermission: () => false,
   canAccessTab: () => false,
@@ -185,62 +185,89 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-// ── Storage key ────────────────────────────────────────────────────────
-const SESSION_KEY = "aduna_session";
+// ── Pending email for OTP flow ──────────────────────────────────────────
+const PENDING_EMAIL_KEY = "aduna_pending_email";
 
 // ── Provider ───────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
-  const [pendingUser, setPendingUser] = useState<UserSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Restore session from localStorage
+  // Restore session from JWT on mount
   useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    // Set a timeout so the page isn't blocked if backend is down
+    const timeout = setTimeout(() => setLoading(false), 3000);
+    authApi.getMe()
+      .then((res) => {
+        setUser({ ...res.data, role: res.data.role as Role });
+      })
+      .catch(() => {
+        removeToken();
+      })
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+  }, []);
+
+  const login = useCallback(async (email: string, password: string) => {
     try {
-      const stored = localStorage.getItem(SESSION_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as UserSession;
-        setUser(parsed);
+      const res = await authApi.login(email, password);
+      if (res.requiresOTP) {
+        localStorage.setItem(PENDING_EMAIL_KEY, email);
+        return { success: true, requiresOTP: true, pendingEmail: email };
       }
-    } catch {}
-  }, []);
-
-  const login = useCallback((email: string, _password: string): { success: boolean; error?: string; requiresOTP?: boolean; user?: UserSession } => {
-    // Mock validation — in real app this would call an API
-    // For now, accept any email that matches a known user pattern
-    const found = findUserByEmail(email);
-    if (!found) {
-      return { success: false, error: "Account not found. Please check your email." };
-    }
-    setPendingUser(found);
-    return { success: true, requiresOTP: true, user: found };
-  }, []);
-
-  const loginAs = useCallback((role: Role) => {
-    const found = getUserByRole(role);
-    if (found) {
-      setUser(found);
-      localStorage.setItem(SESSION_KEY, JSON.stringify(found));
+      // If no OTP required, set user directly
+      setToken(res.token);
+      setUser(res.user as UserSession);
+      return { success: true };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Login failed";
+      return { success: false, error: message };
     }
   }, []);
 
-  const verifyOTP = useCallback((code: string): boolean => {
-    // Mock OTP — accept "123456" or any 6-digit code
-    if (code.length === 6 && /^\d{6}$/.test(code)) {
-      const u = pendingUser || user;
-      if (u) {
-        setUser(u);
-        localStorage.setItem(SESSION_KEY, JSON.stringify(u));
-        setPendingUser(null);
-        return true;
+  const verifyOTP = useCallback(async (code: string): Promise<{ success: boolean; user?: UserSession }> => {
+    const pendingEmail = localStorage.getItem(PENDING_EMAIL_KEY);
+    if (!pendingEmail) return { success: false };
+
+    try {
+      const res = await authApi.verifyOtp(pendingEmail, code);
+      setToken(res.token);
+      const u = res.user as UserSession;
+      setUser(u);
+      localStorage.removeItem(PENDING_EMAIL_KEY);
+      return { success: true, user: u };
+    } catch {
+      return { success: false };
+    }
+  }, []);
+
+  const loginAs = useCallback(async (role: Role) => {
+    try {
+      const res = await authApi.loginAs(role);
+      if (res.requiresOTP) {
+        // loginAs also requires OTP - skip for quick-login convenience
+        setToken(res.token);
+        setUser(res.user as UserSession);
+      } else {
+        setToken(res.token);
+        setUser(res.user as UserSession);
       }
+    } catch {
+      // Quick-login fallback — for demo purposes only
     }
-    return false;
-  }, [pendingUser, user]);
+  }, []);
 
   const logout = useCallback(() => {
     setUser(null);
-    setPendingUser(null);
-    localStorage.removeItem(SESSION_KEY);
+    removeToken();
+    localStorage.removeItem(PENDING_EMAIL_KEY);
   }, []);
 
   const hasPermission = useCallback((permission: string): boolean => {
@@ -257,6 +284,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return [];
     return TAB_VISIBILITY[user.role] ?? [];
   }, [user]);
+
+  if (loading) return null;
 
   return (
     <AuthContext.Provider value={{

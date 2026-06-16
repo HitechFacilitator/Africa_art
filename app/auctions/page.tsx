@@ -217,11 +217,12 @@ export default function AuctionsPage() {
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [profile] = useState<CollectorProfile>(INITIAL_PROFILE);
 
-  const [lots, setLots] = useState<AuctionLot[]>(INITIAL_LOTS);
+  const [lots, setLots] = useState<AuctionLot[]>([]);
   const translatedLots = useTranslatedAuctionLots(lots);
-  const [selectedLot, setSelectedLot] = useState<AuctionLot | null>(translatedLots[0]);
+  const [selectedLot, setSelectedLot] = useState<AuctionLot | null>(null);
   const [filter, setFilter] = useState<"all" | "live" | "upcoming">("all");
   const [watchedLots, setWatchedLots] = useState<Set<string>>(new Set());
+  const [isLoadingAuctions, setIsLoadingAuctions] = useState(true);
 
   // Bid modal state
   const [bidModalState, setBidModalState] = useState<BidModalState>("idle");
@@ -234,8 +235,34 @@ export default function AuctionsPage() {
     if (selectedLot) {
       const updated = translatedLots.find(l => l.id === selectedLot.id);
       if (updated) setSelectedLot(updated);
+    } else if (translatedLots.length > 0) {
+      setSelectedLot(translatedLots[0]);
     }
   }, [translatedLots]);
+
+  // Fetch auction lots from API (falls back to empty if no endpoint)
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchLots() {
+      setIsLoadingAuctions(true);
+      try {
+        const token = localStorage.getItem("aduna_token");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1"}/auctions`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled && data.data) setLots(data.data);
+        }
+      } catch {
+        // No auction endpoint available - show empty state
+      } finally {
+        if (!cancelled) setIsLoadingAuctions(false);
+      }
+    }
+    fetchLots();
+    return () => { cancelled = true; };
+  }, []);
 
   const filtered = translatedLots.filter((l) => filter === "all" || l.status === filter);
   const liveCount = translatedLots.filter((l) => l.status === "live").length;
@@ -379,7 +406,19 @@ export default function AuctionsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Lot List */}
             <div className="lg:col-span-5 space-y-3">
-              {filtered.map((lot) => (
+              {isLoadingAuctions ? (
+                <div className="text-center py-20">
+                  <div className="inline-block w-8 h-8 border-2 border-gold-leaf border-t-transparent rounded-full animate-spin mb-4" />
+                  <p className="font-sans text-sm text-on-surface-variant">{lang === "fr" ? "Chargement des enchères..." : "Loading auction lots..."}</p>
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-20 bg-surface-container-low border border-on-surface/5">
+                  <Gavel className="mx-auto mb-4 text-on-surface-variant/30" size={48} />
+                  <p className="font-serif text-xl text-ebony-deep mb-2">{lang === "fr" ? "Aucune enchère disponible" : "No Auction Lots Available"}</p>
+                  <p className="font-sans text-sm text-on-surface-variant max-w-md mx-auto">{lang === "fr" ? "Aucune enchère n'est actuellement en cours. Veuillez vous assurer que le serveur backend est en cours d'exécution." : "No auction lots are currently active. Please ensure the backend server is running."}</p>
+                </div>
+              ) : (
+              filtered.map((lot) => (
                 <button
                   key={lot.id}
                   onClick={() => setSelectedLot(lot)}
@@ -412,7 +451,7 @@ export default function AuctionsPage() {
                     </div>
                   </div>
                 </button>
-              ))}
+              )))}
             </div>
 
             {/* Lot Detail */}

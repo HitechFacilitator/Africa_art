@@ -7,6 +7,7 @@ import { INITIAL_CHAT_THREADS } from "@/lib/chatData";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
+import AuthGuard from "@/components/AuthGuard";
 import AdvisorSidebar from "@/components/advisor/AdvisorSidebar";
 import AdvisorHeader from "@/components/advisor/AdvisorHeader";
 import OverviewView from "@/components/advisor/OverviewView";
@@ -59,52 +60,54 @@ export default function AdvisorPage() {
   };
 
   return (
-    <div className="bg-background min-h-screen font-sans flex flex-col">
-      <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} />
+    <AuthGuard permission="advisor_dashboard">
+      <div className="bg-background min-h-screen font-sans flex flex-col">
+        <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} />
 
-      <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
-        <AdvisorHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
+        <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+          <AdvisorHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
 
-        <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeView}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3 }}
-            >
-              {activeView === AdvisorView.Overview && (
-                <OverviewView
-                  consultations={INITIAL_CONSULTATIONS}
-                  clients={INITIAL_CLIENTS}
-                  placements={INITIAL_PLACEMENTS}
-                  activities={INITIAL_ADVISOR_ACTIVITY}
-                  setActiveView={handleSetActiveView}
-                />
-              )}
-              {activeView === AdvisorView.Consultations && (
-                <ConsultationsManageView consultations={INITIAL_CONSULTATIONS} />
-              )}
-              {activeView === AdvisorView.Clients && (
-                <ClientsView clients={INITIAL_CLIENTS} />
-              )}
-              {activeView === AdvisorView.Placements && (
-                <PlacementsView placements={INITIAL_PLACEMENTS} />
-              )}
-              {activeView === AdvisorView.Activity && (
-                <ActivityView activities={INITIAL_ADVISOR_ACTIVITY} />
-              )}
-              {activeView === AdvisorView.Settings && (
-                <AdvisorSettingsView />
-              )}
-              {activeView === AdvisorView.Chat && (
-                <AdvisorChatView threads={chatThreads} onSendMessage={handleSendMessage} />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+          <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeView}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+              >
+                {activeView === AdvisorView.Overview && (
+                  <OverviewView
+                    consultations={INITIAL_CONSULTATIONS}
+                    clients={INITIAL_CLIENTS}
+                    placements={INITIAL_PLACEMENTS}
+                    activities={INITIAL_ADVISOR_ACTIVITY}
+                    setActiveView={handleSetActiveView}
+                  />
+                )}
+                {activeView === AdvisorView.Consultations && (
+                  <ConsultationsManageView consultations={INITIAL_CONSULTATIONS} />
+                )}
+                {activeView === AdvisorView.Clients && (
+                  <ClientsView clients={INITIAL_CLIENTS} />
+                )}
+                {activeView === AdvisorView.Placements && (
+                  <PlacementsView placements={INITIAL_PLACEMENTS} />
+                )}
+                {activeView === AdvisorView.Activity && (
+                  <ActivityView activities={INITIAL_ADVISOR_ACTIVITY} />
+                )}
+                {activeView === AdvisorView.Settings && (
+                  <AdvisorSettingsView />
+                )}
+                {activeView === AdvisorView.Chat && (
+                  <AdvisorChatView threads={chatThreads} onSendMessage={handleSendMessage} />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

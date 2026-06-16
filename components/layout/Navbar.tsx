@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, Menu, X, Lock, User, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
+import { useAuth } from "@/lib/auth";
 
 const EXPLORER_LINKS = [
   { href: "/catalogue", labelKey: "Catalogue" },
-  { href: "/auctions", labelKey: "About Us" },
+  { href: "/about", labelKey: "About Us" },
   { href: "/provenance", labelKey: "Provenance" },
   { href: "/investment", labelKey: "Advisory" },
 ];
@@ -17,6 +18,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const { lang, setLang, t } = useTranslate();
+  const { isAuthenticated } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -195,11 +197,11 @@ export default function Navbar() {
               <Search size={17} strokeWidth={1.5} />
             </button>
 
-            {/* Collector Login */}
+            {/* Collector Login / Dashboard */}
             <Link
-              href="/login"
+              href={isAuthenticated ? "/dashboard" : "/login"}
               id="nav-login-btn"
-              aria-label="Collector login"
+              aria-label={isAuthenticated ? "Go to dashboard" : "Collector login"}
               className="p-2 text-on-surface-variant/60 hover:text-gold-leaf transition-colors duration-300"
             >
               <User size={17} strokeWidth={1.5} />

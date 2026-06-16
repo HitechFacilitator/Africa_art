@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
-import { INITIAL_ACQUISITIONS, INITIAL_INQUIRIES, INITIAL_CONSULTATIONS, INITIAL_LOGISTICS, INITIAL_SECURITY, INITIAL_PROFILE } from "@/lib/dashboardData";
-import { INITIAL_CHAT_THREADS } from "@/lib/chatData";
+import { dashboardApi, consultationsApi, chatApi } from "@/lib/api";
+import type { ChatThread } from "@/lib/chatTypes";
 import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, Gavel, Flame, ShieldCheck, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
@@ -27,16 +27,30 @@ import ChatView from "@/components/dashboard/ChatView";
 export default function DashboardPage() {
   const { lang } = useTranslate();
   const router = useRouter();
-  const { canAccessTab, user } = useAuth();
+  const { canAccessTab, user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Dashboard);
   const [tabHistory, setTabHistory] = useState<ActiveTab[]>([]);
-  const [selectedAcquisition, setSelectedAcquisition] = useState<Acquisition | null>(INITIAL_ACQUISITIONS[0] ?? null);
+  const [acquisitions, setAcquisitions] = useState<Acquisition[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [logistics, setLogistics] = useState<LogisticsShipment[]>([]);
+  const [security, setSecurity] = useState<SecurityRecord[]>([]);
+  const [selectedAcquisition, setSelectedAcquisition] = useState<Acquisition | null>(null);
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
   const [isOpenMobile, setIsOpenMobile] = useState<boolean>(false);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [theme, setTheme] = useState<string>('light');
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
+
+  // Fetch dashboard data from API
+  useEffect(() => {
+    dashboardApi.getAcquisitions().then(res => { const d = res.data as Acquisition[]; setAcquisitions(d); setSelectedAcquisition(d[0] ?? null); }).catch(() => {});
+    dashboardApi.getInquiries().then(res => setInquiries(res.data as Inquiry[])).catch(() => {});
+    consultationsApi.getMy().then(res => setConsultations(res.data as Consultation[])).catch(() => {});
+    dashboardApi.getLogistics().then(res => setLogistics(res.data as LogisticsShipment[])).catch(() => {});
+    dashboardApi.getSecurity().then(res => setSecurity(res.data as SecurityRecord[])).catch(() => {});
+  }, []);
 
   // Tab navigation with history tracking
   const navigateTab = (tab: ActiveTab) => {
@@ -79,13 +93,21 @@ export default function DashboardPage() {
     }
   };
 
-  const [acquisitions, setAcquisitions] = useState<Acquisition[]>(INITIAL_ACQUISITIONS);
-  const [inquiries, setInquiries] = useState<Inquiry[]>(INITIAL_INQUIRIES);
-  const [consultations, setConsultations] = useState<Consultation[]>(INITIAL_CONSULTATIONS);
-  const [logistics, setLogistics] = useState<LogisticsShipment[]>(INITIAL_LOGISTICS);
-  const [security, setSecurity] = useState<SecurityRecord[]>(INITIAL_SECURITY);
-  const [profile, setProfile] = useState<CollectorProfile>(INITIAL_PROFILE);
-  const [chatThreads, setChatThreads] = useState(INITIAL_CHAT_THREADS);
+  const defaultProfile: CollectorProfile = {
+    name: user?.name || "Guest",
+    tier: user?.role === "prestige" ? "Prestige Tier" : user?.role === "admin" ? "Admin Tier" : "Member Tier",
+    currency: "EUR (€)",
+    joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+    curatorName: "Aduna Advisory Desk",
+    regionsOfInterest: ["West Africa", "Central Africa", "East Africa"],
+  };
+  const [profile, setProfile] = useState<CollectorProfile>(defaultProfile);
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+
+  // Fetch chat threads from API
+  useEffect(() => {
+    chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
+  }, []);
 
   // Auto-translate dynamic data when language changes
   const translatedAcquisitions = useTranslatedAcquisitions(acquisitions);
@@ -113,13 +135,11 @@ export default function DashboardPage() {
   };
 
   const handleClearCache = () => {
-    setAcquisitions(INITIAL_ACQUISITIONS);
-    setInquiries(INITIAL_INQUIRIES);
-    setConsultations(INITIAL_CONSULTATIONS);
-    setLogistics(INITIAL_LOGISTICS);
-    setSecurity(INITIAL_SECURITY);
-    setProfile(INITIAL_PROFILE);
-    setSelectedAcquisition(INITIAL_ACQUISITIONS[0]);
+    dashboardApi.getAcquisitions().then(res => { const d = res.data as Acquisition[]; setAcquisitions(d); setSelectedAcquisition(d[0] ?? null); }).catch(() => {});
+    dashboardApi.getInquiries().then(res => setInquiries(res.data as Inquiry[])).catch(() => {});
+    consultationsApi.getMy().then(res => setConsultations(res.data as Consultation[])).catch(() => {});
+    dashboardApi.getLogistics().then(res => setLogistics(res.data as LogisticsShipment[])).catch(() => {});
+    dashboardApi.getSecurity().then(res => setSecurity(res.data as SecurityRecord[])).catch(() => {});
     setTabHistory([]);
     setActiveTab(ActiveTab.Dashboard);
     alert(lang === "fr" ? "Les métriques d'Aduna Gallery ont été initialisées avec succès aux paramètres par défaut." : 'Aduna Gallery metrics initialized successfully to pristine defaults.');
@@ -294,7 +314,8 @@ This report acts as a legal certifiable token of ownership index.
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
         if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
-          alert(lang === "fr" ? "Session fermée en toute sécurité. Identifiants du collectionneur authentifiés détachés." : 'Session closed safely. Authenticated collector credentials detached.');
+          logout();
+          router.push("/");
         }
       }} />
 

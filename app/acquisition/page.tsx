@@ -38,11 +38,12 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 import ProvenanceStage from "@/components/acquisition/ProvenanceStage";
+import AuthGuard from "@/components/AuthGuard";
 
 type CheckoutStep = "Summary" | "Provenance" | "Billing" | "Payment" | "Confirmation";
 type PaymentMethod = "swift" | "escrow" | "card";
@@ -71,8 +72,10 @@ interface CardData {
 function AcquisitionContent() {
   const { lang } = useTranslate();
   const searchParams = useSearchParams();
-  const artworkId = searchParams.get("artwork") || ARTWORKS[0]?.id || "";
-  const rawArtwork = ARTWORKS.find((a) => a.id === artworkId) || ARTWORKS[0];
+  const { artworks: apiArtworks } = useArtworks();
+  const artworksList = apiArtworks as unknown as Artwork[];
+  const artworkId = searchParams.get("artwork") || artworksList[0]?.id || "";
+  const rawArtwork = artworksList.find((a) => a.id === artworkId) || artworksList[0];
   const artwork = useTranslatedArtwork(rawArtwork);
 
   const [currentStep, setCurrentStep] = useState<CheckoutStep>("Summary");
@@ -885,11 +888,13 @@ function AcquisitionContent() {
 
 export default function AcquisitionPage() {
   return (
-    <>
-      <Navbar />
-      <Suspense fallback={<div className="flex-1 flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-gold-leaf animate-spin" /></div>}>
-        <AcquisitionContent />
-      </Suspense>
-    </>
+    <AuthGuard permission="purchase">
+      <>
+        <Navbar />
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center py-20"><Loader2 className="w-8 h-8 text-gold-leaf animate-spin" /></div>}>
+          <AcquisitionContent />
+        </Suspense>
+      </>
+    </AuthGuard>
   );
 }

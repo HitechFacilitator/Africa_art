@@ -22,7 +22,7 @@ import {
 import Sidebar from "@/components/dashboard/Sidebar";
 import CollectorHeader from "@/components/dashboard/CollectorHeader";
 import AuthGuard from "@/components/AuthGuard";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
@@ -42,18 +42,7 @@ interface VaultHolding {
   isPublic: boolean;
 }
 
-const vaultHoldings: VaultHolding[] = ARTWORKS.slice(0, 4).map((art, i) => ({
-  artwork: art,
-  vaultLocation: ["Geneva Vault, Bay 7-A", "Zurich Freeport, Vault 12", "London Storage, Room 3-B", "Singapore Hub, Vault 5"][i],
-  temperature: ["18.2°C", "17.8°C", "18.5°C", "19.1°C"][i],
-  humidity: ["48%", "51%", "47%", "52%"][i],
-  lastInspection: ["2026-05-14", "2026-04-28", "2026-05-20", "2026-03-15"][i],
-  insuranceValue: art.investment?.estimatedValue || "€1.2M",
-  acquisitionDate: ["2023-06-15", "2024-01-22", "2023-11-08", "2025-02-10"][i],
-  condition: ["Pristine", "Excellent", "Excellent", "Pristine"][i] as VaultHolding["condition"],
-  certStatus: ["Valid", "Valid", "Renewal Due", "Valid"][i] as VaultHolding["certStatus"],
-  isPublic: i < 2,
-}));
+const vaultHoldingsData: VaultHolding[] = [];
 
 const CONDITION_COLORS = {
   Pristine: "text-emerald-600 bg-emerald-50",
@@ -71,10 +60,11 @@ const PRIVATE_CATALOGUES = [
 export default function PrivateCataloguePage() {
   const router = useRouter();
   const { lang } = useTranslate();
+  const { artworks: apiArtworks } = useArtworks();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [profile] = useState<CollectorProfile>(INITIAL_PROFILE);
-  const translatedArtworks = useTranslatedArtworks(ARTWORKS.slice(0, 4));
+  const translatedArtworks = useTranslatedArtworks((apiArtworks as unknown as Artwork[]).slice(0, 4));
   const vaultHoldings: VaultHolding[] = translatedArtworks.map((art, i) => ({
     artwork: art,
     vaultLocation: ["Geneva Vault, Bay 7-A", "Zurich Freeport, Vault 12", "London Storage, Room 3-B", "Singapore Hub, Vault 5"][i],

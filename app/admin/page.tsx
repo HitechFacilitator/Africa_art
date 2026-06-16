@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useTranslate } from "@/lib/translations";
 import { AdminView, AdminArtwork, AdminCollector, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
-import { INITIAL_ADMIN_ARTWORKS, INITIAL_ADMIN_COLLECTORS, INITIAL_ESCROW, INITIAL_AUDIT_LOGS } from "@/lib/adminData";
+import { adminApi } from "@/lib/api";
+import { INITIAL_ADMIN_ARTWORKS, INITIAL_ADMIN_COLLECTORS } from "@/lib/adminData";
 import { INITIAL_SUPPORT_TICKETS } from "@/lib/chatData";
 import type { SupportTicket } from "@/lib/chatTypes";
 import { AnimatePresence, motion } from "motion/react";
 
+import AuthGuard from "@/components/AuthGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ArtworksView from "@/components/admin/ArtworksView";
@@ -27,9 +29,15 @@ export default function AdminPage() {
 
   const [artworks, setArtworks] = useState<AdminArtwork[]>(INITIAL_ADMIN_ARTWORKS);
   const [collectors, setCollectors] = useState<AdminCollector[]>(INITIAL_ADMIN_COLLECTORS);
-  const [escrows, setEscrows] = useState<EscrowTransaction[]>(INITIAL_ESCROW);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(INITIAL_AUDIT_LOGS);
+  const [escrows, setEscrows] = useState<EscrowTransaction[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(INITIAL_SUPPORT_TICKETS);
+
+  // Fetch real data from API
+  useEffect(() => {
+    adminApi.getEscrow().then(res => setEscrows(res.data as EscrowTransaction[])).catch(() => {});
+    adminApi.getAuditLogs().then(res => setAuditLogs(res.data as AuditLogEntry[])).catch(() => {});
+  }, []);
 
   const canGoBack = viewHistory.length > 0;
 
@@ -154,73 +162,75 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="bg-parchment-ivory min-h-screen font-sans flex flex-col">
-      <AdminSidebar activeView={activeView} setActiveView={(view) => { setViewHistory((prev) => [...prev, activeView]); setActiveView(view); }} open={sidebarOpen} setOpen={setSidebarOpen} />
+    <AuthGuard permission="admin_panel">
+      <div className="bg-parchment-ivory min-h-screen font-sans flex flex-col">
+        <AdminSidebar activeView={activeView} setActiveView={(view) => { setViewHistory((prev) => [...prev, activeView]); setActiveView(view); }} open={sidebarOpen} setOpen={setSidebarOpen} />
 
-      <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
-        <AdminHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
+        <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+          <AdminHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
 
-        <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeView}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.3 }}
-            >
-              {activeView === AdminView.Artworks && (
-                <ArtworksView
-                  artworks={artworks}
-                  auditLogs={auditLogs}
-                  onAddArtwork={handleAddArtwork}
-                  onDeleteArtwork={handleDeleteArtwork}
-                  onUpdateStatus={handleUpdateArtworkStatus}
-                  onRiskScan={handleRiskScan}
-                  setActiveView={navigateView}
-                />
-              )}
-              {activeView === AdminView.Collectors && (
-                <CollectorsView
-                  collectors={collectors}
-                  onAddCollector={handleAddCollector}
-                  onToggleAML={handleToggleAML}
-                />
-              )}
-              {activeView === AdminView.Escrow && (
-                <EscrowView
-                  transactions={escrows}
-                  onRelease={handleReleaseEscrow}
-                  onDispute={handleDisputeEscrow}
-                  onRefund={handleRefundEscrow}
-                />
-              )}
-              {activeView === AdminView.AuditLog && (
-                <AuditLogView
-                  logs={auditLogs}
-                  onVerify={handleVerifyLog}
-                  onVerifyAll={handleVerifyAll}
-                />
-              )}
-              {activeView === AdminView.Compliance && (
-                <ComplianceView
-                  artworks={artworks}
-                  prefilledArtwork={prefilledArtwork}
-                  onScan={handleComplianceScan}
-                />
-              )}
-              {activeView === AdminView.Settings && <SettingsView />}
-              {activeView === AdminView.SupportManagement && (
-                <SupportManagementView
-                  tickets={supportTickets}
-                  onUpdateStatus={handleUpdateTicketStatus}
-                  onAddResponse={handleAddTicketResponse}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </main>
+          <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeView}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3 }}
+              >
+                {activeView === AdminView.Artworks && (
+                  <ArtworksView
+                    artworks={artworks}
+                    auditLogs={auditLogs}
+                    onAddArtwork={handleAddArtwork}
+                    onDeleteArtwork={handleDeleteArtwork}
+                    onUpdateStatus={handleUpdateArtworkStatus}
+                    onRiskScan={handleRiskScan}
+                    setActiveView={navigateView}
+                  />
+                )}
+                {activeView === AdminView.Collectors && (
+                  <CollectorsView
+                    collectors={collectors}
+                    onAddCollector={handleAddCollector}
+                    onToggleAML={handleToggleAML}
+                  />
+                )}
+                {activeView === AdminView.Escrow && (
+                  <EscrowView
+                    transactions={escrows}
+                    onRelease={handleReleaseEscrow}
+                    onDispute={handleDisputeEscrow}
+                    onRefund={handleRefundEscrow}
+                  />
+                )}
+                {activeView === AdminView.AuditLog && (
+                  <AuditLogView
+                    logs={auditLogs}
+                    onVerify={handleVerifyLog}
+                    onVerifyAll={handleVerifyAll}
+                  />
+                )}
+                {activeView === AdminView.Compliance && (
+                  <ComplianceView
+                    artworks={artworks}
+                    prefilledArtwork={prefilledArtwork}
+                    onScan={handleComplianceScan}
+                  />
+                )}
+                {activeView === AdminView.Settings && <SettingsView />}
+                {activeView === AdminView.SupportManagement && (
+                  <SupportManagementView
+                    tickets={supportTickets}
+                    onUpdateStatus={handleUpdateTicketStatus}
+                    onAddResponse={handleAddTicketResponse}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

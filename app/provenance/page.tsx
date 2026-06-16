@@ -22,6 +22,7 @@ import {
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useTranslate } from "@/lib/translations";
+import { artworksApi, ArtworkData } from "@/lib/api";
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -68,73 +69,7 @@ interface LedgerBlock {
   action: string;
 }
 
-const MASTERPIECES: ProvenanceArtifact[] = [
-  {
-    id: "ADUNA-OWO-1897",
-    name: "The Owo Ivory Mask",
-    origin: "Owo Region, Forest Kingdom of Benin",
-    medium: "Sustainably Altered Ancient Ivory with Inlaid Brass",
-    dimensions: "24.5 x 12.8 x 6.2 cm",
-    culture: "Yoruba/Benin Cursive School",
-    approximateAge: "Circa 1897 / late 19th Century",
-    imageUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuAxXjJxrO3g4Bz52wXjwD-Su6ejlw-pC_QrYV5ev4CPbLps0j1ZpLHOhGQFmB32GLnW6HTeaW9riVbK48vPBMr5aueayZohQblL3FehtnP-WWr59Mr3NLmrVSXFhvfjx-WGwTxjmhPq97z8peSF2lDKC0p_T-2vK3rUXGsVeffQsQkrYp_mvjKAT--jAbFLUHBvsp4TmVnKFiUoR7KEk9dFX_T_WQ17yD13WoQf-uzb3VS8u5Fk1RBVy9ZiY8HwdnsPxJJb10J9fg",
-    description: "An incredibly rare sovereign ivory mask carved with delicate stylistic registers, representing royal lineage and royal custody.",
-    caseStudyTitle: "CASE STUDY: THE OWO IVORY MASK",
-    blockHash: "0x8fae3199cb14c478a02bd9ec21fae32230fae3b080b4b2fb39da369e12bf39d1",
-    mintDate: "2024-04-12 UTC",
-    timeline: [
-      { year: "CIRCA 1897", location: "Kingdom of Benin", title: "Royal Commissioning", description: "Original commissioning and ceremonial use under royal decree. Documented directly in the Owo ancestral palace archives.", evidenceType: "Archive", verifierName: "Dr. Adebayo Olamina", verifierCredentials: "Chief Historian, Benin Royal Heritage Society", scientificData: { testMethod: "Aqueous Acid Solvent Spot Analysis & UV Fluorescent Imaging", resultValue: "Palace storage chemical footprint matching original 1890s organic compounds.", labFacility: "Lagos Cultural Chemistry Laboratory", signatureHash: "0xa21d...93ef" } },
-      { year: "1932", location: "Private Collection, London", title: "Sir John Harrington Acquisition", description: "Acquired by noted British diplomat Sir John Harrington. Auction lists verified via Sotheby's heritage database.", evidenceType: "Auction", verifierName: "Lady Beatrice Fox", verifierCredentials: "Senior Provenance Director, Sotheby's Archives London", scientificData: { testMethod: "Catalog Deep Paper Forensic Ink Matrix Matching", resultValue: "Confirmed printed catalogue registry entry No. 2931-A dated September 1932.", labFacility: "Sotheby's Paper Conservation Department", signatureHash: "0x78fe...32db" } },
-      { year: "1985 - 2020", location: "Musée d'Ethnographie, Geneva", title: "Long-Term Exhibition & Academic Review", description: "Exhibited on long-term loan to the Geneva Museum. Extensive material testing conducted.", evidenceType: "Exhibition", verifierName: "Prof. Jean-Marc Dupris", verifierCredentials: "Department Head of Non-Western Antiquities, Université de Genève", scientificData: { testMethod: "Accelerator Mass Spectrometry (AMS) Radiocarbon Dating", resultValue: "Dating of organic matter yields a 95.4% probability range of 1885 - 1902 AD.", labFacility: "Zurich Physics Chronology Institute", signatureHash: "0x3bc1...e584" } },
-      { year: "PRESENT", location: "Aduna Vault, Geneva", title: "Secured for Private Acquisition", description: "Full digital ledger validation protocol conducted and immutable certificate minted.", evidenceType: "Custody", verifierName: "Amara Ndiaye", verifierCredentials: "Chief Curator & Co-Founder, Aduna Gallery", scientificData: { testMethod: "Frictionless Optical Laser Mapping & Micro-structure Fingerprinting", resultValue: "Full 3D physical coordinate blueprint registered on blockchain ledger registry.", labFacility: "Aduna Technical Vault facility, Geneva", signatureHash: "0x4ca2...001a" } },
-    ],
-  },
-  {
-    id: "ADUNA-SEN-1920",
-    name: "The Senufo Rhythm Pounder",
-    origin: "Korhogo Region, northern Côte d'Ivoire",
-    medium: "Hand-Carved Sacred Hardwood with Kaolin Pigments",
-    dimensions: "104.0 x 22.0 x 18.5 cm",
-    culture: "Senufo Traditional Guilds",
-    approximateAge: "Circa 1920",
-    imageUrl: "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?auto=format&fit=crop&q=80&w=800",
-    description: "A monumental rhythm pounder used during Senufo agricultural and funeral rites.",
-    caseStudyTitle: "CASE STUDY: THE SENUFO RHYTHM POUNDER",
-    blockHash: "0x4fe193ab6cd19920efbc09ab93ee7242baedd81f2be88dd39f88a911e2cd33a2",
-    mintDate: "2024-05-18 UTC",
-    timeline: [
-      { year: "CIRCA 1920", location: "Korhogo Village Council", title: "Sacred Ceremonial Use", description: "Carved by celebrated Senufo artisan Kolo Silué for village initiations.", evidenceType: "Archive", verifierName: "Kassoum Coulibaly", verifierCredentials: "Director, Korhogo Cultural Elder Council", scientificData: { testMethod: "Phytochem-Dendrologist Micro-invasive Analysis", resultValue: "Organic cell sap matches indigenous slow-growth hardwood native only to Northern Côte d'Ivoire.", labFacility: "Abidjan Science Institute of Forestry", signatureHash: "0x12b4...34df" } },
-      { year: "1954", location: "Galerie Carrefour, Paris", title: "European Acquisition Program", description: "Acquired by French modernists collector Paul Guillaume-Vignes on an expedition.", evidenceType: "Auction", verifierName: "Dr. Maurice Clémente", verifierCredentials: "Lead Scholar of African Relics, Paris Historical Syndicate", scientificData: { testMethod: "Acid-free Adhesive Catalyst Dating & Ledger Verification", resultValue: "Exhibited in 'Art Negre' exposition Catalogue, Docket No. 49, February 1954.", labFacility: "Paris Conservation Registry", signatureHash: "0x89fd...ee23" } },
-      { year: "2001", location: "The Met Museum, New York", title: "New York Met Exhibition", description: "Featured on special selection for the Modernism and Tribal Roots Exhibition.", evidenceType: "Exhibition", verifierName: "Dr. Helen Rostova", verifierCredentials: "Guest Curator for African Arts, Metropolitan Museology Group", scientificData: { testMethod: "X-Ray Computed Tomography (CT) Scanning", resultValue: "Scan demonstrates completely continuous internal wood ring density.", labFacility: "Met Advanced Radiography Core", signatureHash: "0xdef1...99bc" } },
-      { year: "PRESENT", location: "Aduna Vault, Geneva", title: "Encapsulated Token Minting", description: "Digital ownership certificate minted on energy-efficient ledger.", evidenceType: "Custody", verifierName: "Amara Ndiaye", verifierCredentials: "Chief Curator, Aduna Gallery", scientificData: { testMethod: "High-Frequency Acoustic Micro-spectrometry", resultValue: "Unique solid micro-cavity audio resonance fingerprint recorded as immutable verification key.", labFacility: "Aduna Acoustic Testing Site", signatureHash: "0x3e42...09fd" } },
-    ],
-  },
-  {
-    id: "ADUNA-CHO-1945",
-    name: "The Chokwe Pwo Mask",
-    origin: "Moxico Province, Eastern Angola",
-    medium: "Inlaid Redwood with Woven Raffia Coiffure & Glass Beads",
-    dimensions: "32.0 x 20.0 x 14.5 cm",
-    culture: "Chokwe Sovereignty School",
-    approximateAge: "Circa 1945",
-    imageUrl: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=800",
-    description: "An elegant female ancestor mask symbolizing critical fertility, lineage wisdom, and refined grace.",
-    caseStudyTitle: "CASE STUDY: THE CHOKWE PWO MASK",
-    blockHash: "0xbc1a7248baedd81f2be88dd39f88a911e2cd33a2fe8899a112df312bf39d10e",
-    mintDate: "2024-03-30 UTC",
-    timeline: [
-      { year: "CIRCA 1945", location: "Saurimo Region, Angola", title: "Creation and Initiatory Dancing", description: "Crafted by master carver Muata Mwene for transitional youth maturity pageants.", evidenceType: "Archive", verifierName: "Elder Joao Tchinde", verifierCredentials: "Director, Angola Regional History Repository", scientificData: { testMethod: "Raffia Fiber Carbon-14 Decay Reading", resultValue: "Organic plant fiber shows decay profile aligning with harvesting year 1941 - 1948 AD.", labFacility: "Luanda Nuclear Physics Lab", signatureHash: "0x98ab...12fe" } },
-      { year: "1972", location: "Lisbon Private Salon", title: "Colonial Portuguese Registry", description: "Exported under diplomatic registration during Angola's transitional era.", evidenceType: "Auction", verifierName: "Prof. Manuel de Sousa", verifierCredentials: "Department Chair of Iberian Heritage Antiquities", scientificData: { testMethod: "Spectrophotometric Paint Pigment Matrix Scan", resultValue: "Redwood oil pigment contains standard mid-century kaolin organic binder compounds.", labFacility: "Lisbon Materials Laboratory", signatureHash: "0x56cd...78ab" } },
-      { year: "PRESENT", location: "Aduna Vault, Geneva", title: "Consigned to Aduna Gallery", description: "Secured from a private European estate. Tokenized and sealed in Aduna Vault.", evidenceType: "Custody", verifierName: "Amara Ndiaye", verifierCredentials: "Chief Curator, Aduna Gallery", scientificData: { testMethod: "Opti-Scanned Laser Core Alignment", resultValue: "Fitted with encrypted near-field ledger identity parameters.", labFacility: "Aduna Technical Vault facility, Geneva", signatureHash: "0x78ef...1a2c" } },
-    ],
-  },
-];
-
-const GENERAL_LEDGER_HISTORY: LedgerBlock[] = [
-  { blockHeight: 89412, timestamp: "2026-06-08 22:15:30 UTC", transactionHash: "0x8fae3199cb14c478a02bd9ec21fae32230fae3b080b4b2fb39da369e12bf39d1", prevHash: "0x7fd28a6fde90cce183a2bd9ec44fae32230ffe3e080b4b2fb39da369e12128aa", artifactName: "The Owo Ivory Mask", action: "OWNERSHIP_ANCHORED_IN_LEDGER" },
-  { blockHeight: 89395, timestamp: "2026-06-08 19:42:11 UTC", transactionHash: "0x4fe193ab6cd19920efbc09ab93ee7242baedd81f2be88dd39f88a911e2cd33a2", prevHash: "0x5ea1914eb1362e49c12b9ea89ae322caefbd8ccbc2e48cd39df8ecaa12fedff4", artifactName: "The Senufo Rhythm Pounder", action: "C14_DATING_EVIDENCE_MAPPED" },
-  { blockHeight: 89281, timestamp: "2026-06-08 08:30:45 UTC", transactionHash: "0xbc1a7248baedd81f2be88dd39f88a911e2cd33a2fe8899a112df312bf39d10e", prevHash: "0x12ab00c3cd543bf0fe73bc93ee7242baedd81f2be88dd39f88a911e2cd3344ef", artifactName: "The Chokwe Pwo Mask", action: "CUSTODY_INITIALIZED_Aduna_GENEVA" },
-];
+// Provenance data is fetched from the API at runtime
 
 export default function ProvenancePage() {
   // Protocol Grid state
@@ -155,48 +90,69 @@ export default function ProvenancePage() {
 
   const { lang, tAsync } = useTranslate();
 
-  const [masterpieces, setMasterpieces] = useState(MASTERPIECES);
+  const [masterpieces, setMasterpieces] = useState<ProvenanceArtifact[]>([]);
+  const [ledgerHistory, setLedgerHistory] = useState<LedgerBlock[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const abortRef = useRef(0);
 
   useEffect(() => {
-    if (lang === "en") { setMasterpieces(MASTERPIECES); return; }
     let cancelled = false;
     const runId = ++abortRef.current;
 
-    async function translateAll() {
-      const results = await Promise.all(MASTERPIECES.map(async (art) => {
-        const tl = await Promise.all(art.timeline.map(async (ev) => ({
-          ...ev,
-          title: await tAsync(ev.title),
-          description: await tAsync(ev.description),
-          location: await tAsync(ev.location),
-          verifierName: await tAsync(ev.verifierName),
-          verifierCredentials: await tAsync(ev.verifierCredentials),
-          scientificData: ev.scientificData ? {
-            ...ev.scientificData,
-            testMethod: await tAsync(ev.scientificData.testMethod || ""),
-            resultValue: await tAsync(ev.scientificData.resultValue || ""),
-            labFacility: await tAsync(ev.scientificData.labFacility || ""),
-          } : undefined,
-        })));
-        return {
-          ...art,
-          name: await tAsync(art.name),
-          origin: await tAsync(art.origin),
-          medium: await tAsync(art.medium),
-          dimensions: await tAsync(art.dimensions),
-          culture: await tAsync(art.culture),
-          approximateAge: await tAsync(art.approximateAge),
-          description: await tAsync(art.description),
-          caseStudyTitle: await tAsync(art.caseStudyTitle),
-          timeline: tl,
-        };
-      }));
-      if (!cancelled && runId === abortRef.current) setMasterpieces(results);
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        const res = await artworksApi.getAll({ limit: 50 });
+        const artworks: ArtworkData[] = res.data || [];
+        const artifacts: ProvenanceArtifact[] = artworks.map((art, i) => ({
+          id: art.id || `ART-${i}`,
+          name: art.title,
+          origin: art.origin || art.region,
+          medium: art.material,
+          dimensions: art.dimensions,
+          imageUrl: art.imageUrl,
+          description: art.historicalStory || "",
+          culture: art.tribe,
+          approximateAge: art.period,
+          caseStudyTitle: `CASE STUDY: ${(art.title || "").toUpperCase()}`,
+          blockHash: `0x${Array.from({ length: 64 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("")}`,
+          mintDate: new Date().toISOString().split("T")[0] + " UTC",
+          timeline: (art.provenance || []).map((p, j) => ({
+            year: art.period || "UNKNOWN",
+            location: art.origin || "Unknown",
+            title: `Provenance Event ${j + 1}`,
+            description: p,
+            evidenceType: "Custody" as const,
+            verifierName: "Aduna Verification",
+            verifierCredentials: "Chief Curator, Aduna Gallery",
+          })),
+        }));
+
+        const ledger: LedgerBlock[] = artifacts.map((a, i) => ({
+          blockHeight: 89000 + i,
+          timestamp: new Date().toISOString().replace("T", " ").split(".")[0] + " UTC",
+          transactionHash: a.blockHash,
+          prevHash: i > 0 ? artifacts[i - 1].blockHash : "0x0000000000000000000000000000000000000000000000000000000000000000",
+          artifactName: a.name,
+          action: "OWNERSHIP_ANCHORED_IN_LEDGER",
+        }));
+
+        if (!cancelled && runId === abortRef.current) {
+          setMasterpieces(artifacts);
+          setLedgerHistory(ledger);
+        }
+      } catch {
+        if (!cancelled && runId === abortRef.current) {
+          setMasterpieces([]);
+          setLedgerHistory([]);
+        }
+      } finally {
+        if (!cancelled && runId === abortRef.current) setIsLoading(false);
+      }
     }
-    translateAll();
+    fetchData();
     return () => { cancelled = true; };
-  }, [lang, tAsync]);
+  }, []);
 
   // Certificate modal state
   const [showCertificate, setShowCertificate] = useState(false);
@@ -229,14 +185,16 @@ export default function ProvenancePage() {
     const matchKey = ledgerInputValue.trim().toUpperCase();
     setTimeout(() => {
       setIsLoadingLedger(false);
-      if (matchKey.includes("OWO") || matchKey.includes("ADUNA-OWO")) {
-        setVerifyingBlock(GENERAL_LEDGER_HISTORY[0]);
+      if (ledgerHistory.length === 0) {
+        setVerificationError("No ledger data available. Please ensure the backend is running.");
+      } else if (matchKey.includes("OWO") || matchKey.includes("ADUNA-OWO")) {
+        setVerifyingBlock(ledgerHistory[0]);
       } else if (matchKey.includes("SEN") || matchKey.includes("ADUNA-SEN")) {
-        setVerifyingBlock(GENERAL_LEDGER_HISTORY[1]);
+        setVerifyingBlock(ledgerHistory[1] || ledgerHistory[0]);
       } else if (matchKey.includes("CHO") || matchKey.includes("ADUNA-CHO")) {
-        setVerifyingBlock(GENERAL_LEDGER_HISTORY[2]);
+        setVerifyingBlock(ledgerHistory[2] || ledgerHistory[0]);
       } else {
-        const hashMatch = GENERAL_LEDGER_HISTORY.find(b => b.transactionHash.toUpperCase().includes(matchKey) || b.prevHash.toUpperCase().includes(matchKey));
+        const hashMatch = ledgerHistory.find(b => b.transactionHash.toUpperCase().includes(matchKey) || b.prevHash.toUpperCase().includes(matchKey));
         if (hashMatch) { setVerifyingBlock(hashMatch); } else { setVerificationError(`Hash or identifier "${ledgerInputValue}" not found. Use 'ADUNA-OWO', 'ADUNA-SEN', or 'ADUNA-CHO'.`); }
       }
     }, 800);
@@ -377,6 +335,18 @@ export default function ProvenancePage() {
               </div>
             </div>
 
+            {isLoading ? (
+              <div className="text-center py-20">
+                <div className="inline-block w-8 h-8 border-2 border-gold-leaf border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="font-sans text-sm text-on-surface-variant">{lang === "fr" ? "Chargement des données de provenance..." : "Loading provenance data..."}</p>
+              </div>
+            ) : masterpieces.length === 0 ? (
+              <div className="text-center py-20 bg-surface-container-low border border-on-surface/5">
+                <ShieldCheck className="mx-auto mb-4 text-on-surface-variant/30" size={48} />
+                <p className="font-serif text-xl text-ebony-deep mb-2">{lang === "fr" ? "Aucune donnée de provenance disponible" : "No Provenance Data Available"}</p>
+                <p className="font-sans text-sm text-on-surface-variant max-w-md mx-auto">{lang === "fr" ? "Aucun artifact n'a été trouvé dans la base de données. Veuillez vous assurer que le serveur backend est en cours d'exécution et que des œuvres ont été créées." : "No artifacts found in the database. Please ensure the backend server is running and artworks have been created."}</p>
+              </div>
+            ) : (
             <motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 lg:gap-16 items-start">
               <div className="lg:col-span-6 space-y-8">
                 <p className="font-sans text-lg leading-relaxed text-on-surface-variant">{lang === "fr" ? "Une chaîne de garde documentée est primordiale. Nous reconstituons le parcours historique de chaque artifact." : "A documented chain of custody is paramount. We reconstruct the historical journey of every artifact."}</p>
@@ -451,6 +421,7 @@ export default function ProvenancePage() {
                 </div>
               </div>
             </motion.div>
+            )}
           </section>
 
           {/* 3. Legal Compliance & Digital Ownership */}

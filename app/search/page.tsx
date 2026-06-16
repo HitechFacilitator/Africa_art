@@ -7,9 +7,10 @@ import { motion } from "motion/react";
 import { Compass, ArrowRight, Search } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import type { Artwork } from "@/lib/types";
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -27,6 +28,7 @@ function SearchResults() {
   const query = searchParams.get("q") || "";
   const [localQuery, setLocalQuery] = useState(query);
   const { lang } = useTranslate();
+  const { artworks: apiArtworks } = useArtworks();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +37,7 @@ function SearchResults() {
     }
   };
 
-  const allTranslated = useTranslatedArtworks(ARTWORKS);
+  const allTranslated = useTranslatedArtworks(apiArtworks as unknown as Artwork[]);
 
   const displayResults = useMemo(() => {
     if (!query.trim()) return [];

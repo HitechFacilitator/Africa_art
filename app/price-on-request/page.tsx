@@ -17,7 +17,7 @@ import {
 import { useTranslate } from "@/lib/translations";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 
@@ -39,7 +39,8 @@ export default function PriceOnRequestPage() {
   const [filterMaterial, setFilterMaterial] = useState("All");
   const [filterRegion, setFilterRegion] = useState("All");
 
-  const porArtworks = ARTWORKS.filter((a) => a.label === "Price on Request");
+  const { artworks: apiArtworks } = useArtworks();
+  const porArtworks = (apiArtworks as unknown as Artwork[]).filter((a) => a.label === "Price on Request");
   const displayPorArtworks = useTranslatedArtworks(porArtworks);
 
   const materials = ["All", ...Array.from(new Set(displayPorArtworks.map((a) => a.material)))];

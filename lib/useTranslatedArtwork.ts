@@ -110,15 +110,38 @@ async function translateArtworkFields(
 /**
  * Translates a single artwork's text fields to the current language.
  */
-export function useTranslatedArtwork(artwork: Artwork): Artwork {
+export function useTranslatedArtwork(artwork: Artwork | undefined | null): Artwork {
   const { lang, tAsync } = useTranslate();
-  const [translated, setTranslated] = useState<Artwork>(artwork);
-  const artworkRef = useRef(artwork);
-  artworkRef.current = artwork;
+  const safeArtwork: Artwork = artwork
+    ? {
+        ...artwork,
+        provenance: artwork.provenance || [],
+        historicalStory: artwork.historicalStory || "",
+        investmentThesis: artwork.investmentThesis || "",
+      }
+    : {
+        id: "",
+        title: "Untitled",
+        region: "",
+        tribe: "",
+        material: "",
+        period: "",
+        era: "",
+        origin: "",
+        dimensions: "",
+        imageUrl: "",
+        label: "Price on Request",
+        provenance: [],
+        historicalStory: "",
+        investmentThesis: "",
+      };
+  const [translated, setTranslated] = useState<Artwork>(safeArtwork);
+  const artworkRef = useRef(safeArtwork);
+  artworkRef.current = safeArtwork;
 
   useEffect(() => {
-    if (lang === "en") {
-      setTranslated(artworkRef.current);
+    if (lang === "en" || !artwork) {
+      setTranslated(safeArtwork);
       return;
     }
 
@@ -134,7 +157,7 @@ export function useTranslatedArtwork(artwork: Artwork): Artwork {
 
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artwork.id, lang]);
+  }, [artwork?.id, lang]);
 
   return translated;
 }
@@ -169,7 +192,7 @@ export function useTranslatedArtworks(artworks: Artwork[]): Artwork[] {
 
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artworks.map((a) => a.id).join(","), lang]);
+  }, [artworks.filter(Boolean).map((a) => a.id).join(","), lang]);
 
   return translated;
 }

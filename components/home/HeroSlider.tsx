@@ -4,27 +4,29 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Lock, ChevronLeft, ChevronRight } from "lucide-react";
-import { ARTWORKS } from "@/lib/mockData";
+import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import type { Artwork } from "@/lib/types";
 
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(0);
   const { lang } = useTranslate();
+  const { artworks: apiArtworks } = useArtworks();
 
-  const SLIDES = ARTWORKS.filter((a) => a.investment).slice(0, 5);
+  const SLIDES = (apiArtworks as unknown as Artwork[]).filter((a) => a.imageUrl).slice(0, 5);
   const translatedSlides = useTranslatedArtworks(SLIDES);
 
   const next = useCallback(() => {
     setDirection(1);
-    setCurrent((prev) => (prev + 1) % translatedSlides.length);
-  }, []);
+    setCurrent((prev) => (prev + 1) % (translatedSlides.length || 1));
+  }, [translatedSlides.length]);
 
   const prev = useCallback(() => {
     setDirection(-1);
-    setCurrent((prev) => (prev - 1 + translatedSlides.length) % translatedSlides.length);
-  }, []);
+    setCurrent((prev) => (prev - 1 + (translatedSlides.length || 1)) % (translatedSlides.length || 1));
+  }, [translatedSlides.length]);
 
   useEffect(() => {
     const timer = setInterval(next, 6000);
@@ -32,6 +34,14 @@ export default function HeroSlider() {
   }, [next]);
 
   const artwork = translatedSlides[current];
+
+  if (!artwork || translatedSlides.length === 0) {
+    return (
+      <section className="relative h-[85vh] min-h-[600px] bg-ebony-deep overflow-hidden flex items-center justify-center">
+        <div className="text-parchment-ivory/40 font-sans text-sm">Loading collection...</div>
+      </section>
+    );
+  }
 
   const variants = {
     enter: (dir: number) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
