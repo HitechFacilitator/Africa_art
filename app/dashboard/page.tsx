@@ -269,43 +269,47 @@ export default function DashboardPage() {
   };
 
   const handleDownloadReportFile = () => {
-    const reportText = `
-ADUNA GALLERY - COLLECTOR PORTFOLIO DEED REPORT
-===================================================
-Issued: ${new Date().toLocaleDateString()}
-Collector Account: ${profile.name} (${profile.tier})
-Mainframe Sign-Off: Approved under Ledger Key V2
-Currency basis: EUR (€)
+    const acqRows = acquisitions.map((acq, index) => `
+      <div style="margin-bottom:16px;padding:12px;border:1px solid #e5e5e5">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;display:block">ID</span><strong>${acq.id}</strong></div>
+          <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;display:block">Title</span><strong>${acq.title}</strong></div>
+          <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;display:block">Era</span><strong>${acq.era}</strong></div>
+          <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;display:block">Culture</span><strong>${acq.culture}</strong></div>
+          <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;display:block">Value</span><strong>€${acq.estimatedValueEur.toLocaleString()}</strong></div>
+          <div><span style="font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;display:block">Status</span><strong>${acq.status}</strong></div>
+        </div>
+        ${acq.provenance.length > 0 ? `<div style="margin-top:8px;font-size:11px;color:#555"><strong>Provenance:</strong> ${acq.provenance.join(" → ")}</div>` : ""}
+      </div>`).join("");
 
-PORTFOLIO METRICS SUMMARY
--------------------------
-Total Certified Acquisitions: ${acquisitions.length + 10} Pieces
-Total Local Cabinet: ${acquisitions.length} Pieces
-Estimated Value Portfolio: €${(acquisitions.reduce((sum, item) => sum + item.estimatedValueEur, 0) / 1000000).toFixed(1)} Million
-Operations In Progress: ${consultations.length} Consultation, ${logistics.length} Shipment
-
-REGISTERED CABINET CATALOG
--------------------------
-${acquisitions.map((acq, index) => `${index + 1}. [${acq.id.toUpperCase()}] ${acq.title}
-   - Chronology: ${acq.era} • culture: ${acq.culture}
-   - Registered Value: €${acq.estimatedValueEur.toLocaleString()}
-   - State Status: ${acq.status}
-   - Provenance checklist:
-${acq.provenance.map(p => `     * ${p}`).join('\n')}`).join('\n\n')}
-
-===================================================
-VERIFIED AUTHENTIC SEAL BY ADUNA LABS ADVISORY BOARD
----------------------------------------------------
-This report acts as a legal certifiable token of ownership index.
-`;
-    const element = document.createElement("a");
-    const file = new Blob([reportText], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = `Aduna_Collector_Report_${profile.name.replace(" ", "_")}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-    alert(lang === "fr" ? "Téléchargement du rapport cryptographique terminé." : 'Cryptographic report download complete.');
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Portfolio Report - ${profile.name}</title><style>
+      body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
+      h1{font-size:24px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:6px}
+      h2{font-size:11px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+      .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:16px 0;font-size:12px}
+      .meta span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
+      .meta strong{color:#0f0f0f}
+      h3{font-size:14px;margin:24px 0 12px;border-bottom:1px solid #e5e5e5;padding-bottom:6px}
+      .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+      @media print{body{border:none;margin:0;padding:20px}}
+    </style></head><body>
+      <h1>Collector Portfolio Deed Report</h1>
+      <h2>Aduna Gallery — Institutional Ledger Registry</h2>
+      <div class="meta">
+        <div><span>Collector Account</span><strong>${profile.name} (${profile.tier})</strong></div>
+        <div><span>Issued</span><strong>${new Date().toLocaleDateString()}</strong></div>
+        <div><span>Total Acquisitions</span><strong>${acquisitions.length} Pieces</strong></div>
+        <div><span>Portfolio Value</span><strong>€${(acquisitions.reduce((sum, item) => sum + item.estimatedValueEur, 0) / 1000000).toFixed(1)} Million</strong></div>
+      </div>
+      <h3>Registered Cabinet Catalog</h3>
+      ${acqRows}
+      <div style="margin-top:24px;padding:16px;border-left:3px solid #C5A059;font-size:11px;line-height:1.6;color:#555">
+        <strong>Certification:</strong> This report acts as a legal certifiable token of ownership index, verified by the Aduna Labs Advisory Board.
+      </div>
+      <div class="footer">Aduna Gallery — Certified Text Ledger — ${new Date().toISOString().split("T")[0]}</div>
+    </body></html>`;
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
   };
 
   const totalValueEur = acquisitions.reduce((acc, item) => acc + item.estimatedValueEur, 0);

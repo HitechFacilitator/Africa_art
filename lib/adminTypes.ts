@@ -1,6 +1,8 @@
 export enum AdminView {
   Artworks = "artworks",
+  Users = "users",
   Collectors = "collectors",
+  Certificates = "certificates",
   Escrow = "escrow",
   AuditLog = "audit",
   Compliance = "compliance",
@@ -36,6 +38,30 @@ export interface AdminCollector {
   amlStatus: "Verified" | "Pending" | "Unverified";
   joinedDate: string;
   avatarColor: string;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "advisor" | "collector" | "prestige" | "visitor";
+  institution: string;
+  joinedDate: string;
+  lastActive: string;
+  status: "Active" | "Suspended" | "Pending";
+}
+
+export interface AdminCertificate {
+  id: string;
+  artworkTitle: string;
+  artworkId: string;
+  ownerName: string;
+  ownerEmail: string;
+  issuedDate: string;
+  expiryDate: string;
+  status: "Valid" | "Expired" | "Revoked";
+  blockchainHash: string;
+  verifiedBy: string;
 }
 
 export interface EscrowTransaction {

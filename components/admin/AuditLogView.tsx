@@ -36,24 +36,35 @@ export default function AuditLogView({ logs, onVerify, onVerifyAll }: AuditLogVi
   };
 
   const handleDownload = () => {
-    const content = filtered
-      .map(
-        (log) =>
-          `[${log.timestamp}] ${log.user} — ${log.action}\n  TX: ${log.txHash} | Signed: ${log.signed ? "YES" : "NO"}`
-      )
-      .join("\n\n");
-    const blob = new Blob(
-      [`ADUNA GALLERY — AUDIT LEDGER EXPORT\n=====================================\n\n${content}`],
-      { type: "text/plain" }
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Aduna_Audit_Ledger_${new Date().toISOString().split("T")[0]}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const rows = filtered.map((log) => `
+      <tr>
+        <td style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:12px">${log.timestamp}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:12px">${log.user}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:12px">${log.action}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:11px;font-family:monospace;word-break:break-all">${log.txHash}</td>
+        <td style="padding:8px;border-bottom:1px solid #e5e5e5;font-size:12px;text-align:center">${log.signed ? "✓ YES" : "— NO"}</td>
+      </tr>`).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Audit Ledger - Aduna Gallery</title><style>
+      body{font-family:Georgia,serif;color:#0f0f0f;max-width:900px;margin:40px auto;padding:40px;border:2px double #C5A059}
+      h1{font-size:24px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:6px}
+      h2{font-size:11px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+      table{width:100%;border-collapse:collapse;margin:20px 0}
+      th{text-align:left;padding:8px;border-bottom:2px solid #0f0f0f;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#888}
+      .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+      @media print{body{border:none;margin:0;padding:20px}}
+    </style></head><body>
+      <h1>Audit Ledger Export</h1>
+      <h2>Aduna Gallery — Immutable Registry Record</h2>
+      <p style="font-size:12px;text-align:center;color:#888;margin-bottom:24px">Exported on ${new Date().toLocaleString()} — ${filtered.length} records</p>
+      <table>
+        <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Transaction Hash</th><th style="text-align:center">Signed</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="footer">Aduna Gallery — Audit Ledger Export — ${new Date().toISOString().split("T")[0]}</div>
+    </body></html>`;
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
   };
 
   return (

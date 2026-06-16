@@ -326,12 +326,18 @@ export default function ProvenancePage() {
                 <h2 className="font-serif text-3xl text-ebony-deep font-light mb-1">{lang === "fr" ? "Traçabilité de la Provenance" : "Provenance Tracking"}</h2>
                 <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Explorez les dossiers vérifiés. Sélectionnez une œuvre ci-dessous pour reconstituer son historique." : "Explore verified dossiers. Select a masterwork below to reconstruct its historic timeline."}</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {masterpieces.map((art) => (
-                  <button key={art.id} onClick={() => { setSelectedArtifactId(art.id); setSelectedEventIndex(null); }} className={`px-4 py-2 border text-xs font-semibold uppercase tracking-wider transition-all ${selectedArtifactId === art.id ? "bg-ebony-deep text-parchment-ivory border-ebony-deep" : "bg-transparent text-on-surface-variant/80 border-on-surface/10 hover:border-gold-leaf/40 hover:text-ebony-deep"}`}>
-                    {art.name.replace("The ", "")}
-                  </button>
-                ))}
+              <div className="w-full sm:w-80">
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant/70 tracking-wider mb-1.5">{lang === "fr" ? "Sélectionner une œuvre" : "Select Artwork"}</label>
+                <select
+                  value={selectedArtifactId}
+                  onChange={(e) => { setSelectedArtifactId(e.target.value); setSelectedEventIndex(null); }}
+                  className="w-full bg-parchment-ivory border border-on-surface/10 focus:border-gold-leaf px-4 py-3 text-sm text-ebony-deep font-sans focus:outline-none cursor-pointer appearance-none"
+                  style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230f0f0f' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center" }}
+                >
+                  {masterpieces.map((art) => (
+                    <option key={art.id} value={art.id}>{art.name} — {art.origin}</option>
+                  ))}
+                </select>
               </div>
             </div>
 

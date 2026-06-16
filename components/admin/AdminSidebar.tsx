@@ -13,6 +13,9 @@ import {
   HelpCircle,
   LogOut,
   ChevronLeft,
+  Globe,
+  FileCheck,
+  UserCog,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -24,12 +27,16 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ activeView, setActiveView, open, setOpen }: AdminSidebarProps) {
-  const { lang } = useTranslate();
+  const { lang, setLang } = useTranslate();
   const { user, logout } = useAuth();
+
+  const toggleLang = () => setLang(lang === "fr" ? "en" : "fr");
 
   const navItems = [
     { id: AdminView.Artworks, label: lang === "fr" ? "Œuvres" : "Artworks", icon: Palette },
+    { id: AdminView.Users, label: lang === "fr" ? "Utilisateurs" : "Users", icon: UserCog },
     { id: AdminView.Collectors, label: lang === "fr" ? "Collectionneurs" : "Collectors", icon: Users },
+    { id: AdminView.Certificates, label: lang === "fr" ? "Certificats" : "Certificates", icon: FileCheck },
     { id: AdminView.Escrow, label: lang === "fr" ? "Séquestre" : "Escrow", icon: Shield },
     { id: AdminView.AuditLog, label: lang === "fr" ? "Journal d'Audit" : "Audit Log", icon: History },
     { id: AdminView.Compliance, label: lang === "fr" ? "Conformité" : "Compliance", icon: BadgeCheck },
@@ -99,6 +106,14 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
                 </button>
               );
             })}
+
+            <button
+              onClick={toggleLang}
+              className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/50 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent mt-1"
+            >
+              <Globe className="w-4 h-4" />
+              <span>{lang === "fr" ? "English" : "Français"}</span>
+            </button>
 
             <button
               onClick={logout}
@@ -180,6 +195,13 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
                     </button>
                   );
                 })}
+                <button
+                  onClick={toggleLang}
+                  className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/50 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent mt-1"
+                >
+                  <Globe className="w-4 h-4" />
+                  <span>{lang === "fr" ? "English" : "Français"}</span>
+                </button>
                 <button onClick={logout} className="w-full text-left px-4 py-3 flex items-center gap-3 text-ebony-deep/40 hover:text-terracotta-earth transition-colors text-sm font-sans cursor-pointer border-0 bg-transparent mt-2">
                   <LogOut className="w-4 h-4" />
                   <span>{lang === "fr" ? "Déconnexion" : "Logout"}</span>

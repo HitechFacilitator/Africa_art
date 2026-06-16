@@ -115,7 +115,41 @@ export default function ReportViewerModal({ onClose }: ReportViewerModalProps) {
                   Includes digital asset audit charts & legal certificates.
                 </div>
                 <button
-                  onClick={() => alert("Report PDF generation initiated. Download will start shortly.")}
+                  onClick={() => {
+                    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Heritage Assets Report - Aduna Gallery</title><style>
+                      body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
+                      h1{font-size:26px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:4px}
+                      h2{font-size:12px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+                      h3{font-size:18px;margin-top:24px;border-bottom:1px solid #e5e5e5;padding-bottom:6px}
+                      .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;font-size:12px}
+                      .meta span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
+                      .meta strong{color:#0f0f0f}
+                      .bar{margin:8px 0}.bar-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+                      .bar-track{height:14px;background:#f0f0f0;width:100%}.bar-fill{height:14px;background:#C5A059}
+                      .disclaimer{margin-top:24px;padding:16px;border-left:3px solid #C5A059;font-size:11px;line-height:1.6;color:#555}
+                      .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+                      @media print{body{border:none;margin:0;padding:20px}}
+                    </style></head><body>
+                      <h1>Heritage Assets Report</h1>
+                      <h2>The New Sovereign Reserve — Institutional Intelligence Report</h2>
+                      <div class="meta">
+                        <div><span>Report Code</span><strong>ADUN-REPORT-2026</strong></div>
+                        <div><span>Version</span><strong>v4.12 SECURE</strong></div>
+                        <div><span>Issued</span><strong>${new Date().toLocaleDateString()}</strong></div>
+                        <div><span>Classification</span><strong>Institutional — Confidential</strong></div>
+                      </div>
+                      <h3>Executive Summary — Strategic Antiquities Index (SAI)</h3>
+                      <p style="font-size:13px;line-height:1.7">Over the last decade, authentic, carbon-provenanced African masterworks have demonstrated independent market liquidity with a historic <strong>11.4% CAGR</strong>, displaying high counter-cyclical resistance.</p>
+                      <h3>Annual Compound Yield Comparison (2015–2025)</h3>
+                      <div class="bar"><div class="bar-label"><span style="font-weight:600">Aduna Strategic African Art Index</span><span style="color:#C5A059;font-weight:700">+11.4% CAGR</span></div><div class="bar-track"><div class="bar-fill" style="width:95%"></div></div></div>
+                      <div class="bar"><div class="bar-label"><span>Global Equities (S&P 500)</span><span>+8.2% CAGR</span></div><div class="bar-track"><div class="bar-fill" style="width:68%;background:#999"></div></div></div>
+                      <div class="bar"><div class="bar-label"><span>Sovereign Bullion (Gold Spot)</span><span>+5.4% CAGR</span></div><div class="bar-track"><div class="bar-fill" style="width:45%;background:#bbb"></div></div></div>
+                      <div class="disclaimer"><strong>Compliance Notice:</strong> All heritage trading with Aduna Gallery processes complies with UNESCO 1970 convention standards, including carbon-verified registration. This report acts as an institutional intelligence dossier for qualified collectors and family offices.</div>
+                      <div class="footer">Aduna Gallery — Institutional Ledger Registry — ${new Date().toISOString().split("T")[0]}</div>
+                    </body></html>`;
+                    const w = window.open("", "_blank");
+                    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+                  }}
                   className="bg-ebony-deep hover:bg-gold-leaf hover:text-ebony-deep text-parchment-ivory font-sans text-xs uppercase tracking-widest py-3 px-6 transition-all flex items-center justify-center gap-2"
                 >
                   <Download size={14} />

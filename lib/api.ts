@@ -268,6 +268,64 @@ export const favoritesApi = {
     apiRequest<{ success: boolean }>(`/favorites/${artworkId}`, { method: "DELETE" }),
 };
 
+// ─── Advisor API ────────────────────────────────────────────────────
+
+export const advisorApi = {
+  getConsultations: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      clientName: string;
+      clientTier: string;
+      topic: string;
+      date: string;
+      timeSlot: string;
+      status: string;
+      type: string;
+      notes: string;
+      followUpRequired: boolean;
+    }> }>("/advisor/consultations"),
+
+  getClients: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      name: string;
+      email: string;
+      tier: string;
+      country: string;
+      avatarColor: string;
+      totalSpent: number;
+      acquisitionsCount: number;
+      satisfactionScore: number;
+      lastContact: string;
+      interests: string[];
+    }> }>("/advisor/clients"),
+
+  getPlacements: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      artworkTitle: string;
+      artworkCulture: string;
+      artworkEra: string;
+      imageUrl: string;
+      valuation: number;
+      commission: number;
+      clientName: string;
+      status: string;
+      notes: string;
+      proposedDate: string;
+    }> }>("/advisor/placements"),
+
+  getActivities: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      type: string;
+      title: string;
+      description: string;
+      timestamp: string;
+      icon: string;
+    }> }>("/advisor/activities"),
+};
+
 // ─── Chat API ───────────────────────────────────────────────────────
 
 export const chatApi = {
@@ -314,6 +372,65 @@ export const provenanceApi = {
 // ─── Admin API ──────────────────────────────────────────────────────
 
 export const adminApi = {
+  getArtworks: (params?: { page?: number; limit?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.search) searchParams.set("search", params.search);
+    const qs = searchParams.toString();
+    return apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      title: string;
+      culture: string;
+      era: string;
+      valuation: number;
+      status: string;
+      tier: string;
+      imageUrl: string;
+      description: string;
+      provenanceHash: string;
+      dateCreated: string;
+      acquiredYear: number;
+      acquiredMethod: string;
+      provenance: string[];
+    }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/artworks${qs ? `?${qs}` : ""}`);
+  },
+
+  getCollectors: (params?: { page?: number; limit?: number; search?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.search) searchParams.set("search", params.search);
+    const qs = searchParams.toString();
+    return apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      name: string;
+      email: string;
+      country: string;
+      tier: string;
+      purchasedValue: number;
+      acquisitionsCount: number;
+      amlStatus: string;
+      joinedDate: string;
+      avatarColor: string;
+    }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(`/admin/collectors${qs ? `?${qs}` : ""}`);
+  },
+
+  getSupportTickets: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      clientName: string;
+      clientRole: string;
+      subject: string;
+      description: string;
+      status: string;
+      priority: string;
+      createdDate: string;
+      lastUpdate: string;
+      assignedTo: string;
+      responses: Array<{ author: string; text: string; timestamp: string }>;
+    }> }>("/chat/tickets"),
+
   getAuditLogs: () =>
     apiRequest<{ success: boolean; data: Array<{
       id: string;
@@ -341,4 +458,48 @@ export const adminApi = {
 
   verifyAllAuditLogs: () =>
     apiRequest<{ success: boolean }>("/admin/audit-logs/verify-all", { method: "POST" }),
+
+  getUsers: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      institution: string;
+      joinedDate: string;
+      lastActive: string;
+      status: string;
+    }> }>("/admin/users"),
+
+  updateUserStatus: (id: string, status: string) =>
+    apiRequest<{ success: boolean }>(`/admin/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+
+  deleteUser: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/users/${id}`, { method: "DELETE" }),
+
+  getCertificates: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      artworkTitle: string;
+      artworkId: string;
+      ownerName: string;
+      ownerEmail: string;
+      issuedDate: string;
+      expiryDate: string;
+      status: string;
+      blockchainHash: string;
+      verifiedBy: string;
+    }> }>("/admin/certificates"),
+
+  createCertificate: (data: { artworkTitle: string; artworkId?: string; ownerName?: string; ownerEmail?: string; expiryDate?: string; verifiedBy?: string }) =>
+    apiRequest<{ success: boolean }>(`/admin/certificates`, { method: "POST", body: JSON.stringify(data) }),
+
+  updateCertificate: (id: string, data: { artworkTitle?: string; ownerName?: string; ownerEmail?: string; expiryDate?: string; verifiedBy?: string }) =>
+    apiRequest<{ success: boolean }>(`/admin/certificates/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+
+  revokeCertificate: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/certificates/${id}/revoke`, { method: "PATCH" }),
+
+  deleteCertificate: (id: string) =>
+    apiRequest<{ success: boolean }>(`/admin/certificates/${id}`, { method: "DELETE" }),
 };

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Acquisition, ActiveTab, AcquisitionStatus } from "@/lib/dashboardTypes";
+import { useAuth } from "@/lib/auth";
 import {
   Download,
   CheckCircle,
@@ -40,6 +41,8 @@ export default function DashboardView({
   onExportReport
 }: DashboardViewProps) {
   const { lang } = useTranslate();
+  const { user } = useAuth();
+  const firstName = user?.name?.split(" ")[0] || "Collector";
   const [isAttendanceConfirmed, setIsAttendanceConfirmed] = useState(false);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
 
@@ -61,7 +64,7 @@ export default function DashboardView({
       <header className="mb-12 border-b border-ebony-deep/10 pb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
         <div>
           <h2 className="font-serif text-[48px] italic font-medium text-ebony-deep leading-tight mb-2">
-            {lang === "fr" ? "Bonjour, Julian." : "Hello, Julian."}
+            {lang === "fr" ? `Bonjour, ${firstName}.` : `Hello, ${firstName}.`}
           </h2>
           <p className="font-sans text-sm text-on-surface-variant" suppressHydrationWarning>
             {lang === "fr" ? "Dernière mise à jour :" : "Last updated:"} Today, {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {lang === "fr" ? "Compte Prestige Actif" : "Prestige Account Active"}

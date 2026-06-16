@@ -110,14 +110,15 @@ function AcquisitionContent() {
   const stepOrder: CheckoutStep[] = ["Summary", "Provenance", "Billing", "Payment", "Confirmation"];
   const currentIndex = stepOrder.indexOf(currentStep);
 
-  const parsePrice = (priceStr: string): number => {
-    const match = priceStr.replace(/\s/g, "").match(/[\d,.]+/);
+  const parsePrice = (priceStr: string | number): number => {
+    const str = String(priceStr);
+    const match = str.replace(/\s/g, "").match(/[\d,.]+/);
     if (!match) return 0;
     const numStr = match[0].replace(",", ".");
     return parseFloat(numStr) || 0;
   };
 
-  const artworkPrice = parsePrice(artwork?.investment?.estimatedValue || "0");
+  const artworkPrice = parsePrice(artwork?.investment?.estimatedValue || artwork?.label || 0);
   const vatRate = 0.19;
   const vatAmount = artworkPrice * vatRate;
   const totalWithVAT = artworkPrice + vatAmount;
@@ -364,7 +365,13 @@ function AcquisitionContent() {
                       {/* Artwork Details */}
                       <div className="flex flex-col sm:flex-row gap-6 border-b border-on-surface/10 pb-6">
                         <div className="w-full sm:w-40 h-48 bg-ebony-deep/5 overflow-hidden border border-on-surface/5 shrink-0">
-                          <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                          {artwork.imageUrl ? (
+                            <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-on-surface-variant/40">
+                              <FileText className="w-8 h-8" />
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2 flex-1">
                           <h3 className="font-serif text-lg text-ebony-deep">{artwork.title}</h3>
@@ -416,7 +423,13 @@ function AcquisitionContent() {
                       <div className="bg-surface-container-low border border-on-surface/5 p-6 flex flex-col gap-5 sticky top-24">
                         <div className="font-sans text-[10px] font-bold uppercase tracking-widest text-gold-leaf">{lang === "fr" ? "Paiement sécurisé" : "Secure Checkout"}</div>
                         <div className="aspect-square bg-ebony-deep/5 overflow-hidden border border-on-surface/5 relative">
-                          <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-95 hover:grayscale-0 transition-all duration-700" />
+                          {artwork.imageUrl ? (
+                            <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-95 hover:grayscale-0 transition-all duration-700" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-on-surface-variant/40">
+                              <FileText className="w-10 h-10" />
+                            </div>
+                          )}
                           <div className="absolute top-3 right-3 bg-ebony-deep text-parchment-ivory font-mono text-[10px] px-2.5 py-1 tracking-wider uppercase">{artwork.id}</div>
                         </div>
                         <div className="flex flex-col gap-2">
@@ -586,7 +599,13 @@ function AcquisitionContent() {
                       <div className="bg-surface-container-low border border-on-surface/5 p-6 flex flex-col gap-5 sticky top-24">
                         <div className="font-sans text-[10px] font-bold uppercase tracking-widest text-gold-leaf">{lang === "fr" ? "Récapitulatif de la commande" : "Order Summary"}</div>
                         <div className="aspect-square bg-ebony-deep/5 overflow-hidden border border-on-surface/5 relative">
-                          <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-95 hover:grayscale-0 transition-all duration-700" />
+                          {artwork.imageUrl ? (
+                            <img src={artwork.imageUrl} alt={artwork.title} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-95 hover:grayscale-0 transition-all duration-700" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-on-surface-variant/40">
+                              <FileText className="w-10 h-10" />
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <h3 className="font-serif text-xl text-ebony-deep leading-tight">{artwork.title}</h3>
@@ -835,7 +854,49 @@ function AcquisitionContent() {
                           <div className="font-sans text-[9px] text-on-surface-variant uppercase flex items-center gap-1">
                             <Sparkles className="w-3 h-3 text-gold-leaf" /> {lang === "fr" ? "Signature cryptographique vérifiablement sécurisée" : "Verifiably secure cryptographic signature"}
                           </div>
-                          <button onClick={() => alert("Certificate downloaded (simulated)")} className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-6 py-3 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
+                          <button onClick={() => {
+                            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Legal Deed - ${artwork.title}</title><style>
+                              body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
+                              h1{font-size:28px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px}
+                              h2{font-size:14px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+                              .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:16px 0;font-size:13px}
+                              .meta span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
+                              .meta strong{color:#0f0f0f}
+                              .body{font-size:14px;line-height:1.8;margin:24px 0}
+                              .sig{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;padding-top:20px;border-top:1px solid #e5e5e5}
+                              .sig div{text-align:center;font-size:12px;color:#666}
+                              .sig .name{font-style:italic;font-size:16px;color:#C5A059;border-bottom:1px solid #e5e5e5;padding-bottom:6px;margin-bottom:4px}
+                              .footer{text-align:center;font-size:10px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+                              @media print{body{border:none;margin:0;padding:20px}}
+                            </style></head><body>
+                              <h1>Certificate of Absolute Provenance</h1>
+                              <h2>Official Legal Deed of Ownership Transfer</h2>
+                              <div class="meta">
+                                <div><span>Acquisition Registry ID</span><strong>${artwork.id}</strong></div>
+                                <div><span>Transaction Settlement Ref</span><strong>${txnRef}</strong></div>
+                                <div><span>Registered Owner</span><strong>${billing.firstName} ${billing.lastName}</strong></div>
+                                <div><span>Billing Address</span><strong>${billing.address}, ${billing.city}, ${billing.country}</strong></div>
+                                <div><span>Artwork Title</span><strong>${artwork.title}</strong></div>
+                                <div><span>Period / Era</span><strong>${artwork.period}</strong></div>
+                                <div><span>Origin</span><strong>${artwork.origin}</strong></div>
+                                <div><span>Medium</span><strong>${artwork.material}</strong></div>
+                                <div><span>Dimensions</span><strong>${artwork.dimensions}</strong></div>
+                                <div><span>Estimated Value (incl. VAT)</span><strong>${totalWithVAT.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</strong></div>
+                              </div>
+                              <div class="body">
+                                <p>This document hereby guarantees that <strong>${billing.firstName} ${billing.lastName}</strong> is the authenticated registered owner of <strong>${artwork.title}</strong>, dated ${artwork.period}, originating from ${artwork.origin}.</p>
+                                <p>All rights, legal titles, forensic reports, custody deeds, and blockchain-anchored provenance records are transferred henceforth in perpetuity. The physical asset has been secured in transit-hold, and digital title registry is complete.</p>
+                                <p>This certificate is issued in accordance with the UNESCO 1970 Convention and the UNIDROIT Convention on Stolen or Illegally Exported Cultural Objects. All ALM (Anti-Money Laundering) checks have been completed satisfactorily.</p>
+                              </div>
+                              <div class="sig">
+                                <div><div class="name">Amara Ndiaye</div>Chief Curator Signature</div>
+                                <div><div class="name">Benin Council Board</div>Advisory Assessor Stamp</div>
+                              </div>
+                              <div class="footer">Aduna Gallery — Institutional Ledger Registry Compliance — ${new Date().toISOString().split("T")[0]}</div>
+                            </body></html>`;
+                            const w = window.open("", "_blank");
+                            if (w) { w.document.write(html); w.document.close(); w.print(); }
+                          }} className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-6 py-3 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
                             <Download className="w-4 h-4" /> {lang === "fr" ? "Télécharger l'acte légal" : "Download Legal Deed"}
                           </button>
                         </div>

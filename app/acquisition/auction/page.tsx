@@ -181,7 +181,42 @@ export default function AuctionAcquisitionPage() {
                 <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
                   {lang === "fr" ? "Aller au Tableau de Bord" : "Go to Dashboard"}
                 </a>
-                <button className="border border-on-surface/20 text-on-surface-variant px-6 py-3 text-xs uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors bg-transparent cursor-pointer flex items-center gap-1.5">
+                <button onClick={() => {
+                  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Auction Receipt - ${winner.title}</title><style>
+                    body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
+                    h1{font-size:24px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:6px}
+                    h2{font-size:11px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+                    .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:16px 0;font-size:12px}
+                    .meta span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
+                    .meta strong{color:#0f0f0f}
+                    .total{margin:24px 0;padding:16px;background:#f9f9f9;text-align:center}
+                    .total .amount{font-size:28px;font-weight:bold;color:#C5A059}
+                    .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+                    @media print{body{border:none;margin:0;padding:20px}}
+                  </style></head><body>
+                    <h1>Auction Receipt</h1>
+                    <h2>Aduna Gallery — Official Transaction Record</h2>
+                    <div class="meta">
+                      <div><span>Transaction Reference</span><strong>${paymentRef}</strong></div>
+                      <div><span>Lot Number</span><strong>${winner.lotId}</strong></div>
+                      <div><span>Artwork</span><strong>${winner.title}</strong></div>
+                      <div><span>Origin</span><strong>${winner.origin}</strong></div>
+                      <div><span>Period</span><strong>${winner.period}</strong></div>
+                      <div><span>Material</span><strong>${winner.material}</strong></div>
+                      <div><span>Auction Date</span><strong>${winner.auctionDate}</strong></div>
+                      <div><span>Auction House</span><strong>${winner.auctionHouse}</strong></div>
+                      <div><span>Winning Bid</span><strong>${formatCurrency(winner.winningBid)}</strong></div>
+                      <div><span>Buyer Premium</span><strong>${formatCurrency(winner.buyerPremium)}</strong></div>
+                    </div>
+                    <div class="total">
+                      <div style="font-size:10px;text-transform:uppercase;letter-spacing:3px;color:#888;margin-bottom:4px">Total Due</div>
+                      <div class="amount">${formatCurrency(winner.totalDue)}</div>
+                    </div>
+                    <div class="footer">Aduna Gallery — Auction Transaction Receipt — ${new Date().toISOString().split("T")[0]}</div>
+                  </body></html>`;
+                  const w = window.open("", "_blank");
+                  if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+                }} className="border border-on-surface/20 text-on-surface-variant px-6 py-3 text-xs uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors bg-transparent cursor-pointer flex items-center gap-1.5">
                   <Download size={12} /> {lang === "fr" ? "Télécharger le Reçu" : "Download Receipt"}
                 </button>
               </div>

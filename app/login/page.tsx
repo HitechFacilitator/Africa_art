@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslate } from "@/lib/translations";
 import { useAuth, type Role } from "@/lib/auth";
+import LoadingModal from "@/components/ui/LoadingModal";
 
 const MAX_ATTEMPTS = 3;
 const OTP_EXPIRY_SECONDS = 60;
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const [otpTimer, setOtpTimer] = useState(OTP_EXPIRY_SECONDS);
   const [otpExpired, setOtpExpired] = useState(false);
   const [resending, setResending] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Lockout countdown
@@ -82,8 +84,10 @@ export default function LoginPage() {
     if (!email) { setErrorMsg(lang === "fr" ? "Veuillez entrer une adresse email valide." : "Please specify a valid email address."); return; }
     if (!passphrase || passphrase.length < 4) { setErrorMsg(lang === "fr" ? "Le mot de passe doit contenir au moins 4 caractères." : "The password must be at least 4 characters."); return; }
     setErrorMsg(null);
+    setLoginLoading(true);
 
     const result = await login(email, passphrase);
+    setLoginLoading(false);
     if (!result.success) {
       setErrorMsg(result.error || "Invalid credentials.");
       return;
@@ -125,7 +129,9 @@ export default function LoginPage() {
       return;
     }
 
+    setLoginLoading(true);
     const result = await verifyOTP(code);
+    setLoginLoading(false);
     if (result.success && result.user) {
       if (result.user.role === "admin") router.push("/admin");
       else if (result.user.role === "advisor") router.push("/advisor");
@@ -280,6 +286,12 @@ export default function LoginPage() {
       <footer className="absolute bottom-6 left-0 right-0 z-10 text-center">
         <p className="font-sans text-[10px] tracking-[0.25em] uppercase text-parchment-ivory/30">Aduna Gallery Trust Custody Group &copy; 2026. All Rights Reserved.</p>
       </footer>
+
+      <LoadingModal
+        isOpen={loginLoading}
+        message={lang === "fr" ? "Authentification en cours..." : "Authenticating..."}
+        submessage={lang === "fr" ? "Vérification des identifiants de placement privé." : "Verifying private placement credentials."}
+      />
     </div>
   );
 }

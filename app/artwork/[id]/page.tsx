@@ -27,6 +27,7 @@ import Footer from "@/components/layout/Footer";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork, useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import { useAuth } from "@/lib/auth";
 import type { Artwork } from "@/lib/types";
 
 interface ChatMessage {
@@ -37,6 +38,7 @@ interface ChatMessage {
 export default function ArtworkDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const { artworks: apiArtworks, loading } = useArtworks();
   const artworksList = apiArtworks as unknown as Artwork[];
   const rawArtwork = artworksList.find((a) => a.id === id) || artworksList[0];
@@ -316,11 +318,14 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                       {lang === "fr" ? "Acheter Maintenant" : "Purchase Now"}
                     </Link>
                     <Link
-                      href="/login"
+                      href={isAuthenticated ? "#" : "/login"}
+                      onClick={isAuthenticated ? (e) => { e.preventDefault(); setShowReserveModal(true); } : undefined}
                       className="w-full border border-gold-leaf text-gold-leaf bg-transparent font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf/10 transition-colors text-center flex items-center justify-center gap-2"
                     >
                       <Lock className="w-3 h-3" />
-                      {lang === "fr" ? "Connexion pour Réserver" : "Login to Reserve"}
+                      {isAuthenticated
+                        ? (lang === "fr" ? "Réserver pour 48 Heures" : "Reserve for 48 Hours")
+                        : (lang === "fr" ? "Connexion pour Réserver" : "Login to Reserve")}
                     </Link>
                   </div>
                   <p className="text-[10px] text-on-surface-variant/60 mt-3 font-sans">
@@ -561,10 +566,9 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
         )}
       </AnimatePresence>
 
-      {/* 48h Reservation Modal (POR only) */}
-      {isPor && (
-        <AnimatePresence>
-          {showReserveModal && (
+      {/* 48h Reservation Modal */}
+      <AnimatePresence>
+        {showReserveModal && (
             <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
               <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
                 <button onClick={() => { setShowReserveModal(false); setReserveConfirmed(false); }} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
@@ -629,8 +633,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
               </motion.div>
             </div>
           )}
-        </AnimatePresence>
-      )}
+      </AnimatePresence>
 
       <div className="pb-16" />
       <Footer />

@@ -2,10 +2,8 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useTranslate } from "@/lib/translations";
-import { AdminView, AdminArtwork, AdminCollector, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
+import { AdminView, AdminArtwork, AdminCollector, AdminUser, AdminCertificate, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
 import { adminApi } from "@/lib/api";
-import { INITIAL_ADMIN_ARTWORKS, INITIAL_ADMIN_COLLECTORS } from "@/lib/adminData";
-import { INITIAL_SUPPORT_TICKETS } from "@/lib/chatData";
 import type { SupportTicket } from "@/lib/chatTypes";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -13,7 +11,9 @@ import AuthGuard from "@/components/AuthGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ArtworksView from "@/components/admin/ArtworksView";
+import UsersView from "@/components/admin/UsersView";
 import CollectorsView from "@/components/admin/CollectorsView";
+import CertificatesView from "@/components/admin/CertificatesView";
 import EscrowView from "@/components/admin/EscrowView";
 import AuditLogView from "@/components/admin/AuditLogView";
 import ComplianceView from "@/components/admin/ComplianceView";
@@ -27,16 +27,23 @@ export default function AdminPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prefilledArtwork, setPrefilledArtwork] = useState<AdminArtwork | null>(null);
 
-  const [artworks, setArtworks] = useState<AdminArtwork[]>(INITIAL_ADMIN_ARTWORKS);
-  const [collectors, setCollectors] = useState<AdminCollector[]>(INITIAL_ADMIN_COLLECTORS);
+  const [artworks, setArtworks] = useState<AdminArtwork[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [collectors, setCollectors] = useState<AdminCollector[]>([]);
+  const [certificates, setCertificates] = useState<AdminCertificate[]>([]);
   const [escrows, setEscrows] = useState<EscrowTransaction[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
-  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(INITIAL_SUPPORT_TICKETS);
+  const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
 
   // Fetch real data from API
   useEffect(() => {
+    adminApi.getArtworks().then(res => setArtworks(res.data as AdminArtwork[])).catch(() => {});
+    adminApi.getUsers().then(res => setUsers(res.data as AdminUser[])).catch(() => {});
+    adminApi.getCollectors().then(res => setCollectors(res.data as AdminCollector[])).catch(() => {});
+    adminApi.getCertificates().then(res => setCertificates(res.data as AdminCertificate[])).catch(() => {});
     adminApi.getEscrow().then(res => setEscrows(res.data as EscrowTransaction[])).catch(() => {});
     adminApi.getAuditLogs().then(res => setAuditLogs(res.data as AuditLogEntry[])).catch(() => {});
+    adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
   }, []);
 
   const canGoBack = viewHistory.length > 0;
@@ -88,6 +95,38 @@ export default function AdminPage() {
   const handleAddCollector = (collector: AdminCollector) => {
     setCollectors((prev) => [collector, ...prev]);
     appendAudit("Helena S.", `New collector enrolled: ${collector.id} — ${collector.name}`);
+  };
+
+  const handleUpdateUserStatus = (id: string, status: AdminUser["status"]) => {
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
+    appendAudit("Admin", `User ${id} status changed to ${status}`);
+  };
+
+  const handleDeleteUser = (id: string) => {
+    const u = users.find((usr) => usr.id === id);
+    setUsers((prev) => prev.filter((usr) => usr.id !== id));
+    if (u) appendAudit("Admin", `User deleted: ${u.id} — ${u.name}`);
+  };
+
+  const handleRevokeCertificate = (id: string) => {
+    setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, status: "Revoked" as const } : c)));
+    appendAudit("Admin", `Certificate ${id} revoked`);
+  };
+
+  const handleCreateCertificate = (cert: AdminCertificate) => {
+    setCertificates((prev) => [cert, ...prev]);
+    appendAudit("Admin", `Certificate created: ${cert.id} — ${cert.artworkTitle}`);
+  };
+
+  const handleUpdateCertificate = (id: string, data: Partial<AdminCertificate>) => {
+    setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
+    appendAudit("Admin", `Certificate ${id} updated`);
+  };
+
+  const handleDeleteCertificate = (id: string) => {
+    const c = certificates.find((cert) => cert.id === id);
+    setCertificates((prev) => prev.filter((cert) => cert.id !== id));
+    if (c) appendAudit("Admin", `Certificate deleted: ${c.id} — ${c.artworkTitle}`);
   };
 
   const handleToggleAML = (id: string) => {
@@ -194,6 +233,22 @@ export default function AdminPage() {
                     collectors={collectors}
                     onAddCollector={handleAddCollector}
                     onToggleAML={handleToggleAML}
+                  />
+                )}
+                {activeView === AdminView.Users && (
+                  <UsersView
+                    users={users}
+                    onUpdateStatus={handleUpdateUserStatus}
+                    onDelete={handleDeleteUser}
+                  />
+                )}
+                {activeView === AdminView.Certificates && (
+                  <CertificatesView
+                    certificates={certificates}
+                    onCreate={handleCreateCertificate}
+                    onUpdate={handleUpdateCertificate}
+                    onRevoke={handleRevokeCertificate}
+                    onDelete={handleDeleteCertificate}
                   />
                 )}
                 {activeView === AdminView.Escrow && (

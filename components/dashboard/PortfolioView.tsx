@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Acquisition, AcquisitionStatus } from "@/lib/dashboardTypes";
-import { ARTWORK_OPTIONS } from "@/lib/dashboardData";
+import { artworksApi, ArtworkData } from "@/lib/api";
 import {
   Plus,
   Search,
@@ -47,6 +47,22 @@ export default function PortfolioView({
   const [customDesc, setCustomDesc] = useState('');
   const [customProvenance, setCustomProvenance] = useState('');
   const [customImage, setCustomImage] = useState('https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew');
+  const [artworkOptions, setArtworkOptions] = useState<Array<{ title: string; era: string; culture: string; value: number; imageUrl: string; description: string }>>([]);
+
+  useEffect(() => {
+    if (showAddModal && artworkOptions.length === 0) {
+      artworksApi.getAll({ limit: 10 }).then(res => {
+        setArtworkOptions(res.data.map((a: ArtworkData) => ({
+          title: a.title,
+          era: a.era || a.period || "",
+          culture: a.region || a.origin || "",
+          value: typeof a.investment?.estimatedValue === 'number' ? a.investment.estimatedValue : typeof a.label === 'number' ? a.label : 0,
+          imageUrl: a.imageUrl || "",
+          description: a.historicalStory || "",
+        })));
+      }).catch(() => {});
+    }
+  }, [showAddModal]);
 
   const filteredAcquisitions = acquisitions.filter(item => {
     const matchesFilter = filter === 'ALL' || (filter === 'CERTIFIED' && item.status === AcquisitionStatus.Certified) || (filter === 'TRANSIT' && item.status === AcquisitionStatus.InTransit) || (filter === 'PENDING' && item.status === AcquisitionStatus.Pending);
@@ -54,7 +70,7 @@ export default function PortfolioView({
     return matchesFilter && matchesSearch;
   });
 
-  const handleSelectPreset = (preset: typeof ARTWORK_OPTIONS[0]) => {
+  const handleSelectPreset = (preset: typeof artworkOptions[0]) => {
     setCustomTitle(preset.title);
     setCustomEra(preset.era);
     setCustomCulture(preset.culture);
@@ -219,7 +235,41 @@ export default function PortfolioView({
                     <span className="text-ebony-deep font-sans font-medium">Geneva Chamber IV</span>
                   </div>
                 </div>
-                <button onClick={() => alert(`Provenance report for - ${selectedAcquisition.title} - downloaded successfully under ledger signature hash.`)} className="w-full mt-6 bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 transition-all cursor-pointer">
+                <button onClick={() => {
+                  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ledger Proof - ${selectedAcquisition.title}</title><style>
+                    body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
+                    h1{font-size:22px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:6px}
+                    h2{font-size:11px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+                    .meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:16px 0;font-size:12px}
+                    .meta span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
+                    .meta strong{color:#0f0f0f}
+                    .provenance{margin:20px 0;font-size:12px;line-height:1.8}
+                    .provenance li{margin-bottom:6px}
+                    .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+                    @media print{body{border:none;margin:0;padding:20px}}
+                  </style></head><body>
+                    <h1>Down-stream Ledger Proof</h1>
+                    <h2>Aduna Gallery — Provenance Registry Certificate</h2>
+                    <div class="meta">
+                      <div><span>Acquisition ID</span><strong>${selectedAcquisition.id}</strong></div>
+                      <div><span>Title</span><strong>${selectedAcquisition.title}</strong></div>
+                      <div><span>Era</span><strong>${selectedAcquisition.era}</strong></div>
+                      <div><span>Culture</span><strong>${selectedAcquisition.culture}</strong></div>
+                      <div><span>Estimated Value</span><strong>€${selectedAcquisition.estimatedValueEur.toLocaleString()}</strong></div>
+                      <div><span>Status</span><strong>${selectedAcquisition.status}</strong></div>
+                      <div><span>Acquisition Date</span><strong>${selectedAcquisition.acquisitionDate}</strong></div>
+                      <div><span>Custody Location</span><strong>Geneva Chamber IV — Freeport Vault</strong></div>
+                    </div>
+                    <h3 style="font-size:14px;margin:20px 0 8px;border-bottom:1px solid #e5e5e5;padding-bottom:6px">Provenance Chain of Custody</h3>
+                    <ol class="provenance">${selectedAcquisition.provenance.map(p => `<li>${p}</li>`).join("")}</ol>
+                    <div style="margin-top:24px;padding:16px;border-left:3px solid #C5A059;font-size:11px;line-height:1.6;color:#555">
+                      <strong>Certification:</strong> This ledger proof certifies the provenance chain and custody status of the above artifact as recorded in the Aduna Gallery institutional registry. All blockchain-anchored records are immutable and verifiable.
+                    </div>
+                    <div class="footer">Aduna Gallery — Down-stream Ledger Proof — ${new Date().toISOString().split("T")[0]}</div>
+                  </body></html>`;
+                  const w = window.open("", "_blank");
+                  if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+                }} className="w-full mt-6 bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 transition-all cursor-pointer">
                   {lang === "fr" ? "Preuve de Registre en Aval" : "Down-stream Ledger Proof"}
                 </button>
               </div>
@@ -248,7 +298,7 @@ export default function PortfolioView({
                 <div className="mb-8">
                   <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-3">Select A Vetted Masterpiece From Curator Register</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {ARTWORK_OPTIONS.map((opt, idx) => (
+                    {artworkOptions.map((opt, idx) => (
                       <div key={idx} onClick={() => handleSelectPreset(opt)} className="bg-surface border border-ebony-deep/5 hover:border-gold-leaf p-3 cursor-pointer text-left transition-colors group flex items-start gap-3">
                         <div className="w-12 h-12 bg-zinc-200 shrink-0 overflow-hidden"><img src={opt.imageUrl} alt={opt.title} referrerPolicy="no-referrer" className="w-full h-full object-cover object-center" /></div>
                         <div>

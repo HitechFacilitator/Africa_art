@@ -725,7 +725,33 @@ export default function InvestmentPage() {
                               {[lang === "fr" ? "Certificats d'Authenticité" : "Certificates of Authenticity", lang === "fr" ? "Police d'Assurance Transit Lloyd's" : "Lloyd's Transit Insurance Policy", lang === "fr" ? "Protocoles de Séquestre Souverains" : "Sovereign Escrow Protocols"].map((doc, i) => (
                                 <div key={i} className="flex justify-between items-center bg-surface-container/40 p-3.5 border-l-2 border-gold-leaf font-sans text-xs">
                                   <div><span className="font-bold text-ebony-deep block">{doc}</span><span className="text-on-surface-variant/50 text-[10px]">PDF {lang === "fr" ? "(Signé)" : "(Signed)"}</span></div>
-                                  <button className="p-2 bg-ebony-deep hover:bg-gold-leaf hover:text-ebony-deep text-parchment-ivory transition-colors"><Download className="w-3.5 h-3.5" /></button>
+                                  <button onClick={() => {
+                                    const titles = ["Certificate of Authenticity", "Lloyd's Transit Insurance Policy", "Sovereign Escrow Protocols"];
+                                    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titles[i]} - Aduna Gallery</title><style>
+                                      body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
+                                      h1{font-size:24px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:6px}
+                                      h2{font-size:11px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
+                                      .meta{margin:16px 0;font-size:12px;line-height:1.8}
+                                      .meta span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
+                                      .body{font-size:13px;line-height:1.8;margin:24px 0}
+                                      .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
+                                      @media print{body{border:none;margin:0;padding:20px}}
+                                    </style></head><body>
+                                      <h1>${titles[i]}</h1>
+                                      <h2>Aduna Gallery — Sovereign Vault Document</h2>
+                                      <div class="meta">
+                                        <div><span>Document Type</span><strong>${titles[i]}</strong></div>
+                                        <div><span>Status</span><strong>Signed &amp; Sealed</strong></div>
+                                        <div><span>Issued</span><strong>${new Date().toLocaleDateString()}</strong></div>
+                                        <div><span>Classification</span><strong>Institutional — Confidential</strong></div>
+                                      </div>
+                                      <div class="body">
+                                        <p>This document certifies that all holdings within the Aduna Gallery Sovereign Vault are maintained under strict fiduciary custody at the Geneva Freeport, Switzerland. All instruments, protocols, and policies herein are executed in accordance with international cultural heritage law and institutional compliance standards.</div>
+                                      <div class="footer">Aduna Gallery — Sovereign Vault Document Library — ${new Date().toISOString().split("T")[0]}</div>
+                                    </body></html>`;
+                                    const w = window.open("", "_blank");
+                                    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+                                  }} className="p-2 bg-ebony-deep hover:bg-gold-leaf hover:text-ebony-deep text-parchment-ivory transition-colors cursor-pointer"><Download className="w-3.5 h-3.5" /></button>
                                 </div>
                               ))}
                             </div>

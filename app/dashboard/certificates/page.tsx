@@ -6,7 +6,7 @@ import Sidebar from "@/components/dashboard/Sidebar";
 import CollectorHeader from "@/components/dashboard/CollectorHeader";
 import CertificatesView from "@/components/dashboard/CertificatesView";
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
-import { INITIAL_PROFILE } from "@/lib/dashboardData";
+import { useAuth } from "@/lib/auth";
 import { useTranslate } from "@/lib/translations";
 import AuthGuard from "@/components/AuthGuard";
 
@@ -15,7 +15,15 @@ export default function CertificatesPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const [profile] = useState<CollectorProfile>(INITIAL_PROFILE);
+  const { user } = useAuth();
+  const profile: CollectorProfile = {
+    name: user?.name || "Guest",
+    tier: user?.role === "prestige" ? "Prestige Tier" : "Member Tier",
+    currency: "EUR (€)",
+    joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+    curatorName: "Aduna Advisory Desk",
+    regionsOfInterest: ["West Africa", "Central Africa", "East Africa"],
+  };
 
   return (
     <AuthGuard permission="certificates">

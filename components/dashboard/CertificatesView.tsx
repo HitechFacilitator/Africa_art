@@ -15,6 +15,9 @@ import {
   Printer,
   Eye,
   Plus,
+  Copy,
+  Check,
+  X,
 } from "lucide-react";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
@@ -23,6 +26,7 @@ import type { Artwork } from "@/lib/types";
 import PrintCertificateModal from "@/components/certificates/PrintCertificateModal";
 import RegisterCertificateDrawer from "@/components/certificates/RegisterCertificateDrawer";
 import ProvenanceDetailModal from "@/components/certificates/ProvenanceDetailModal";
+import LoadingModal from "@/components/ui/LoadingModal";
 
 interface Certificate {
   id: string;
@@ -84,6 +88,9 @@ export default function CertificatesView() {
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [showRegisterDrawer, setShowRegisterDrawer] = useState(false);
   const [showProvenanceModal, setShowProvenanceModal] = useState(false);
+  const [copiedHash, setCopiedHash] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   const filtered = CERTIFICATES.filter((c) => {
     if (filterStatus !== "All" && c.status !== filterStatus) return false;
@@ -106,6 +113,99 @@ export default function CertificatesView() {
         c.blockchainHash.toLowerCase() === verifyInput.toLowerCase()
     );
     setVerifyResult(found ? "valid" : "invalid");
+  };
+
+  const handleCopyHash = async () => {
+    if (!selectedCert) return;
+    try {
+      await navigator.clipboard.writeText(selectedCert.blockchainHash);
+      setCopiedHash(true);
+      setTimeout(() => setCopiedHash(false), 2000);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = selectedCert.blockchainHash;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopiedHash(true);
+      setTimeout(() => setCopiedHash(false), 2000);
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!selectedCert) return;
+    setPdfLoading(true);
+    const cert = selectedCert;
+    const html = `<!DOCTYPE html>
+<html><head><title>Certificate - ${cert.artwork.title}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #faf7f2; color: #1a1a1a; padding: 40px; }
+  .cert { max-width: 700px; margin: 0 auto; border: 8px double #C5A05940; padding: 40px; }
+  .inner { border: 1px solid #C5A05940; padding: 30px; text-align: center; }
+  .seal { font-size: 40px; color: #C5A059; margin-bottom: 10px; }
+  .subtitle { font-size: 11px; letter-spacing: 0.25em; color: #C5A059; text-transform: uppercase; font-weight: 600; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 32px; margin: 10px 0; }
+  .desc { font-size: 12px; color: #666; font-style: italic; max-width: 500px; margin: 0 auto 20px; line-height: 1.6; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; border-top: 1px solid #C5A05930; border-bottom: 1px solid #C5A05930; padding: 20px 0; margin: 20px 0; }
+  .field-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: #888; margin-bottom: 3px; }
+  .field-value { font-size: 14px; font-weight: 600; }
+  .field-gold { color: #C5A059; font-family: monospace; font-size: 12px; }
+  .sigs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px; text-align: center; }
+  .sig-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px; color: #555; }
+  .sig-title { font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: #888; margin-top: 3px; }
+  .hash { margin-top: 30px; border-top: 1px solid #C5A05920; padding-top: 15px; }
+  .hash-label { font-size: 9px; color: #aaa; letter-spacing: 0.1em; }
+  .hash-value { font-family: monospace; font-size: 10px; color: #C5A059; margin-top: 5px; font-weight: 600; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style></head><body>
+<div class="cert"><div class="inner">
+  <div class="seal">🛡️</div>
+  <div class="subtitle">Institutional Mandate of Antiquity</div>
+  <h1>Certificate of Authenticity</h1>
+  <p class="desc">This document solemnly certifies that the registered artifact described below has undergone rigorous carbon analysis, physical inspectoral examination, and chronological ledger checks.</p>
+  <div class="fields">
+    <div><div class="field-label">Asset Registration Title</div><div class="field-value">${cert.artwork.title}</div></div>
+    <div><div class="field-label">Chronological Epoch / Age</div><div class="field-value">${cert.artwork.period}</div></div>
+    <div><div class="field-label">Origin Cultural Coordinates</div><div class="field-value">${cert.artwork.origin}</div></div>
+    <div><div class="field-label">Secure Ledger Reference ID</div><div class="field-gold">${cert.certificateNumber}</div></div>
+    <div><div class="field-label">Authorizing Certifying Body</div><div class="field-value">${cert.issuer}</div></div>
+    <div><div class="field-label">Authentication Level</div><div class="field-value">${cert.authenticationLevel}</div></div>
+  </div>
+  <div class="sigs">
+    <div><div style="font-size:24px;color:#C5A059;">🛡️</div><div class="sig-title">Gold Foil Seal</div></div>
+    <div><div class="sig-name">A. Kengne G.</div><div class="sig-title">Chief Curator of Board</div></div>
+    <div><div class="sig-name">M. Lambert Trust</div><div class="sig-title">Treasury Trustee</div></div>
+  </div>
+  <div class="hash">
+    <div class="hash-label">LEDGER AUTHENTICITY BLOCK HASH</div>
+    <div class="hash-value">${cert.blockchainHash}</div>
+  </div>
+</div></div>
+</body></html>`;
+    const w = window.open("", "_blank", "width=800,height=900");
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      setTimeout(() => {
+        w.print();
+        setPdfLoading(false);
+      }, 500);
+    } else {
+      setPdfLoading(false);
+      alert("Please allow popups to download the PDF certificate.");
+    }
+  };
+
+  const handleShowQr = () => {
+    setShowQrModal(true);
+  };
+
+  const handleExplorer = () => {
+    if (!selectedCert) return;
+    window.open(`https://etherscan.io/token/${selectedCert.blockchainHash}`, "_blank");
   };
 
   const validCount = CERTIFICATES.filter((c) => c.status === "VALID").length;
@@ -292,7 +392,17 @@ export default function CertificatesView() {
                   <ShieldCheck size={12} className="text-gold-leaf" />
                   <p className="text-[9px] uppercase tracking-widest font-bold text-on-surface-variant">{lang === "fr" ? "Vérification Blockchain" : "Blockchain Verification"}</p>
                 </div>
-                <p className="font-mono text-[9px] text-on-surface-variant break-all leading-relaxed bg-surface p-2 border border-on-surface/5">{selectedCert.blockchainHash}</p>
+                <div className="flex items-stretch gap-0">
+                  <p className="font-mono text-[9px] text-on-surface-variant break-all leading-relaxed bg-surface p-2 border border-on-surface/5 flex-1">{selectedCert.blockchainHash}</p>
+                  <button
+                    onClick={handleCopyHash}
+                    className="px-3 bg-surface-container-high border border-l-0 border-on-surface/5 hover:bg-gold-leaf/10 hover:border-gold-leaf/30 transition-all cursor-pointer flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider"
+                    title={lang === "fr" ? "Copier le hash" : "Copy hash"}
+                  >
+                    {copiedHash ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} className="text-on-surface-variant" />}
+                    <span className="hidden sm:inline">{copiedHash ? "Copied" : "Copy"}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Issuer */}
@@ -312,16 +422,16 @@ export default function CertificatesView() {
                 <button onClick={() => setShowPrintModal(true)} className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
                   <Printer size={11} /> {lang === "fr" ? "Imprimer" : "Print"}
                 </button>
-                <button className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
+                <button onClick={handleDownloadPdf} className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
                   <Download size={11} /> {lang === "fr" ? "Télécharger PDF" : "Download PDF"}
                 </button>
                 <button onClick={() => setShowProvenanceModal(true)} className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
                   <Eye size={11} /> {lang === "fr" ? "Provenance" : "Provenance"}
                 </button>
-                <button className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
+                <button onClick={handleShowQr} className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
                   <QrCode size={11} /> QR
                 </button>
-                <button className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
+                <button onClick={handleExplorer} className="border border-on-surface/20 text-on-surface-variant px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors cursor-pointer bg-transparent flex items-center gap-1.5">
                   <ExternalLink size={11} /> {lang === "fr" ? "Explorateur" : "Explorer"}
                 </button>
                 {selectedCert.status === "RENEWAL DUE" && (
@@ -409,7 +519,7 @@ export default function CertificatesView() {
                   <div className="flex gap-3">
                     <button onClick={() => { setShowRenewalModal(false); setRenewalLoading(false); }} className="flex-1 border border-ebony-deep/20 px-6 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
                     <button onClick={() => { setRenewalLoading(true); setTimeout(() => { setRenewalLoading(false); setRenewalConfirmed(true); }, 1500); }} disabled={renewalLoading} className="flex-1 bg-amber-500 text-parchment-ivory px-6 py-3 text-xs font-bold uppercase tracking-widest hover:bg-amber-600 transition-colors disabled:opacity-50 cursor-pointer border-0 flex items-center justify-center gap-2">
-                      {renewalLoading ? (lang === "fr" ? "Traitement..." : "Processing...") : (lang === "fr" ? "Confirmer" : "Confirm")}
+                      {lang === "fr" ? "Confirmer" : "Confirm"}
                     </button>
                   </div>
                 </>
@@ -454,6 +564,52 @@ export default function CertificatesView() {
           onPrintCertificate={() => { setShowProvenanceModal(false); setShowPrintModal(true); }}
         />
       )}
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQrModal && selectedCert && (
+          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-sm w-full p-8 text-ebony-deep shadow-2xl relative">
+              <button onClick={() => setShowQrModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-5 h-5" /></button>
+              <div className="text-center mb-6">
+                <QrCode className="w-10 h-10 text-gold-leaf mx-auto mb-3" />
+                <h3 className="font-serif text-lg font-medium uppercase tracking-wide">{lang === "fr" ? "Code QR du Certificat" : "Certificate QR Code"}</h3>
+                <p className="text-xs text-on-surface-variant mt-1">{selectedCert.certificateNumber}</p>
+              </div>
+              <div className="flex justify-center mb-6">
+                <div className="bg-white p-4 border border-on-surface/10">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`https://adunagallery.com/verify/${selectedCert.certificateNumber}`)}`}
+                    alt="Certificate QR Code"
+                    width={200}
+                    height={200}
+                  />
+                </div>
+              </div>
+              <p className="text-[9px] text-on-surface-variant text-center leading-relaxed">
+                {lang === "fr"
+                  ? "Scannez ce code pour vérifier l'authenticité du certificat via le registre Aduna Gallery."
+                  : "Scan this code to verify the certificate's authenticity via the Aduna Gallery ledger."}
+              </p>
+              <button onClick={() => setShowQrModal(false)} className="w-full mt-5 bg-ebony-deep text-parchment-ivory py-2.5 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0">
+                {lang === "fr" ? "Fermer" : "Close"}
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Loading Modals */}
+      <LoadingModal
+        isOpen={pdfLoading}
+        message={lang === "fr" ? "Génération du PDF..." : "Generating PDF..."}
+        submessage={lang === "fr" ? "Préparation du certificat pour l'impression." : "Preparing certificate for print."}
+      />
+      <LoadingModal
+        isOpen={renewalLoading}
+        message={lang === "fr" ? "Traitement du renouvellement..." : "Processing renewal..."}
+        submessage={lang === "fr" ? "Veuillez patienter pendant le traitement de votre demande." : "Please wait while your request is being processed."}
+      />
     </div>
   );
 }

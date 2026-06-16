@@ -11,6 +11,7 @@ import {
   EyeOff,
   Trash2,
   BadgeCheck,
+  MoreVertical,
 } from "lucide-react";
 
 interface ArtworksViewProps {
@@ -26,6 +27,7 @@ interface ArtworksViewProps {
 export default function ArtworksView({
   artworks,
   auditLogs,
+  onAddArtwork,
   onDeleteArtwork,
   onUpdateStatus,
   onRiskScan,
@@ -65,9 +67,36 @@ export default function ArtworksView({
         <h2 className="font-serif text-2xl font-medium text-ebony-deep">
           {lang === "fr" ? "Inventaire de Chefs-d'Œuvre" : "Masterpiece Inventory"}
         </h2>
-        <span className="text-xs text-on-surface-variant font-sans">
-          {artworks.length} {lang === "fr" ? "Total des Actifs" : "Total Assets"}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-on-surface-variant font-sans">
+            {artworks.length} {lang === "fr" ? "Total des Actifs" : "Total Assets"}
+          </span>
+          <button
+            onClick={() => {
+              const newArtwork: AdminArtwork = {
+                id: `art-${Date.now()}`,
+                title: lang === "fr" ? "Nouvelle Œuvre" : "New Artwork",
+                culture: "",
+                era: "",
+                valuation: 0,
+                status: "Draft",
+                tier: "Standard",
+                imageUrl: "",
+                description: "",
+                provenanceHash: "",
+                dateCreated: new Date().toISOString().split("T")[0],
+                acquiredYear: new Date().getFullYear(),
+                acquiredMethod: "",
+                provenance: [],
+              };
+              onAddArtwork(newArtwork);
+            }}
+            className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-wider px-4 py-2.5 hover:opacity-90 transition-all flex items-center gap-2 cursor-pointer border-0"
+          >
+            <Plus className="w-4 h-4" />
+            {lang === "fr" ? "Ajouter une Œuvre" : "Add Artwork"}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -185,9 +214,9 @@ export default function ArtworksView({
                         onClick={() =>
                           setOpenDropdown(openDropdown === artwork.id ? null : artwork.id)
                         }
-                        className="p-1 text-on-surface-variant/60 hover:text-ebony-deep transition-colors"
+                        className="p-1.5 text-ebony-deep/70 hover:text-ebony-deep hover:bg-surface-container-high transition-colors cursor-pointer border-0 bg-transparent"
                       >
-                        <ChevronDown className="w-4 h-4" />
+                        <MoreVertical className="w-4 h-4" />
                       </button>
                       {openDropdown === artwork.id && (
                         <div className="absolute right-0 top-full mt-1 bg-surface-container-lowest border border-outline-variant/50 shadow-lg z-20 w-48 py-1">
@@ -213,15 +242,28 @@ export default function ArtworksView({
                                <EyeOff className="w-3 h-3" /> {lang === "fr" ? "Revenir au Brouillon" : "Revert to Draft"}
                             </button>
                           )}
-                          <button
-                            onClick={() => {
-                              onUpdateStatus(artwork.id, "Unpublished");
-                              setOpenDropdown(null);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
-                          >
-                             <EyeOff className="w-3 h-3" /> {lang === "fr" ? "Dépublier" : "Unpublish"}
-                          </button>
+                          {artwork.status === "Unpublished" && (
+                            <button
+                              onClick={() => {
+                                onUpdateStatus(artwork.id, "Draft");
+                                setOpenDropdown(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
+                            >
+                               <Eye className="w-3 h-3" /> {lang === "fr" ? "Revenir au Brouillon" : "Revert to Draft"}
+                            </button>
+                          )}
+                          {artwork.status !== "Unpublished" && (
+                            <button
+                              onClick={() => {
+                                onUpdateStatus(artwork.id, "Unpublished");
+                                setOpenDropdown(null);
+                              }}
+                              className="w-full text-left px-3 py-2 text-xs font-sans text-ebony-deep hover:bg-surface-container-low flex items-center gap-2"
+                            >
+                               <EyeOff className="w-3 h-3" /> {lang === "fr" ? "Dépublier" : "Unpublish"}
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               onRiskScan(artwork);

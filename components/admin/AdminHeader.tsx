@@ -16,7 +16,9 @@ interface AdminHeaderProps {
 
 const TAB_LABELS: Record<AdminView, { en: string; fr: string; icon: string }> = {
   [AdminView.Artworks]: { en: "Artworks", fr: "Œuvres", icon: "🎨" },
+  [AdminView.Users]: { en: "Users", fr: "Utilisateurs", icon: "👤" },
   [AdminView.Collectors]: { en: "Collectors", fr: "Collectionneurs", icon: "👥" },
+  [AdminView.Certificates]: { en: "Certificates", fr: "Certificats", icon: "📜" },
   [AdminView.Escrow]: { en: "Escrow", fr: "Séquestre", icon: "🔒" },
   [AdminView.AuditLog]: { en: "Audit Log", fr: "Journal d'Audit", icon: "📋" },
   [AdminView.Compliance]: { en: "Compliance", fr: "Conformité", icon: "✅" },

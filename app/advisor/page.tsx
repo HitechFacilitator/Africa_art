@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { AdvisorView } from "@/lib/advisorTypes";
-import { INITIAL_CONSULTATIONS, INITIAL_CLIENTS, INITIAL_PLACEMENTS, INITIAL_ADVISOR_ACTIVITY } from "@/lib/advisorData";
-import { INITIAL_CHAT_THREADS } from "@/lib/chatData";
+import { useState, useEffect } from "react";
+import { AdvisorView, AdvisorConsultation, AdvisorClient, AdvisorPlacement, AdvisorActivity } from "@/lib/advisorTypes";
+import { advisorApi, chatApi } from "@/lib/api";
+import type { ChatThread } from "@/lib/chatTypes";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
@@ -26,7 +26,19 @@ export default function AdvisorPage() {
   const [activeView, setActiveView] = useState<AdvisorView>(AdvisorView.Overview);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewHistory, setViewHistory] = useState<AdvisorView[]>([AdvisorView.Overview]);
-  const [chatThreads, setChatThreads] = useState(INITIAL_CHAT_THREADS);
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [consultations, setConsultations] = useState<AdvisorConsultation[]>([]);
+  const [clients, setClients] = useState<AdvisorClient[]>([]);
+  const [placements, setPlacements] = useState<AdvisorPlacement[]>([]);
+  const [activities, setActivities] = useState<AdvisorActivity[]>([]);
+
+  useEffect(() => {
+    advisorApi.getConsultations().then(res => setConsultations(res.data as AdvisorConsultation[])).catch(() => {});
+    advisorApi.getClients().then(res => setClients(res.data as AdvisorClient[])).catch(() => {});
+    advisorApi.getPlacements().then(res => setPlacements(res.data as AdvisorPlacement[])).catch(() => {});
+    advisorApi.getActivities().then(res => setActivities(res.data as AdvisorActivity[])).catch(() => {});
+    chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
+  }, []);
 
   const canGoBack = viewHistory.length > 1;
 
@@ -78,24 +90,24 @@ export default function AdvisorPage() {
               >
                 {activeView === AdvisorView.Overview && (
                   <OverviewView
-                    consultations={INITIAL_CONSULTATIONS}
-                    clients={INITIAL_CLIENTS}
-                    placements={INITIAL_PLACEMENTS}
-                    activities={INITIAL_ADVISOR_ACTIVITY}
+                    consultations={consultations}
+                    clients={clients}
+                    placements={placements}
+                    activities={activities}
                     setActiveView={handleSetActiveView}
                   />
                 )}
                 {activeView === AdvisorView.Consultations && (
-                  <ConsultationsManageView consultations={INITIAL_CONSULTATIONS} />
+                  <ConsultationsManageView consultations={consultations} />
                 )}
                 {activeView === AdvisorView.Clients && (
-                  <ClientsView clients={INITIAL_CLIENTS} />
+                  <ClientsView clients={clients} />
                 )}
                 {activeView === AdvisorView.Placements && (
-                  <PlacementsView placements={INITIAL_PLACEMENTS} />
+                  <PlacementsView placements={placements} />
                 )}
                 {activeView === AdvisorView.Activity && (
-                  <ActivityView activities={INITIAL_ADVISOR_ACTIVITY} />
+                  <ActivityView activities={activities} />
                 )}
                 {activeView === AdvisorView.Settings && (
                   <AdvisorSettingsView />

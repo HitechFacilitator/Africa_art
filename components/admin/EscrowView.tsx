@@ -48,6 +48,13 @@ function getStatusConfig(status: EscrowTransaction["status"], lang: string) {
         color: "bg-amber-100 text-amber-800",
         iconColor: "text-amber-600",
       };
+    default:
+      return {
+        icon: Lock,
+        label: status || (lang === "fr" ? "Inconnu" : "Unknown"),
+        color: "bg-gray-100 text-gray-800",
+        iconColor: "text-gray-600",
+      };
   }
 }
 

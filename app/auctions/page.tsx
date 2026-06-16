@@ -27,7 +27,7 @@ import CollectorHeader from "@/components/dashboard/CollectorHeader";
 import AuthGuard from "@/components/AuthGuard";
 import { useTranslate } from "@/lib/translations";
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
-import { INITIAL_PROFILE } from "@/lib/dashboardData";
+import { useAuth } from "@/lib/auth";
 
 interface Bid {
   id: string;
@@ -215,7 +215,15 @@ export default function AuctionsPage() {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isOpenMobile, setIsOpenMobile] = useState(false);
-  const [profile] = useState<CollectorProfile>(INITIAL_PROFILE);
+  const { user } = useAuth();
+  const profile: CollectorProfile = {
+    name: user?.name || "Guest",
+    tier: user?.role === "prestige" ? "Prestige Tier" : "Member Tier",
+    currency: "EUR (€)",
+    joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+    curatorName: "Aduna Advisory Desk",
+    regionsOfInterest: ["West Africa", "Central Africa", "East Africa"],
+  };
 
   const [lots, setLots] = useState<AuctionLot[]>([]);
   const translatedLots = useTranslatedAuctionLots(lots);

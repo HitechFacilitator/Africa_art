@@ -33,16 +33,16 @@ export default function PrintCertificateModal({ certificate, onClose }: PrintCer
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ebony-deep/85 backdrop-blur-md print:bg-white print:p-0">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ebony-deep/85 backdrop-blur-md print:bg-white print:p-0 overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-[#faf7f2] w-full max-w-3xl border-8 border-double border-gold-leaf/40 p-8 shadow-2xl relative text-ebony-deep print:border-8 print:shadow-none print:w-full print:max-w-none print:h-full print:absolute print:inset-0"
+          className="bg-[#faf7f2] w-full max-w-3xl border-8 border-double border-gold-leaf/40 p-8 shadow-2xl relative text-ebony-deep print:border-8 print:shadow-none print:w-full print:max-w-none print:h-full print:absolute print:inset-0 my-8 print:my-0"
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 text-zinc-500 hover:text-gold-leaf transition-colors cursor-pointer print:hidden"
+            className="sticky top-0 float-right p-1.5 text-zinc-500 hover:text-gold-leaf transition-colors cursor-pointer print:hidden z-10"
           >
             <X className="w-5 h-5" />
           </button>
@@ -147,7 +147,7 @@ export default function PrintCertificateModal({ certificate, onClose }: PrintCer
             </div>
           </div>
 
-          <div className="absolute bottom-[-60px] left-0 right-0 flex justify-center gap-4 print:hidden">
+          <div className="flex justify-center gap-4 mt-8 print:hidden">
             <button
               onClick={handlePrint}
               className="px-6 py-2.5 bg-gold-leaf text-ebony-deep text-xs font-semibold tracking-widest uppercase hover:bg-ebony-deep hover:text-parchment-ivory transition-all duration-300 shadow-lg flex items-center gap-2 cursor-pointer border-0"
