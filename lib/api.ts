@@ -409,6 +409,9 @@ export const adminApi = {
   deleteArtwork: (id: string) =>
     apiRequest<{ success: boolean }>(`/admin/artworks/${id.replace("ART-", "")}`, { method: "DELETE" }),
 
+  updateArtworkStatus: (id: string, status: string) =>
+    apiRequest<{ success: boolean }>(`/admin/artworks/${id.replace("ART-", "")}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+
   getCollectors: (params?: { page?: number; limit?: number; search?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, Menu, X, Lock, User, ShieldCheck, ChevronDown, PanelLeftOpen } from "lucide-react";
+import { Search, Menu, X, Lock, User, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 
@@ -19,7 +19,6 @@ export default function Navbar() {
   const router = useRouter();
   const { lang, setLang, t } = useTranslate();
   const { isAuthenticated, user } = useAuth();
-  const isAdmin = pathname.startsWith("/admin");
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,25 +78,14 @@ export default function Navbar() {
         <div className="flex justify-between items-center w-full px-6 md:px-16 xl:px-20 max-w-[1440px] mx-auto h-20">
 
           {/* Logo */}
-          <div className="flex items-center gap-3 shrink-0">
-            {isAdmin && (
-              <button
-                onClick={() => window.dispatchEvent(new Event("toggle-admin-sidebar"))}
-                aria-label="Toggle admin sidebar"
-                className="flex items-center justify-center w-10 h-10 -ml-2 text-on-surface-variant/70 hover:text-gold-leaf hover:bg-gold-leaf/10 rounded-sm transition-all duration-200 cursor-pointer border-0 bg-transparent"
-              >
-                <PanelLeftOpen size={20} strokeWidth={1.5} />
-              </button>
-            )}
-            <Link
-              href="/"
-              id="nav-logo"
-              className="font-serif text-2xl md:text-[1.75rem] tracking-tight font-light text-ebony-deep hover:text-gold-leaf transition-colors duration-300 select-none"
-              aria-label="Aduna Gallery — Go to homepage"
-            >
-              ADUNA <span className="text-gold-leaf">GALLERY</span>
-            </Link>
-          </div>
+          <Link
+            href="/"
+            id="nav-logo"
+            className="font-serif text-2xl md:text-[1.75rem] tracking-tight font-light text-ebony-deep hover:text-gold-leaf transition-colors duration-300 select-none shrink-0"
+            aria-label="Aduna Gallery — Go to homepage"
+          >
+            ADUNA <span className="text-gold-leaf">GALLERY</span>
+          </Link>
 
           {/* Desktop Nav — Home + Explorer */}
           <div className="hidden md:flex items-center space-x-8" role="menubar">

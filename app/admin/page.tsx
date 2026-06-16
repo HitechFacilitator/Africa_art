@@ -39,7 +39,7 @@ export default function AdminPage() {
   const [editingArtworkId, setEditingArtworkId] = useState<string | null>(null);
 
   // Fetch real data from API
-  useEffect(() => {
+  const fetchAllData = useCallback(() => {
     adminApi.getArtworks().then(res => setArtworks(res.data as AdminArtwork[])).catch(() => {});
     adminApi.getUsers().then(res => setUsers(res.data as AdminUser[])).catch(() => {});
     adminApi.getCollectors().then(res => setCollectors(res.data as AdminCollector[])).catch(() => {});
@@ -48,6 +48,10 @@ export default function AdminPage() {
     adminApi.getAuditLogs().then(res => setAuditLogs(res.data as AuditLogEntry[])).catch(() => {});
     adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
 
   const canGoBack = viewHistory.length > 0;
 
@@ -90,7 +94,7 @@ export default function AdminPage() {
   const handleWizardComplete = () => {
     setWizardOpen(false);
     setEditingArtworkId(null);
-    adminApi.getArtworks().then(res => setArtworks(res.data as AdminArtwork[])).catch(() => {});
+    fetchAllData();
   };
 
   const handleDeleteArtwork = async (id: string) => {
@@ -104,11 +108,14 @@ export default function AdminPage() {
     }
   };
 
-  const handleUpdateArtworkStatus = (id: string, status: AdminArtwork["status"]) => {
-    setArtworks((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status } : a))
-    );
-    appendAudit("Julien D.", `Artwork ${id} status changed to ${status}`);
+  const handleUpdateArtworkStatus = async (id: string, status: AdminArtwork["status"]) => {
+    try {
+      await adminApi.updateArtworkStatus(id, status);
+      appendAudit("Julien D.", `Artwork ${id} status changed to ${status}`);
+      fetchAllData();
+    } catch (err) {
+      console.error("Status update failed:", err);
+    }
   };
 
   const handleAddCollector = (collector: AdminCollector) => {
