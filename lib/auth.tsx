@@ -175,6 +175,7 @@ export interface UserSession {
 interface AuthCtx {
   user: UserSession | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOTP?: boolean; pendingEmail?: string; user?: UserSession }>;
   loginAs: (role: Role) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; user?: UserSession }>;
@@ -187,6 +188,7 @@ interface AuthCtx {
 const AuthContext = createContext<AuthCtx>({
   user: null,
   isAuthenticated: false,
+  loading: true,
   login: async () => ({ success: false }),
   loginAs: async () => {},
   verifyOTP: async () => ({ success: false }),
@@ -305,6 +307,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={{
       user,
       isAuthenticated: !!user,
+      loading,
       login,
       loginAs,
       verifyOTP,

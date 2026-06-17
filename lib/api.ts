@@ -231,13 +231,14 @@ export const dashboardApi = {
       { method: "POST", body: JSON.stringify(data) }
     ),
 
-  createSupportTicket: (data: { subject: string; description: string; priority?: string }) =>
+  createSupportTicket: (data: { subject: string; description: string; priority?: string; category?: string }) =>
     apiRequest<{ success: boolean; data: {
       id: string;
       clientName: string;
       clientRole: string;
       subject: string;
       description: string;
+      category: string;
       status: string;
       priority: string;
       createdDate: string;
@@ -245,6 +246,22 @@ export const dashboardApi = {
       assignedTo: string;
       responses: Array<{ author: string; text: string; timestamp: string }>;
     } }>("/chat/tickets", { method: "POST", body: JSON.stringify(data) }),
+
+  getMyTickets: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      clientName: string;
+      clientRole: string;
+      subject: string;
+      description: string;
+      category: string;
+      status: string;
+      priority: string;
+      createdDate: string;
+      lastUpdate: string;
+      assignedTo: string;
+      responses: Array<{ author: string; text: string; timestamp: string }>;
+    }> }>("/chat/tickets"),
 
   getLogistics: () =>
     apiRequest<{ success: boolean; data: Array<{
@@ -490,6 +507,7 @@ export const adminApi = {
       clientRole: string;
       subject: string;
       description: string;
+      category: string;
       status: string;
       priority: string;
       createdDate: string;

@@ -10,22 +10,22 @@ interface AuthGuardProps {
 }
 
 export default function AuthGuard({ permission, children }: AuthGuardProps) {
-  const { isAuthenticated, hasPermission } = useAuth();
+  const { isAuthenticated, loading, hasPermission } = useAuth();
   const router = useRouter();
 
   const allowed = !permission || hasPermission(permission);
 
   useEffect(() => {
+    if (loading) return;
     if (!isAuthenticated) {
       router.replace("/unauthorized");
     } else if (!allowed) {
       router.replace("/unauthorized");
     }
-  }, [isAuthenticated, allowed, router]);
+  }, [loading, isAuthenticated, allowed, router]);
 
-  if (!isAuthenticated || !allowed) {
-    return null;
-  }
+  if (loading) return null;
+  if (!isAuthenticated || !allowed) return null;
 
   return <>{children}</>;
 }

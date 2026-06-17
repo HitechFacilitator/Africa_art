@@ -26,6 +26,7 @@ import SecurityView from "@/components/dashboard/SecurityView";
 import SettingsView from "@/components/dashboard/SettingsView";
 import CertificatesView from "@/components/dashboard/CertificatesView";
 import ChatView from "@/components/dashboard/ChatView";
+import SupportView from "@/components/dashboard/SupportView";
 
 export default function DashboardPage() {
   const { lang } = useTranslate();
@@ -417,16 +418,7 @@ export default function DashboardPage() {
               </div>
             )}
             {activeTab === ActiveTab.Support && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Support" : "Support"}</h2>
-                  <p className="font-sans text-sm text-on-surface-variant mt-1">{lang === "fr" ? "Contactez l'équipe technique d'Aduna Gallery." : "Contact the Aduna Gallery technical team."}</p>
-                </div>
-                <div className="max-w-xl bg-surface-container-low border border-on-surface/5 p-6">
-                  <p className="font-sans text-xs text-on-surface-variant mb-4">{lang === "fr" ? "Soumettre un ticket de support. Délai de réponse : dans les 24 heures ouvrables." : "Submit a support ticket. Response time: within 24 business hours."}</p>
-                  <SupportTicketForm lang={lang} />
-                </div>
-              </div>
+              <SupportView lang={lang} />
             )}
             {activeTab === ActiveTab.PrivateCatalogues && (
               <div className="space-y-6">
@@ -743,56 +735,5 @@ export default function DashboardPage() {
       </AnimatePresence>
     </div>
     </AuthGuard>
-  );
-}
-
-function SupportTicketForm({ lang }: { lang: string }) {
-  const [message, setMessage] = useState("");
-  const [subject, setSubject] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!message.trim() || !subject.trim()) return;
-    setLoading(true);
-    try {
-      await dashboardApi.createSupportTicket({ subject: subject.trim(), description: message.trim() });
-      setSubmitted(true);
-      setMessage("");
-      setSubject("");
-      setTimeout(() => setSubmitted(false), 3000);
-    } catch (err) {
-      console.error("Failed to create support ticket:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div>
-      <input
-        type="text"
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        placeholder={lang === "fr" ? "Sujet du ticket..." : "Ticket subject..."}
-        className="w-full px-3 py-2.5 bg-parchment-ivory border border-on-surface/10 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-terracotta-earth/30 mb-3"
-      />
-      <textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        rows={6}
-        placeholder={lang === "fr" ? "Décrivez votre problème ou demande..." : "Describe your issue or request..."}
-        className="w-full px-3 py-2.5 bg-parchment-ivory border border-on-surface/10 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-terracotta-earth/30 resize-none mb-4"
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={loading || !subject.trim() || !message.trim()}
-        className="px-4 py-2.5 bg-terracotta-earth text-parchment-ivory text-xs font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/90 transition-opacity cursor-pointer border-0 disabled:opacity-50"
-      >
-        {loading ? "..." : submitted
-          ? (lang === "fr" ? "Ticket Soumis" : "Ticket Submitted")
-          : (lang === "fr" ? "Soumettre le Ticket" : "Submit Ticket")}
-      </button>
-    </div>
   );
 }
