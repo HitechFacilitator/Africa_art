@@ -340,11 +340,11 @@ export default function SupportView({ lang }: SupportViewProps) {
                 className="bg-surface-container-low border border-on-surface/5"
               >
                 {/* Ticket header row */}
-                <button
+                <div
+                  className="w-full flex items-center gap-4 p-4 cursor-pointer hover:bg-surface-container-low/80 transition-colors"
                   onClick={() =>
                     setExpandedId(isExpanded ? null : ticket.id)
                   }
-                  className="w-full flex items-center gap-4 p-4 text-left cursor-pointer bg-transparent border-0 hover:bg-surface-container-low/80 transition-colors"
                 >
                   {isExpanded ? (
                     <ChevronDown
@@ -401,18 +401,18 @@ export default function SupportView({ lang }: SupportViewProps) {
                     </div>
                   </div>
                   <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(t("Supprimer ce ticket ?", "Delete this ticket?"))) {
-                          handleDelete(ticket.id);
-                        }
-                      }}
-                      className="p-1.5 text-on-surface-variant hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 shrink-0"
-                      title={t("Supprimer", "Delete")}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                </button>
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(t("Supprimer ce ticket ?", "Delete this ticket?"))) {
+                        handleDelete(ticket.id);
+                      }
+                    }}
+                    className="p-1.5 text-on-surface-variant hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 shrink-0"
+                    title={t("Supprimer", "Delete")}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
 
                 {/* Expanded content */}
                 {isExpanded && (

@@ -303,6 +303,27 @@ export const consultationsApi = {
       status: string;
       notes?: string;
     }> }>("/consultations/my"),
+
+  create: (data: { type: string; date: string; notes?: string; topic?: string; timeSlot?: string; expertName?: string; expertTitle?: string; expertAvatar?: string }) =>
+    apiRequest<{ success: boolean; data: {
+      id: string;
+      expertName: string;
+      expertTitle: string;
+      date: string;
+      timeSlot: string;
+      topic: string;
+      status: string;
+      notes?: string;
+    } }>("/consultations", { method: "POST", body: JSON.stringify(data) }),
+
+  getAdvisors: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      name: string;
+      email: string;
+      institution: string;
+      avatar: string;
+    }> }>("/consultations/advisors"),
 };
 
 // ─── Favorites API ──────────────────────────────────────────────────

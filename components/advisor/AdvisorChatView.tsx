@@ -10,9 +10,10 @@ import { Send, MessageSquare, User, Clock, Search, Archive, Eye } from "lucide-r
 interface AdvisorChatViewProps {
   threads: ChatThread[];
   onSendMessage: (threadId: string, text: string) => void;
+  onMarkRead: (threadId: string) => void;
 }
 
-export default function AdvisorChatView({ threads, onSendMessage }: AdvisorChatViewProps) {
+export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: AdvisorChatViewProps) {
   const { lang } = useTranslate();
   const [selectedId, setSelectedId] = useState<string | null>(threads[0]?.id || null);
   const [newMessage, setNewMessage] = useState("");
@@ -34,9 +35,9 @@ export default function AdvisorChatView({ threads, onSendMessage }: AdvisorChatV
 
   useEffect(() => {
     if (selectedId) {
-      chatApi.markThreadRead(selectedId).catch(() => {});
+      chatApi.markThreadRead(selectedId).then(() => onMarkRead(selectedId)).catch(() => {});
     }
-  }, [selectedId]);
+  }, [selectedId, onMarkRead]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();

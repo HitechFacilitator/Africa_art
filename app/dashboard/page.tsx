@@ -121,7 +121,8 @@ export default function DashboardPage() {
         if (t.id !== `thr-${threadId}`) return t;
         const alreadyExists = t.messages.some(m => m.id === message.id);
         if (alreadyExists) return t;
-        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp };
+        const isFromOther = message.senderId !== user?.id;
+        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
       }));
     },
   });
@@ -390,7 +391,7 @@ export default function DashboardPage() {
               <CertificatesView />
             )}
             {activeTab === ActiveTab.Chat && (
-              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} />
+              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} />
             )}
             {activeTab === ActiveTab.Documentation && (
               <div className="space-y-6">

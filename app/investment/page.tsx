@@ -32,7 +32,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useTranslate } from "@/lib/translations";
 import AuthGuard from "@/components/AuthGuard";
-import { artworksApi, ArtworkData } from "@/lib/api";
+import { artworksApi, consultationsApi, ArtworkData } from "@/lib/api";
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -114,6 +114,9 @@ export default function InvestmentPage() {
   const [meetingType, setMeetingType] = useState("Video Call");
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [advisors, setAdvisors] = useState<Array<{ id: string; name: string; institution: string }>>([]);
+  const [existingConsultation, setExistingConsultation] = useState<{ id: string; expertName: string; date: string; timeSlot: string; topic: string; status: string } | null>(null);
+  const [consultLoading, setConsultLoading] = useState(false);
 
   // Gallery states
   const [regionFilter, setRegionFilter] = useState("All");
@@ -235,11 +238,41 @@ export default function InvestmentPage() {
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [activeTab]);
 
-  const handleBooking = (e: React.FormEvent) => {
+  // Fetch advisors + existing consultation on mount
+  useEffect(() => {
+    consultationsApi.getAdvisors().then(res => setAdvisors(res.data || [])).catch(() => {});
+    consultationsApi.getMy().then(res => {
+      const cons = res.data || [];
+      const active = cons.find((c: { status: string }) => c.status === "PENDING" || c.status === "CONFIRMED");
+      if (active) {
+        setExistingConsultation(active);
+        setBookingSuccess(true);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email) return;
-    setBookingRef(`HV-${Math.floor(1000 + Math.random() * 9000)}-CONFD`);
-    setBookingSuccess(true);
+    setConsultLoading(true);
+    try {
+      const res = await consultationsApi.create({
+        type: inquiryType,
+        date: preferredDate || new Date().toISOString().split("T")[0],
+        notes: `${meetingType} | ${investmentTier} | ${investmentHorizon} | ${investmentGoals}`,
+        topic: preferredCurator,
+        timeSlot: preferredTime,
+        expertName: preferredCurator,
+        expertTitle: "Advisory Curator",
+      });
+      setExistingConsultation(res.data);
+      setBookingRef(res.data.id);
+      setBookingSuccess(true);
+    } catch (err) {
+      console.error("Failed to create consultation:", err);
+    } finally {
+      setConsultLoading(false);
+    }
   };
 
   const handleAuth = (e: React.FormEvent) => {
@@ -439,7 +472,7 @@ export default function InvestmentPage() {
                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Type de Demande" : "Inquiry Type"}</label><select value={inquiryType} onChange={(e) => setInquiryType(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>{lang === "fr" ? "Évaluation & Allocation de Portefeuille" : "Portfolio Assessment & Allocation"}</option><option>{lang === "fr" ? "Stratégie d'Acquisition Directe" : "Direct Acquisition Strategy"}</option><option>{lang === "fr" ? "Authentification & Vérification du Carbone" : "Authentication & Carbon Vetting"}</option><option>{lang === "fr" ? "Configuration de Stockage Sécurisé" : "Secure Escrow Storage Setup"}</option></select></div>
                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Nom Complet" : "Full Name"}</label><input type="text" required placeholder="Baron Robert de Rothschild" value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none placeholder:text-on-surface-variant/30" /></div>
                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Email de Contact Chiffré" : "Encrypted Contact Email"}</label><input type="email" required placeholder="r.rothschild@sovereign-vault.ch" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none placeholder:text-on-surface-variant/30" /></div>
-                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Conservateur Conseil Préféré" : "Preferred Advisory Curator"}</label><select value={preferredCurator} onChange={(e) => setPreferredCurator(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>Dr. Elena Rostova (African Antiquities)</option><option>Marcus Vance (Financial Art Allocation)</option><option>{lang === "fr" ? "Conseil de Consensus (Comité Consultatif Complet)" : "Consensus Council (Full Advisory Board)"}</option></select></div>
+                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Conservateur Conseil Préféré" : "Preferred Advisory Curator"}</label><select value={preferredCurator} onChange={(e) => setPreferredCurator(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer">{advisors.length > 0 ? advisors.map(a => <option key={a.id} value={a.name}>{a.name} {a.institution ? `(${a.institution})` : ""}</option>) : <option>{lang === "fr" ? "Aucun conseiller disponible" : "No advisors available"}</option>}</select></div>
                            <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Cible d'Allocation Principale" : "Primary Allocation Target"}</label><select value={investmentTier} onChange={(e) => setInvestmentTier(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>$250,000 - $500,000</option><option>$500,000 - $2,000,000</option><option>$2,000,000 - $5,000,000</option><option>$5,000,000+ ({lang === "fr" ? "Mandat Institutionnel" : "Institutional Mandate"})</option></select></div>
                            <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Horizon d'Investissement" : "Investment Horizon"}</label><select value={investmentHorizon} onChange={(e) => setInvestmentHorizon(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>1-2 {lang === "fr" ? "Ans" : "Years"}</option><option>3-5 {lang === "fr" ? "Ans" : "Years"}</option><option>5-10 {lang === "fr" ? "Ans" : "Years"}</option><option>10+ {lang === "fr" ? "Ans (Héritage)" : "Years (Legacy)"}</option></select></div>
                            <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Objectifs d'Investissement" : "Investment Goals"}</label><select value={investmentGoals} onChange={(e) => setInvestmentGoals(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>{lang === "fr" ? "Appréciation du Capital" : "Capital Appreciation"}</option><option>{lang === "fr" ? "Diversification" : "Diversification"}</option><option>{lang === "fr" ? "Préservation Culturelle" : "Cultural Preservation"}</option><option>{lang === "fr" ? "Optimisation Fiscale" : "Tax Optimization"}</option><option>{lang === "fr" ? "Couverture de Portefeuille" : "Portfolio Hedging"}</option></select></div>
@@ -458,19 +491,16 @@ export default function InvestmentPage() {
                           <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="text-center py-10 flex flex-col items-center justify-center h-full">
                           <div className="w-14 h-14 rounded-full bg-gold-leaf/10 border border-gold-leaf flex items-center justify-center text-gold-leaf mb-6"><ShieldCheck className="w-7 h-7 stroke-[1.5]" /></div>
                            <h3 className="font-serif text-2xl text-ebony-deep mb-4">{lang === "fr" ? "Connexion Sécurisée Établie" : "Secure Connection Established"}</h3>
-                           <p className="font-serif text-sm text-on-surface-variant mb-6 max-w-sm leading-relaxed">{lang === "fr" ? "Merci," : "Thank you,"} <strong className="text-ebony-deep">{fullName}</strong>. {lang === "fr" ? "Votre demande de conseil pour" : "Your advisory request for"} <strong className="text-ebony-deep">{inquiryType}</strong> {lang === "fr" ? "a été enregistrée." : "has been logged."}</p>
+                           <p className="font-serif text-sm text-on-surface-variant mb-6 max-w-sm leading-relaxed">{lang === "fr" ? "Merci," : "Thank you,"} <strong className="text-ebony-deep">{existingConsultation ? "" : fullName}</strong>. {lang === "fr" ? "Votre demande de conseil pour" : "Your advisory request for"} <strong className="text-ebony-deep">{existingConsultation?.topic || inquiryType}</strong> {lang === "fr" ? "a été enregistrée." : "has been logged."}</p>
                           <div className="bg-surface-container p-4 border border-on-surface/5 mb-8 w-full text-left">
                             <div className="space-y-1.5 text-xs font-sans">
-                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Code de Vérification :" : "Vetting Code:"}</span><span className="font-bold text-ebony-deep font-mono">{bookingRef}</span></div>
-                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Conservateur Assigné :" : "Assigned Curator:"}</span><span className="text-ebony-deep font-medium">{preferredCurator}</span></div>
-                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Volume Cible :" : "Target Volume:"}</span><span className="text-ebony-deep font-medium">{investmentTier}</span></div>
-                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Horizon :" : "Horizon:"}</span><span className="text-ebony-deep font-medium">{investmentHorizon}</span></div>
-                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Objectifs :" : "Goals:"}</span><span className="text-ebony-deep font-medium">{investmentGoals}</span></div>
-                              {preferredDate && <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Réunion :" : "Meeting:"}</span><span className="text-ebony-deep font-medium">{preferredDate} · {preferredTime}</span></div>}
-                              {meetingType && <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Format :" : "Format:"}</span><span className="text-ebony-deep font-medium">{meetingType}</span></div>}
+                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Code de Vérification :" : "Vetting Code:"}</span><span className="font-bold text-ebony-deep font-mono">{existingConsultation?.id || bookingRef}</span></div>
+                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Conservateur Assigné :" : "Assigned Curator:"}</span><span className="text-ebony-deep font-medium">{existingConsultation?.expertName || preferredCurator}</span></div>
+                              {existingConsultation?.date && <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Date :" : "Date:"}</span><span className="text-ebony-deep font-medium">{existingConsultation.date} {existingConsultation.timeSlot ? `· ${existingConsultation.timeSlot}` : ""}</span></div>}
+                              <div className="flex justify-between"><span className="text-on-surface-variant/50">{lang === "fr" ? "Statut :" : "Status:"}</span><span className="text-ebony-deep font-medium">{existingConsultation?.status || "PENDING"}</span></div>
                             </div>
                           </div>
-                          <button onClick={() => { setBookingSuccess(false); setFullName(""); setEmail(""); setCurrentCollection(""); setPreferredDate(""); }} className="border border-on-surface/10 font-sans text-xs uppercase tracking-widest px-6 py-3 hover:bg-on-surface/5 transition-colors">{lang === "fr" ? "Autoriser une Autre Demande" : "Authorize Another Request"}</button>
+                          <button onClick={() => { setBookingSuccess(false); setExistingConsultation(null); setFullName(""); setEmail(""); setCurrentCollection(""); setPreferredDate(""); }} className="border border-on-surface/10 font-sans text-xs uppercase tracking-widest px-6 py-3 hover:bg-on-surface/5 transition-colors">{lang === "fr" ? "Autoriser une Autre Demande" : "Authorize Another Request"}</button>
                         </motion.div>
                       )}
                     </AnimatePresence>

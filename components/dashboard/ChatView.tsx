@@ -10,9 +10,10 @@ import { Send, MessageSquare, User, Clock, ArrowLeft } from "lucide-react";
 interface ChatViewProps {
   threads: ChatThread[];
   onSendMessage: (threadId: string, text: string) => void;
+  onMarkRead: (threadId: string) => void;
 }
 
-export default function ChatView({ threads, onSendMessage }: ChatViewProps) {
+export default function ChatView({ threads, onSendMessage, onMarkRead }: ChatViewProps) {
   const { lang } = useTranslate();
   const [selectedId, setSelectedId] = useState<string | null>(threads[0]?.id || null);
   const [newMessage, setNewMessage] = useState("");
@@ -26,9 +27,9 @@ export default function ChatView({ threads, onSendMessage }: ChatViewProps) {
 
   useEffect(() => {
     if (selectedId) {
-      chatApi.markThreadRead(selectedId).catch(() => {});
+      chatApi.markThreadRead(selectedId).then(() => onMarkRead(selectedId)).catch(() => {});
     }
-  }, [selectedId]);
+  }, [selectedId, onMarkRead]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
