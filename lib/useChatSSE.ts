@@ -1,9 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { getToken } from "@/lib/api";
 
 type SSEEventHandler = (data: unknown) => void;
+
+function createSSE(
+  url: string,
+  handlers: Record<string, SSEEventHandler>,
+  onReconnect?: () => void
+): EventSource {
+  const es = new EventSource(url);
+
+  Object.keys(handlers).forEach((event) => {
+    es.addEventListener(event, ((e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        handlers[event]?.(data);
+      } catch { /* ignore parse errors */ }
+    }) as EventListener);
+  });
+
+  es.onerror = () => {
+    es.close();
+    setTimeout(() => {
+      onReconnect?.();
+    }, 3000);
+  };
+
+  return es;
+}
 
 export function useChatSSE(handlers: Record<string, SSEEventHandler>) {
   const handlersRef = useRef(handlers);
@@ -14,25 +40,24 @@ export function useChatSSE(handlers: Record<string, SSEEventHandler>) {
     if (!token) return;
 
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    const es = new EventSource(`${baseUrl}/api/v1/chat/events?token=${token}`);
+    let es: EventSource | null = null;
+    let stopped = false;
 
-    Object.keys(handlersRef.current).forEach((event) => {
-      es.addEventListener(event, ((e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          handlersRef.current[event]?.(data);
-        } catch { /* ignore parse errors */ }
-      }) as EventListener);
-    });
+    function connect() {
+      if (stopped) return;
+      es = createSSE(
+        `${baseUrl}/api/v1/chat/events?token=${token}`,
+        handlersRef.current,
+        () => connect()
+      );
+    }
 
-    es.onerror = () => {
-      es.close();
-      setTimeout(() => {
-        // Reconnect after 3 seconds
-      }, 3000);
+    connect();
+
+    return () => {
+      stopped = true;
+      es?.close();
     };
-
-    return () => es.close();
   }, []);
 }
 
@@ -50,21 +75,23 @@ export function useSSE(
     if (!token) return;
 
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    const es = new EventSource(`${baseUrl}${url}?token=${token}`);
+    let es: EventSource | null = null;
+    let stopped = false;
 
-    Object.keys(handlersRef.current).forEach((event) => {
-      es.addEventListener(event, ((e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data);
-          handlersRef.current[event]?.(data);
-        } catch { /* ignore */ }
-      }) as EventListener);
-    });
+    function connect() {
+      if (stopped) return;
+      es = createSSE(
+        `${baseUrl}${url}?token=${token}`,
+        handlersRef.current,
+        () => connect()
+      );
+    }
 
-    es.onerror = () => {
-      es.close();
+    connect();
+
+    return () => {
+      stopped = true;
+      es?.close();
     };
-
-    return () => es.close();
   }, [url, enabled]);
 }

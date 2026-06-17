@@ -59,6 +59,13 @@ async function apiRequest<T>(
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
+    if (res.status === 429) {
+      throw new Error("Rate limited — please wait a moment and try again");
+    }
+    if (res.status === 401) {
+      // Token expired or invalid — don't throw, let auth handler deal with it
+      throw new Error(body.message || "Session expired");
+    }
     throw new Error(body.message || `API error: ${res.status}`);
   }
 
