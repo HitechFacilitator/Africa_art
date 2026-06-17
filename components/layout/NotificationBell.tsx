@@ -2,23 +2,26 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bell, MessageSquare, Ticket, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useTranslate } from "@/lib/translations";
-import { dashboardApi, chatApi } from "@/lib/api";
+import { chatApi } from "@/lib/api";
 import { useChatSSE } from "@/lib/useChatSSE";
 
 interface Notification {
   id: string;
-  type: "message" | "ticket" | "inquiry";
+  type: "message" | "ticket";
   title: string;
   body: string;
   time: string;
   read: boolean;
+  threadId?: string;
 }
 
 export default function NotificationBell() {
   const { user } = useAuth();
   const { lang } = useTranslate();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -26,17 +29,12 @@ export default function NotificationBell() {
 
   const t = (fr: string, en: string) => (lang === "fr" ? fr : en);
 
-  // Fetch initial unread counts
   useEffect(() => {
     if (!user) return;
-
-    // Fetch unread thread messages
     chatApi.getThreads().then((res) => {
       const threads = res.data || [];
       const totalUnread = threads.reduce((sum: number, thread: { unreadCount: number }) => sum + (thread.unreadCount || 0), 0);
       setUnreadCount(totalUnread);
-
-      // Build notifications from threads with unread messages
       const threadNotifs: Notification[] = threads
         .filter((thread: { unreadCount: number }) => thread.unreadCount > 0)
         .map((thread: { id: string; clientName: string; subject: string; lastMessage: string; lastMessageTime: string }) => ({
@@ -46,15 +44,15 @@ export default function NotificationBell() {
           body: thread.lastMessage || "",
           time: thread.lastMessageTime || "",
           read: false,
+          threadId: thread.id,
         }));
       setNotifications(threadNotifs);
     }).catch(() => {});
   }, [user]);
 
-  // Listen for real-time events
   useChatSSE({
     "new-message": (data: unknown) => {
-      const { message } = data as { message: { senderName: string; text: string; timestamp: string } };
+      const { threadId, message } = data as { threadId: number; message: { senderName: string; text: string; timestamp: string } };
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [
         {
@@ -64,6 +62,7 @@ export default function NotificationBell() {
           body: message.text || "",
           time: message.timestamp || "",
           read: false,
+          threadId: `thr-${threadId}`,
         },
         ...prev,
       ]);
@@ -85,7 +84,6 @@ export default function NotificationBell() {
     },
   });
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -96,14 +94,20 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleNotificationClick = (notif: Notification) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+    setOpen(false);
+    if (notif.type === "message" && notif.threadId) {
+      router.push(`/dashboard?tab=chat&thread=${notif.threadId}`);
+    } else if (notif.type === "ticket") {
+      router.push(`/dashboard?tab=support`);
+    }
+  };
+
   const markAllRead = () => {
     setUnreadCount(0);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const clearNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
   };
 
   if (!user) return null;
@@ -138,61 +142,38 @@ export default function NotificationBell() {
               </button>
             )}
           </div>
-
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="w-8 h-8 text-on-surface-variant/20 mx-auto mb-2" />
-                <p className="font-sans text-xs text-on-surface-variant">
-                  {t("Aucune notification", "No notifications")}
-                </p>
+                <p className="font-sans text-xs text-on-surface-variant">{t("Aucune notification", "No notifications")}</p>
               </div>
             ) : (
               notifications.slice(0, 20).map((notif) => (
-                <div
+                <button
                   key={notif.id}
-                  className={`px-4 py-3 border-b border-on-surface/5 flex items-start gap-3 ${
-                    notif.read ? "opacity-60" : "bg-surface-container-low/30"
+                  onClick={() => handleNotificationClick(notif)}
+                  className={`w-full px-4 py-3 border-b border-on-surface/5 flex items-start gap-3 text-left cursor-pointer bg-transparent border-x-0 border-t-0 hover:bg-surface-container-low/30 transition-colors ${
+                    notif.read ? "opacity-60" : ""
                   }`}
                 >
                   <div className="shrink-0 mt-0.5">
                     {notif.type === "message" ? (
                       <MessageSquare size={14} className="text-terracotta-earth" />
-                    ) : notif.type === "ticket" ? (
-                      <Ticket size={14} className="text-gold-leaf" />
                     ) : (
-                      <Bell size={14} className="text-on-surface-variant" />
+                      <Ticket size={14} className="text-gold-leaf" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-sans text-xs font-medium text-ebony-deep truncate">
-                      {notif.title}
-                    </p>
-                    <p className="font-sans text-[11px] text-on-surface-variant truncate mt-0.5">
-                      {notif.body}
-                    </p>
-                    {notif.time && (
-                      <p className="font-sans text-[10px] text-on-surface-variant/50 mt-1">
-                        {notif.time}
-                      </p>
-                    )}
+                    <p className="font-sans text-xs font-medium text-ebony-deep truncate">{notif.title}</p>
+                    <p className="font-sans text-[11px] text-on-surface-variant truncate mt-0.5">{notif.body}</p>
                   </div>
-                  <button
-                    onClick={() => clearNotification(notif.id)}
-                    className="shrink-0 p-1 text-on-surface-variant/30 hover:text-on-surface-variant transition-colors cursor-pointer bg-transparent border-0"
-                  >
-                    <X size={10} />
-                  </button>
-                </div>
+                </button>
               ))
             )}
           </div>
-
           <div className="px-4 py-2.5 border-t border-on-surface/5 text-center">
-            <a
-              href="/dashboard"
-              className="font-sans text-[10px] font-bold uppercase tracking-wider text-terracotta-earth hover:text-ebony-deep transition-colors"
-            >
+            <a href="/dashboard" className="font-sans text-[10px] font-bold uppercase tracking-wider text-terracotta-earth hover:text-ebony-deep transition-colors">
               {t("Voir toutes les notifications", "View all notifications")}
             </a>
           </div>

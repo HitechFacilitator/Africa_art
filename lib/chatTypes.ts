@@ -2,7 +2,7 @@ export interface ChatMessage {
   id: string;
   senderId: string;
   senderName: string;
-  senderRole: "collector" | "visitor" | "advisor" | "admin";
+  senderRole: "collector" | "visitor" | "advisor" | "admin" | "support";
   text: string;
   timestamp: string;
   read: boolean;
@@ -13,6 +13,8 @@ export interface ChatThread {
   clientName: string;
   clientRole: "collector" | "visitor";
   advisorName: string;
+  clientUserId: number | null;
+  advisorUserId: number | null;
   subject: string;
   status: "active" | "archived";
   lastMessage: string;

@@ -159,7 +159,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Right Controls */}
-          <div className="hidden md:flex items-center space-x-5">
+          <div className="hidden md:flex items-center space-x-3">
             {/* Language Toggle */}
             <div className="flex items-center bg-surface-container-low/80 rounded-full p-0.5">
               <button
@@ -207,7 +207,7 @@ export default function Navbar() {
                 href={user?.role === "admin" ? "/admin" : "/dashboard"}
                 id="nav-login-btn"
                 aria-label="Go to dashboard"
-                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-2.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
+                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-4 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
               >
                 {t("Dashboard")}
               </Link>
@@ -216,20 +216,17 @@ export default function Navbar() {
                 href="/login"
                 id="nav-login-btn"
                 aria-label="Collector login"
-                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-2.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
+                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-4 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
               >
                 {t("Login")}
               </Link>
             )}
 
-            {/* Divider */}
-            <div className="w-px h-5 bg-on-surface/10" />
-
             {/* Request Private Access CTA */}
             <Link
               href="/price-on-request"
               id="nav-access-btn"
-              className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-2.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
+              className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-4 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
             >
               {t("Request Private Access")}
             </Link>

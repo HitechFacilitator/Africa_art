@@ -413,6 +413,8 @@ export const chatApi = {
       clientName: string;
       clientRole: string;
       advisorName: string;
+      clientUserId: number | null;
+      advisorUserId: number | null;
       subject: string;
       lastMessage: string;
       lastMessageTime: string;
