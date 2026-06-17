@@ -118,20 +118,35 @@ export default function DashboardPage() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
-  const handleSendMessage = (threadId: string, text: string) => {
+  const handleSendMessage = async (threadId: string, text: string) => {
+    const tempMsg = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || "collector",
+      senderName: user?.name || "Julian Doe",
+      senderRole: (user?.role || "collector") as "collector",
+      text,
+      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+      read: true,
+    };
     setChatThreads(prev => prev.map(t => {
       if (t.id !== threadId) return t;
-      const newMsg = {
-        id: `msg-${Date.now()}`,
-        senderId: user?.id || "collector",
-        senderName: user?.name || "Julian Doe",
-        senderRole: (user?.role || "collector") as "collector",
-        text,
-        timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
-        read: true,
-      };
-      return { ...t, messages: [...t.messages, newMsg], lastMessage: text, lastMessageTime: newMsg.timestamp };
+      return { ...t, messages: [...t.messages, tempMsg], lastMessage: text, lastMessageTime: tempMsg.timestamp };
     }));
+    try {
+      const res = await chatApi.sendMessage(threadId, {
+        senderId: user?.id,
+        senderName: user?.name,
+        senderRole: user?.role || "collector",
+        text,
+      });
+      const serverMsg = res.data;
+      setChatThreads(prev => prev.map(t => {
+        if (t.id !== threadId) return t;
+        return { ...t, messages: t.messages.map(m => m.id === tempMsg.id ? { ...m, id: serverMsg.id } : m) };
+      }));
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   const handleClearCache = () => {
@@ -145,78 +160,42 @@ export default function DashboardPage() {
     alert(lang === "fr" ? "Les métriques d'Aduna Gallery ont été initialisées avec succès aux paramètres par défaut." : 'Aduna Gallery metrics initialized successfully to pristine defaults.');
   };
 
-  const handleExpressInterest = (artworkTitle: string, year: string) => {
+  const handleExpressInterest = async (artworkTitle: string, year: string) => {
     const existing = inquiries.find(inq => inq.artworkTitle === artworkTitle);
     if (existing) {
       setSelectedInquiryId(existing.id);
       navigateTab(ActiveTab.Inquiries);
       return;
     }
-    const newInquiryId = `inq_${Date.now()}`;
-    const newInquiry: Inquiry = {
-      id: newInquiryId,
-      artworkTitle: artworkTitle,
-      artworkYear: year,
-      imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew',
-      status: 'Received',
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      messages: [
-        {
-          sender: 'collector',
-          text: `Expressing immediate, confidential interest regarding "${artworkTitle}" (${year}). Please provide full research reports and dispatch options to Geneva.`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]
-    };
-    setInquiries(prev => [newInquiry, ...prev]);
-    setSelectedInquiryId(newInquiryId);
-    navigateTab(ActiveTab.Inquiries);
-
-    setTimeout(() => {
-      setInquiries(prev => prev.map(inq => {
-        if (inq.id === newInquiryId) {
-          return {
-            ...inq,
-            status: 'In Discussion' as const,
-            messages: [
-              ...inq.messages,
-              {
-                sender: 'curator' as const,
-                text: `Greetings Julian. The private placement file for "${artworkTitle}" is now checked. We have logged your priority interest on the Aduna Ledger. Dynamic shipping quotas are ready. Let's arrange a conference.`,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              }
-            ]
-          };
-        }
-        return inq;
-      }));
-    }, 1500);
+    const initText = `Expressing immediate, confidential interest regarding "${artworkTitle}" (${year}). Please provide full research reports and dispatch options to Geneva.`;
+    try {
+      const res = await dashboardApi.createInquiry({
+        artworkTitle,
+        artworkYear: year,
+        imageUrl: "",
+        messages: [{ sender: "collector", text: initText }],
+      });
+      const newInquiry = res.data as Inquiry;
+      setInquiries(prev => [newInquiry, ...prev]);
+      setSelectedInquiryId(newInquiry.id);
+      navigateTab(ActiveTab.Inquiries);
+    } catch (err) {
+      console.error("Failed to create inquiry:", err);
+    }
   };
 
-  const handleAddMessage = (inquiryId: string, text: string) => {
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const handleAddMessage = async (inquiryId: string, text: string) => {
     setInquiries(prev => prev.map(inq => {
       if (inq.id === inquiryId) {
-        return { ...inq, messages: [...inq.messages, { sender: 'collector' as const, text, timestamp }] };
+        return { ...inq, messages: [...inq.messages, { sender: 'collector' as const, text, timestamp: new Date().toISOString() }] };
       }
       return inq;
     }));
-
-    setTimeout(() => {
-      setInquiries(prev => prev.map(inq => {
-        if (inq.id === inquiryId) {
-          const responds = [
-            `Excellent point, Julian. I am forwarding your parameter guidelines directly to our Zurich legal council for prompt vetting.`,
-            `Checked, Julian. We can guarantee premium transit with Malca-Amit. Dual-authentication contracts have been prepared and logged under safe signature.`,
-            `Excellent. Let's review logistics options with Dr. Amara Diop on our next scheduled video advisory.`,
-            `I have compiled the required radiometric carbon testing data for this piece. It confirms pristine structural integrity.`
-          ];
-          const randomText = responds[Math.floor(Math.random() * responds.length)];
-          return { ...inq, messages: [...inq.messages, { sender: 'curator' as const, text: randomText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }] };
-        }
-        return inq;
-      }));
-    }, 1800);
+    try {
+      await dashboardApi.addInquiryMessage(inquiryId, { sender: "collector", text });
+    } catch (err) {
+      console.error("Failed to send inquiry message:", err);
+    }
   };
 
   const handleAddAcquisition = (newAcq: Acquisition) => {
@@ -746,17 +725,35 @@ export default function DashboardPage() {
 
 function SupportTicketForm({ lang }: { lang: string }) {
   const [message, setMessage] = useState("");
+  const [subject, setSubject] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    if (!message.trim()) return;
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setMessage("");
+  const handleSubmit = async () => {
+    if (!message.trim() || !subject.trim()) return;
+    setLoading(true);
+    try {
+      await dashboardApi.createSupportTicket({ subject: subject.trim(), description: message.trim() });
+      setSubmitted(true);
+      setMessage("");
+      setSubject("");
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (err) {
+      console.error("Failed to create support ticket:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div>
+      <input
+        type="text"
+        value={subject}
+        onChange={(e) => setSubject(e.target.value)}
+        placeholder={lang === "fr" ? "Sujet du ticket..." : "Ticket subject..."}
+        className="w-full px-3 py-2.5 bg-parchment-ivory border border-on-surface/10 text-sm font-sans text-ebony-deep placeholder:text-on-surface-variant/40 focus:outline-none focus:border-terracotta-earth/30 mb-3"
+      />
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
@@ -766,9 +763,10 @@ function SupportTicketForm({ lang }: { lang: string }) {
       />
       <button
         onClick={handleSubmit}
-        className="px-4 py-2.5 bg-terracotta-earth text-parchment-ivory text-xs font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/90 transition-opacity cursor-pointer border-0"
+        disabled={loading || !subject.trim() || !message.trim()}
+        className="px-4 py-2.5 bg-terracotta-earth text-parchment-ivory text-xs font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/90 transition-opacity cursor-pointer border-0 disabled:opacity-50"
       >
-        {submitted
+        {loading ? "..." : submitted
           ? (lang === "fr" ? "Ticket Soumis" : "Ticket Submitted")
           : (lang === "fr" ? "Soumettre le Ticket" : "Submit Ticket")}
       </button>

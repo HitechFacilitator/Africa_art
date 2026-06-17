@@ -214,6 +214,38 @@ export const dashboardApi = {
       messages: Array<{ sender: string; text: string; timestamp: string }>;
     }> }>("/dashboard/inquiries"),
 
+  createInquiry: (data: { artworkTitle: string; artworkYear?: string; imageUrl?: string; messages?: Array<{ sender: string; text: string }> }) =>
+    apiRequest<{ success: boolean; data: {
+      id: string;
+      artworkTitle: string;
+      artworkYear: string;
+      imageUrl: string;
+      status: string;
+      date: string;
+      messages: Array<{ sender: string; text: string; timestamp: string }>;
+    } }>("/dashboard/inquiries", { method: "POST", body: JSON.stringify(data) }),
+
+  addInquiryMessage: (inquiryId: string, data: { sender: string; text: string }) =>
+    apiRequest<{ success: boolean; data: { sender: string; text: string; timestamp: string } }>(
+      `/dashboard/inquiries/${inquiryId.replace("inq-", "")}/messages`,
+      { method: "POST", body: JSON.stringify(data) }
+    ),
+
+  createSupportTicket: (data: { subject: string; description: string; priority?: string }) =>
+    apiRequest<{ success: boolean; data: {
+      id: string;
+      clientName: string;
+      clientRole: string;
+      subject: string;
+      description: string;
+      status: string;
+      priority: string;
+      createdDate: string;
+      lastUpdate: string;
+      assignedTo: string;
+      responses: Array<{ author: string; text: string; timestamp: string }>;
+    } }>("/chat/tickets", { method: "POST", body: JSON.stringify(data) }),
+
   getLogistics: () =>
     apiRequest<{ success: boolean; data: Array<{
       id: string;
@@ -351,6 +383,20 @@ export const chatApi = {
         read: boolean;
       }>;
     }> }>("/chat/threads"),
+
+  sendMessage: (threadId: string, data: { senderId?: string; senderName?: string; senderRole?: string; text: string }) =>
+    apiRequest<{ success: boolean; data: {
+      id: string;
+      senderId: string;
+      senderName: string;
+      senderRole: string;
+      text: string;
+      timestamp: string;
+      read: boolean;
+    } }>(`/chat/threads/${threadId.replace("thr-", "")}/messages`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ─── Admin API ──────────────────────────────────────────────────────

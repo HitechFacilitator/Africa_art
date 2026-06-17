@@ -27,6 +27,7 @@ import Footer from "@/components/layout/Footer";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork, useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import { dashboardApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Artwork } from "@/lib/types";
 
@@ -86,17 +87,28 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
 
-  const handleAcquisitionSubmit = (e: React.FormEvent) => {
+  const handleAcquisitionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inquiryFirstName || !inquiryLastName || !inquiryEmail || !gdprConsent) {
       alert("Please fill in all required fields and accept the privacy policy.");
       return;
     }
     setSubmittingInquiry(true);
-    setTimeout(() => {
+    try {
+      const initText = `Confidential acquisition inquiry for "${artwork.title}" (${artwork.era}). Contact: ${inquiryFirstName} ${inquiryLastName} (${inquiryEmail}). Status: ${clientStatus}. Budget: ${budgetRange}. ${inquiryNotes || ""}`;
+      await dashboardApi.createInquiry({
+        artworkTitle: artwork.title,
+        artworkYear: artwork.era,
+        imageUrl: artwork.imageUrl,
+        messages: [{ sender: "collector", text: initText }],
+      });
       setInquiryResult(`Dear ${inquiryFirstName} ${inquiryLastName},\n\nYour application regarding the potential allocation of "${artwork.title}" has been securely logged with our advisory council in London.\n\nOur representatives will verify your credentials and dispatch the hardcopy Authentication Dossier to the primary advisor email: ${inquiryEmail}.\n\nWarm regards,\nPrivate Placement Desk, Aduna Gallery`);
+    } catch (err) {
+      console.error("Failed to submit inquiry:", err);
+      alert("Failed to submit inquiry. Please try again.");
+    } finally {
       setSubmittingInquiry(false);
-    }, 1500);
+    }
   };
 
   const askCurator = (e: React.FormEvent) => {

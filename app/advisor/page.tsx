@@ -55,20 +55,35 @@ export default function AdvisorPage() {
     }
   };
 
-  const handleSendMessage = (threadId: string, text: string) => {
+  const handleSendMessage = async (threadId: string, text: string) => {
+    const tempMsg = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || "advisor",
+      senderName: user?.name || "Dr. Fatima Benali",
+      senderRole: (user?.role || "advisor") as "advisor",
+      text,
+      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+      read: true,
+    };
     setChatThreads(prev => prev.map(t => {
       if (t.id !== threadId) return t;
-      const newMsg = {
-        id: `msg-${Date.now()}`,
-        senderId: user?.id || "advisor",
-        senderName: user?.name || "Dr. Fatima Benali",
-        senderRole: (user?.role || "advisor") as "advisor",
-        text,
-        timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
-        read: true,
-      };
-      return { ...t, messages: [...t.messages, newMsg], lastMessage: text, lastMessageTime: newMsg.timestamp };
+      return { ...t, messages: [...t.messages, tempMsg], lastMessage: text, lastMessageTime: tempMsg.timestamp };
     }));
+    try {
+      const res = await chatApi.sendMessage(threadId, {
+        senderId: user?.id,
+        senderName: user?.name,
+        senderRole: user?.role || "advisor",
+        text,
+      });
+      const serverMsg = res.data;
+      setChatThreads(prev => prev.map(t => {
+        if (t.id !== threadId) return t;
+        return { ...t, messages: t.messages.map(m => m.id === tempMsg.id ? { ...m, id: serverMsg.id } : m) };
+      }));
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
   };
 
   return (
