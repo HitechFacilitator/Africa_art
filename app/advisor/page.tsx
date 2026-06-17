@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { AdvisorView, AdvisorConsultation, AdvisorClient, AdvisorPlacement, AdvisorActivity } from "@/lib/advisorTypes";
 import { advisorApi, chatApi } from "@/lib/api";
 import type { ChatThread } from "@/lib/chatTypes";
+import type { ChatMessage } from "@/lib/chatTypes";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
+import { useChatSSE } from "@/lib/useChatSSE";
 import AdvisorSidebar from "@/components/advisor/AdvisorSidebar";
 import AdvisorHeader from "@/components/advisor/AdvisorHeader";
 import OverviewView from "@/components/advisor/OverviewView";
@@ -39,6 +41,18 @@ export default function AdvisorPage() {
     advisorApi.getActivities().then(res => setActivities(res.data as AdvisorActivity[])).catch(() => {});
     chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
   }, []);
+
+  useChatSSE({
+    "new-message": (data: unknown) => {
+      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
+      setChatThreads(prev => prev.map(t => {
+        if (t.id !== `thr-${threadId}`) return t;
+        const alreadyExists = t.messages.some(m => m.id === message.id);
+        if (alreadyExists) return t;
+        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp };
+      }));
+    },
+  });
 
   const canGoBack = viewHistory.length > 1;
 

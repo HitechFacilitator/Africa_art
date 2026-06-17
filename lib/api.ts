@@ -397,6 +397,11 @@ export const chatApi = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+
+  markThreadRead: (threadId: string) =>
+    apiRequest<{ success: boolean }>(`/chat/threads/${threadId.replace("thr-", "")}/read`, {
+      method: "PATCH",
+    }),
 };
 
 // ─── Admin API ──────────────────────────────────────────────────────

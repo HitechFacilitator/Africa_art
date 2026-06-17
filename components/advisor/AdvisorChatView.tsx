@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { ChatThread } from "@/lib/chatTypes";
+import { chatApi } from "@/lib/api";
 import { Send, MessageSquare, User, Clock, Search, Archive, Eye } from "lucide-react";
 
 interface AdvisorChatViewProps {
@@ -30,6 +31,12 @@ export default function AdvisorChatView({ threads, onSendMessage }: AdvisorChatV
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selected?.messages.length]);
+
+  useEffect(() => {
+    if (selectedId) {
+      chatApi.markThreadRead(selectedId).catch(() => {});
+    }
+  }, [selectedId]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();

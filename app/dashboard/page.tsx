@@ -6,10 +6,13 @@ import { useRouter } from "next/navigation";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
 import { dashboardApi, consultationsApi, chatApi } from "@/lib/api";
 import type { ChatThread } from "@/lib/chatTypes";
+import type { ChatMessage } from "@/lib/chatTypes";
 import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, Gavel, Flame, ShieldCheck, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
+import AuthGuard from "@/components/AuthGuard";
+import { useChatSSE } from "@/lib/useChatSSE";
 import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -109,6 +112,19 @@ export default function DashboardPage() {
     chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
   }, []);
 
+  // Realtime SSE for new messages
+  useChatSSE({
+    "new-message": (data: unknown) => {
+      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
+      setChatThreads(prev => prev.map(t => {
+        if (t.id !== `thr-${threadId}`) return t;
+        const alreadyExists = t.messages.some(m => m.id === message.id);
+        if (alreadyExists) return t;
+        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp };
+      }));
+    },
+  });
+
   // Auto-translate dynamic data when language changes
   const translatedAcquisitions = useTranslatedAcquisitions(acquisitions);
   const translatedInquiries = useTranslatedInquiries(inquiries);
@@ -176,6 +192,11 @@ export default function DashboardPage() {
         messages: [{ sender: "collector", text: initText }],
       });
       const newInquiry = res.data as Inquiry;
+      if ((res.data as Record<string, unknown>).existing) {
+        setSelectedInquiryId(newInquiry.id);
+        navigateTab(ActiveTab.Inquiries);
+        return;
+      }
       setInquiries(prev => [newInquiry, ...prev]);
       setSelectedInquiryId(newInquiry.id);
       navigateTab(ActiveTab.Inquiries);
@@ -294,6 +315,7 @@ export default function DashboardPage() {
   const totalValueEur = acquisitions.reduce((acc, item) => acc + item.estimatedValueEur, 0);
 
   return (
+    <AuthGuard permission="dashboard">
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
         if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
@@ -720,6 +742,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
     </div>
+    </AuthGuard>
   );
 }
 

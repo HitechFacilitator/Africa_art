@@ -5,7 +5,7 @@ import { ActiveTab } from "@/lib/dashboardTypes";
 import { authApi, setToken, getToken, removeToken } from "@/lib/api";
 
 // ── Roles ──────────────────────────────────────────────────────────────
-export type Role = "visitor" | "collector" | "prestige" | "advisor" | "admin";
+export type Role = "visitor" | "collector" | "prestige" | "advisor" | "admin" | "support";
 
 // ── Permissions per role ───────────────────────────────────────────────
 const PERMISSIONS: Record<Role, string[]> = {
@@ -82,6 +82,13 @@ const PERMISSIONS: Record<Role, string[]> = {
     "compliance",
     "escrow",
   ],
+  support: [
+    "browse",
+    "search",
+    "support_panel",
+    "support_tickets",
+    "support_manage",
+  ],
 };
 
 // ── Dashboard tabs visible per role ────────────────────────────────────
@@ -135,6 +142,12 @@ const TAB_VISIBILITY: Record<Role, ActiveTab[]> = {
     ActiveTab.Security,
     ActiveTab.Settings,
   ],
+  support: [
+    ActiveTab.Dashboard,
+    ActiveTab.Support,
+    ActiveTab.Chat,
+    ActiveTab.Settings,
+  ],
 };
 
 // ── Role display info ──────────────────────────────────────────────────
@@ -144,6 +157,7 @@ export const ROLE_INFO: Record<Role, { label: string; labelFr: string; tier: str
   prestige: { label: "Prestige Collector", labelFr: "Collectionneur Prestige", tier: "Prestige", tierFr: "Prestige", color: "text-gold-leaf" },
   advisor: { label: "Art Advisor", labelFr: "Conseiller en Art", tier: "Advisor", tierFr: "Conseiller", color: "text-terracotta-earth" },
   admin: { label: "Administrator", labelFr: "Administrateur", tier: "Admin", tierFr: "Admin", color: "text-terracotta-earth" },
+  support: { label: "Support Staff", labelFr: "Équipe Support", tier: "Support", tierFr: "Support", color: "text-terracotta-earth" },
 };
 
 // ── User session ───────────────────────────────────────────────────────
