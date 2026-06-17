@@ -16,6 +16,7 @@ import {
   Filter,
   CircleDot,
   XCircle,
+  Trash2,
 } from "lucide-react";
 
 interface Ticket {
@@ -71,6 +72,7 @@ export default function SupportView({ lang }: SupportViewProps) {
   // Reply
   const [replyText, setReplyText] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -155,6 +157,18 @@ export default function SupportView({ lang }: SupportViewProps) {
       setReplyingTo(null);
     } catch (err) {
       console.error("Failed to reply:", err);
+    }
+  };
+
+  const handleDelete = async (ticketId: string) => {
+    try {
+      await adminApi.deleteSupportTicket(ticketId);
+      setTickets((prev) => prev.filter((t) => t.id !== ticketId));
+      if (expandedId === ticketId) setExpandedId(null);
+    } catch (err) {
+      console.error("Failed to delete ticket:", err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -386,6 +400,18 @@ export default function SupportView({ lang }: SupportViewProps) {
                       )}
                     </div>
                   </div>
+                  <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm(t("Supprimer ce ticket ?", "Delete this ticket?"))) {
+                          handleDelete(ticket.id);
+                        }
+                      }}
+                      className="p-1.5 text-on-surface-variant hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 shrink-0"
+                      title={t("Supprimer", "Delete")}
+                    >
+                      <Trash2 size={14} />
+                    </button>
                 </button>
 
                 {/* Expanded content */}

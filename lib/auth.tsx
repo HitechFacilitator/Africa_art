@@ -85,9 +85,12 @@ const PERMISSIONS: Record<Role, string[]> = {
   support: [
     "browse",
     "search",
+    "dashboard",
     "support_panel",
     "support_tickets",
     "support_manage",
+    "settings",
+    "chat",
   ],
 };
 

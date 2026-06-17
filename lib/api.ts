@@ -557,7 +557,10 @@ export const adminApi = {
     apiRequest<{ success: boolean }>(`/chat/tickets/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 
   addSupportTicketResponse: (id: string, text: string) =>
-    apiRequest<{ success: boolean; data: { author: string; text: string; timestamp: string } }>(`/chat/tickets/${id}/responses`, { method: "POST", body: JSON.stringify({ author: "Admin", text }) }),
+    apiRequest<{ success: boolean; data: { author: string; text: string; timestamp: string } }>(`/chat/tickets/${id}/responses`, { method: "POST", body: JSON.stringify({ text }) }),
+
+  deleteSupportTicket: (id: string) =>
+    apiRequest<{ success: boolean }>(`/chat/tickets/${id}`, { method: "DELETE" }),
 
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiRequest<{ success: boolean }>(`/users/change-password`, { method: "POST", body: JSON.stringify(data) }),
