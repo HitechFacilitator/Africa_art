@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { dashboardApi, adminApi } from "@/lib/api";
 import { useTranslate } from "@/lib/translations";
+import { useChatSSE } from "@/lib/useChatSSE";
 import {
   Send,
   ChevronDown,
@@ -89,6 +90,18 @@ export default function SupportView({ lang }: SupportViewProps) {
   useEffect(() => {
     fetchTickets();
   }, []);
+
+  // Listen for real-time ticket updates via SSE
+  useChatSSE({
+    "ticket-update": (data: unknown) => {
+      const { ticketId, response } = data as { ticketId: number; response: { author: string; text: string; timestamp: string } };
+      setTickets((prev) => prev.map((t) =>
+        t.id === String(ticketId)
+          ? { ...t, responses: [...t.responses, response], lastUpdate: response.timestamp }
+          : t
+      ));
+    },
+  });
 
   const handleCreateTicket = async () => {
     if (!newSubject.trim() || !newDescription.trim()) return;

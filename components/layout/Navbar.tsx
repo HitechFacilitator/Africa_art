@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Search, Menu, X, Lock, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 const EXPLORER_LINKS = [
   { href: "/catalogue", labelKey: "Catalogue" },
@@ -196,6 +197,9 @@ export default function Navbar() {
             >
               <Search size={17} strokeWidth={1.5} />
             </button>
+
+            {/* Notifications */}
+            {isAuthenticated && <NotificationBell />}
 
             {/* Collector Login / Dashboard */}
             {isAuthenticated ? (
