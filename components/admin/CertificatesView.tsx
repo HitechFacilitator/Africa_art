@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AdminCertificate } from "@/lib/adminTypes";
 import { useTranslate } from "@/lib/translations";
 import {
@@ -18,6 +18,13 @@ import {
 } from "lucide-react";
 import { adminApi } from "@/lib/api";
 import SmartDropdown from "@/components/ui/SmartDropdown";
+
+interface ArtworkOption {
+  id: string;
+  title: string;
+  culture: string;
+  era: string;
+}
 
 interface CertificatesViewProps {
   certificates: AdminCertificate[];
@@ -49,6 +56,13 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
   const [editingCert, setEditingCert] = useState<AdminCertificate | null>(null);
   const [form, setForm] = useState(emptyForm);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [artworks, setArtworks] = useState<ArtworkOption[]>([]);
+
+  useEffect(() => {
+    adminApi.getArtworks({ limit: 100 }).then(res => {
+      setArtworks(res.data.map(a => ({ id: a.id, title: a.title, culture: a.culture, era: a.era })));
+    }).catch(() => {});
+  }, []);
 
   const filtered = certificates.filter((c) => {
     const matchesSearch =
@@ -80,9 +94,10 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
   const handleCreate = async () => {
     setSaving(true);
     try {
+      const numericArtworkId = form.artworkId ? Number(form.artworkId.replace(/^ART-/i, "")) : undefined;
       await adminApi.createCertificate({
         artworkTitle: form.artworkTitle,
-        artworkId: form.artworkId ? form.artworkId.replace("art-", "") : undefined,
+        artworkId: numericArtworkId ? String(numericArtworkId) : undefined,
         ownerName: form.ownerName,
         ownerEmail: form.ownerEmail,
         expiryDate: form.expiryDate || undefined,
@@ -90,7 +105,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
       });
       setForm(emptyForm);
       setShowCreateModal(false);
-      onCreate({} as AdminCertificate);
+      onCreate(undefined as unknown as AdminCertificate);
     } catch (err) {
       console.error("Create certificate failed:", err);
     } finally {
@@ -284,12 +299,28 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
             </div>
             <div className="space-y-4 px-6">
               <div>
-                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Titre de l'Œuvre" : "Artwork Title"} *</label>
-                <input type="text" value={form.artworkTitle} onChange={(e) => setForm({ ...form, artworkTitle: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Benin Bronze Relief Plaque" />
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Œuvre" : "Artwork"} *</label>
+                <select
+                  value={form.artworkId}
+                  onChange={(e) => {
+                    const selected = artworks.find(a => a.id === e.target.value);
+                    setForm({
+                      ...form,
+                      artworkId: e.target.value,
+                      artworkTitle: selected?.title || form.artworkTitle,
+                    });
+                  }}
+                  className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf cursor-pointer"
+                >
+                  <option value="">{lang === "fr" ? "— Sélectionner une œuvre —" : "— Select an artwork —"}</option>
+                  {artworks.map(a => (
+                    <option key={a.id} value={a.id}>{a.title} ({a.id})</option>
+                  ))}
+                </select>
               </div>
               <div>
-                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "ID de l'Œuvre" : "Artwork ID"}</label>
-                <input type="text" value={form.artworkId} onChange={(e) => setForm({ ...form, artworkId: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="art-2" />
+                <label className="block text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider mb-1">{lang === "fr" ? "Titre de l'Œuvre" : "Artwork Title"} *</label>
+                <input type="text" value={form.artworkTitle} onChange={(e) => setForm({ ...form, artworkTitle: e.target.value })} className="w-full bg-surface-container-lowest border border-outline-variant/30 px-3 py-2.5 text-xs font-sans text-ebony-deep focus:outline-none focus:border-gold-leaf" placeholder="Benin Bronze Relief Plaque" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

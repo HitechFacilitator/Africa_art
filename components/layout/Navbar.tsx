@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { Search, Menu, X, Lock, User, ShieldCheck, ChevronDown } from "lucide-react";
+import { Search, Menu, X, Lock, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 
@@ -198,14 +198,25 @@ export default function Navbar() {
             </button>
 
             {/* Collector Login / Dashboard */}
-            <Link
-              href={isAuthenticated ? (user?.role === "admin" ? "/admin" : "/dashboard") : "/login"}
-              id="nav-login-btn"
-              aria-label={isAuthenticated ? "Go to dashboard" : "Collector login"}
-              className="p-2 text-on-surface-variant/60 hover:text-gold-leaf transition-colors duration-300"
-            >
-              <User size={17} strokeWidth={1.5} />
-            </Link>
+            {isAuthenticated ? (
+              <Link
+                href={user?.role === "admin" ? "/admin" : "/dashboard"}
+                id="nav-login-btn"
+                aria-label="Go to dashboard"
+                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-2.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
+              >
+                {t("Dashboard")}
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                id="nav-login-btn"
+                aria-label="Collector login"
+                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-5 py-2.5 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
+              >
+                {t("Login")}
+              </Link>
+            )}
 
             {/* Divider */}
             <div className="w-px h-5 bg-on-surface/10" />

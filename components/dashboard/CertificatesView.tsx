@@ -27,6 +27,7 @@ import PrintCertificateModal from "@/components/certificates/PrintCertificateMod
 import RegisterCertificateDrawer from "@/components/certificates/RegisterCertificateDrawer";
 import ProvenanceDetailModal from "@/components/certificates/ProvenanceDetailModal";
 import LoadingModal from "@/components/ui/LoadingModal";
+import { buildPdfShell, openPrintWindow } from "@/lib/pdfTemplate";
 
 interface Certificate {
   id: string;
@@ -137,66 +138,86 @@ export default function CertificatesView() {
     if (!selectedCert) return;
     setPdfLoading(true);
     const cert = selectedCert;
-    const html = `<!DOCTYPE html>
-<html><head><title>Certificate - ${cert.artwork.title}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;600&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Inter', sans-serif; background: #faf7f2; color: #1a1a1a; padding: 40px; }
-  .cert { max-width: 700px; margin: 0 auto; border: 8px double #C5A05940; padding: 40px; }
-  .inner { border: 1px solid #C5A05940; padding: 30px; text-align: center; }
-  .seal { font-size: 40px; color: #C5A059; margin-bottom: 10px; }
-  .subtitle { font-size: 11px; letter-spacing: 0.25em; color: #C5A059; text-transform: uppercase; font-weight: 600; }
-  h1 { font-family: 'Playfair Display', serif; font-size: 32px; margin: 10px 0; }
-  .desc { font-size: 12px; color: #666; font-style: italic; max-width: 500px; margin: 0 auto 20px; line-height: 1.6; }
-  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; border-top: 1px solid #C5A05930; border-bottom: 1px solid #C5A05930; padding: 20px 0; margin: 20px 0; }
-  .field-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em; color: #888; margin-bottom: 3px; }
-  .field-value { font-size: 14px; font-weight: 600; }
-  .field-gold { color: #C5A059; font-family: monospace; font-size: 12px; }
-  .sigs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 30px; text-align: center; }
-  .sig-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 13px; color: #555; }
-  .sig-title { font-size: 8px; text-transform: uppercase; letter-spacing: 0.15em; color: #888; margin-top: 3px; }
-  .hash { margin-top: 30px; border-top: 1px solid #C5A05920; padding-top: 15px; }
-  .hash-label { font-size: 9px; color: #aaa; letter-spacing: 0.1em; }
-  .hash-value { font-family: monospace; font-size: 10px; color: #C5A059; margin-top: 5px; font-weight: 600; }
-  @media print { body { padding: 0; } .no-print { display: none !important; } }
-</style></head><body>
-<div class="cert"><div class="inner">
-  <div class="seal">🛡️</div>
-  <div class="subtitle">Institutional Mandate of Antiquity</div>
-  <h1>Certificate of Authenticity</h1>
-  <p class="desc">This document solemnly certifies that the registered artifact described below has undergone rigorous carbon analysis, physical inspectoral examination, and chronological ledger checks.</p>
-  <div class="fields">
-    <div><div class="field-label">Asset Registration Title</div><div class="field-value">${cert.artwork.title}</div></div>
-    <div><div class="field-label">Chronological Epoch / Age</div><div class="field-value">${cert.artwork.period}</div></div>
-    <div><div class="field-label">Origin Cultural Coordinates</div><div class="field-value">${cert.artwork.origin}</div></div>
-    <div><div class="field-label">Secure Ledger Reference ID</div><div class="field-gold">${cert.certificateNumber}</div></div>
-    <div><div class="field-label">Authorizing Certifying Body</div><div class="field-value">${cert.issuer}</div></div>
-    <div><div class="field-label">Authentication Level</div><div class="field-value">${cert.authenticationLevel}</div></div>
-  </div>
-  <div class="sigs">
-    <div><div style="font-size:24px;color:#C5A059;">🛡️</div><div class="sig-title">Gold Foil Seal</div></div>
-    <div><div class="sig-name">A. Kengne G.</div><div class="sig-title">Chief Curator of Board</div></div>
-    <div><div class="sig-name">M. Lambert Trust</div><div class="sig-title">Treasury Trustee</div></div>
-  </div>
-  <div class="hash">
-    <div class="hash-label">LEDGER AUTHENTICITY BLOCK HASH</div>
-    <div class="hash-value">${cert.blockchainHash}</div>
-  </div>
-</div></div>
-</body></html>`;
-    const w = window.open("", "_blank", "width=800,height=900");
-    if (w) {
-      w.document.write(html);
-      w.document.close();
-      setTimeout(() => {
-        w.print();
-        setPdfLoading(false);
-      }, 500);
-    } else {
-      setPdfLoading(false);
-      alert("Please allow popups to download the PDF certificate.");
-    }
+    const content = `
+      <div class="header">
+        <div class="est">E S T . 2 0 2 4</div>
+        <div class="gallery-name">ADUNA GALLERY</div>
+        <div class="gallery-sub">African Heritage Art &amp; Advisory</div>
+        <hr class="divider">
+        <hr class="divider-thin">
+        <div class="doc-title">Certificate of Authenticity</div>
+        <div class="doc-subtitle">&amp; Provenance Verification</div>
+        <hr class="divider-thin">
+        <hr class="divider">
+      </div>
+
+      <div class="section" style="text-align:center; margin-bottom: 20px;">
+        <div style="background:#f5f0e8; display:inline-block; padding:8px 24px; border-radius:4px;">
+          <span style="font-size:9px; font-weight:bold; color:#a07d4a; letter-spacing:2px;">CERTIFICATE NO: ${cert.certificateNumber}</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Artwork Details</div>
+        <hr class="section-line">
+        <div class="field"><div class="field-label">Title</div><div class="field-value">${cert.artwork.title}</div></div>
+        <div class="field"><div class="field-label">Region</div><div class="field-value">${cert.artwork.region || "—"}</div></div>
+        <div class="field"><div class="field-label">Period / Era</div><div class="field-value">${cert.artwork.period || "—"}</div></div>
+        <div class="field"><div class="field-label">Material</div><div class="field-value">${cert.artwork.material || "—"}</div></div>
+        <div class="field"><div class="field-label">Dimensions</div><div class="field-value">${cert.artwork.dimensions || "—"}</div></div>
+        <div class="field"><div class="field-label">Origin</div><div class="field-value">${cert.artwork.origin || "—"}</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Certification Details</div>
+        <hr class="section-line">
+        <div class="field"><div class="field-label">Date of Issue</div><div class="field-value">${cert.issueDate}</div></div>
+        <div class="field"><div class="field-label">Expiry Date</div><div class="field-value">${cert.expiryDate || "No Expiry"}</div></div>
+        <div class="field"><div class="field-label">Certifying Body</div><div class="field-value">${cert.issuer}</div></div>
+        <div class="field"><div class="field-label">Auth. Level</div><div class="field-value">${cert.authenticationLevel}</div></div>
+        <div class="field"><div class="field-label">Last Verified</div><div class="field-value">${cert.lastVerified}</div></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Verification Status</div>
+        <hr class="section-line">
+        <span class="badge ${cert.status === "VALID" ? "badge-valid" : cert.status === "EXPIRED" ? "badge-expired" : "badge-held"}">${cert.status}</span>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Blockchain Verification</div>
+        <hr class="section-line">
+        <div class="hash-box">
+          <div class="hash-label">Transaction Hash</div>
+          ${cert.blockchainHash}
+        </div>
+        <p style="font-size:7px; color:#999; margin-top:6px;">Verify at: https://etherscan.io/tx/${cert.blockchainHash}</p>
+      </div>
+
+      <div class="signature-section">
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-label">Authorized Signature</div>
+          <div class="sig-sublabel">${cert.issuer}</div>
+          <div class="sig-date">${cert.issueDate}</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div class="sig-label">Digital Verification</div>
+          <div class="sig-sublabel">Blockchain Timestamp</div>
+          <div class="sig-date">${cert.issueDate}</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Aduna Gallery — African Heritage Art &amp; Advisory — Geneva, Switzerland</p>
+        <p>This certificate is digitally signed and blockchain-verified. Any tampering will invalidate the hash.</p>
+        <p>Document ID: ${cert.certificateNumber} | Generated: ${new Date().toISOString()}</p>
+      </div>
+    `;
+    const html = buildPdfShell(`Certificate - ${cert.artwork.title}`, content);
+    openPrintWindow(html);
+    setTimeout(() => setPdfLoading(false), 1000);
   };
 
   const handleShowQr = () => {

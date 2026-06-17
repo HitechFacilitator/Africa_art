@@ -154,13 +154,14 @@ export interface UserSession {
   role: Role;
   avatar?: string;
   institution?: string;
+  twoFactorEnabled?: boolean;
 }
 
 // ── Auth context ───────────────────────────────────────────────────────
 interface AuthCtx {
   user: UserSession | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOTP?: boolean; pendingEmail?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOTP?: boolean; pendingEmail?: string; user?: UserSession }>;
   loginAs: (role: Role) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; user?: UserSession }>;
   logout: () => void;
@@ -215,17 +216,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string; requiresOTP?: boolean; pendingEmail?: string; user?: UserSession }> => {
     try {
       const res = await authApi.login(email, password);
       if (res.requiresOTP) {
         localStorage.setItem(PENDING_EMAIL_KEY, email);
         return { success: true, requiresOTP: true, pendingEmail: email };
       }
-      // If no OTP required, set user directly
+      // If no OTP required, set user directly and return user info for redirect
       setToken(res.token);
       setUser(res.user as UserSession);
-      return { success: true };
+      return { success: true, requiresOTP: false, user: res.user as UserSession };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       return { success: false, error: message };
@@ -268,6 +269,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     removeToken();
     localStorage.removeItem(PENDING_EMAIL_KEY);
+    window.location.href = "/";
   }, []);
 
   const hasPermission = useCallback((permission: string): boolean => {

@@ -2,11 +2,11 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle, User, Crown, Briefcase, Shield } from "lucide-react";
+import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslate } from "@/lib/translations";
-import { useAuth, type Role } from "@/lib/auth";
+import { useAuth } from "@/lib/auth";
 import LoadingModal from "@/components/ui/LoadingModal";
 
 const MAX_ATTEMPTS = 3;
@@ -15,7 +15,7 @@ const OTP_EXPIRY_SECONDS = 60;
 export default function LoginPage() {
   const router = useRouter();
   const { lang } = useTranslate();
-  const { login, loginAs, verifyOTP } = useAuth();
+  const { login, verifyOTP } = useAuth();
   const [step, setStep] = useState<"login" | "mfa">("login");
   const [email, setEmail] = useState("");
   const [passphrase, setPassphrase] = useState("");
@@ -68,13 +68,6 @@ export default function LoginPage() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handleQuickLogin = async (role: Role) => {
-    await loginAs(role);
-    if (role === "admin") router.push("/admin");
-    else if (role === "advisor") router.push("/advisor");
-    else router.push("/dashboard");
-  };
-
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (lockedOut) {
@@ -97,6 +90,10 @@ export default function LoginPage() {
       setOtpTimer(OTP_EXPIRY_SECONDS);
       setOtpExpired(false);
       setOtp(["", "", "", "", "", ""]);
+    } else if (result.user) {
+      if (result.user.role === "admin") router.push("/admin");
+      else if (result.user.role === "advisor") router.push("/advisor");
+      else router.push("/dashboard");
     }
   };
 
@@ -217,23 +214,6 @@ export default function LoginPage() {
                   </div>
                   <div className="mt-6 text-center border-t border-ebony-deep/5 pt-4">
                     <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Vous n'avez pas de compte ?" : "Don't have an account?"} <Link href="/register" className="text-ebony-deep font-medium hover:text-gold-leaf underline transition-colors">{lang === "fr" ? "S'inscrire" : "Register"}</Link></p>
-                  </div>
-                  <div className="mt-4 flex flex-col items-center justify-center gap-1.5 border-t border-dashed border-ebony-deep/5 pt-3">
-                    <span className="text-[9px] uppercase tracking-[0.1em] text-on-surface-variant/40">{lang === "fr" ? "Accès Rapide aux Rôles" : "Quick Role Access"}</span>
-                    <div className="flex flex-wrap gap-1.5 justify-center">
-                      <button onClick={() => handleQuickLogin("collector")} className="text-[9px] font-sans px-2 py-1 bg-gold-leaf/10 text-ebony-deep hover:bg-gold-leaf/20 transition-colors border border-gold-leaf/25 flex items-center gap-1">
-                        <User size={10} /> Collector
-                      </button>
-                      <button onClick={() => handleQuickLogin("prestige")} className="text-[9px] font-sans px-2 py-1 bg-gold-leaf/15 text-ebony-deep hover:bg-gold-leaf/25 transition-colors border border-gold-leaf/30 flex items-center gap-1">
-                        <Crown size={10} /> Prestige
-                      </button>
-                      <button onClick={() => handleQuickLogin("advisor")} className="text-[9px] font-sans px-2 py-1 bg-terracotta-earth/10 text-ebony-deep hover:bg-terracotta-earth/20 transition-colors border border-terracotta-earth/25 flex items-center gap-1">
-                        <Briefcase size={10} /> Advisor
-                      </button>
-                      <button onClick={() => handleQuickLogin("admin")} className="text-[9px] font-sans px-2 py-1 bg-ebony-deep/10 text-ebony-deep hover:bg-ebony-deep/20 transition-colors border border-ebony-deep/25 flex items-center gap-1">
-                        <Shield size={10} /> Admin
-                      </button>
-                    </div>
                   </div>
                 </motion.div>
               ) : (

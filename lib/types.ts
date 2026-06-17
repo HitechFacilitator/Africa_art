@@ -1,3 +1,16 @@
+export interface ArtworkCertificate {
+  id: number;
+  certificateNumber: string;
+  title: string;
+  issuedDate: string;
+  expiryDate: string | null;
+  isValid: boolean;
+  blockchainHash: string;
+  status: string;
+  authenticationLevel: string;
+  certifyingBody: string;
+}
+
 export interface Artwork {
   id: string;
   title: string;
@@ -23,6 +36,7 @@ export interface Artwork {
     historicalCagr: number;
     yieldIndex: number;
   };
+  certificates?: ArtworkCertificate[];
 }
 
 export interface AdvisorMessage {

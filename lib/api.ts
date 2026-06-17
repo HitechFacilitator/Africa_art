@@ -493,6 +493,12 @@ export const adminApi = {
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
     apiRequest<{ success: boolean }>(`/users/change-password`, { method: "POST", body: JSON.stringify(data) }),
 
+  enable2FA: () =>
+    apiRequest<{ success: boolean; data: { twoFactorEnabled: boolean } }>("/auth/2fa/enable", { method: "POST" }),
+
+  disable2FA: (password: string) =>
+    apiRequest<{ success: boolean; data: { twoFactorEnabled: boolean } }>("/auth/2fa/disable", { method: "POST", body: JSON.stringify({ password }) }),
+
   getUsers: (params?: { page?: number; limit?: number; search?: string }) => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set("page", String(params.page));

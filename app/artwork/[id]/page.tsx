@@ -379,9 +379,43 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                   <button type="submit" disabled={curatorLoading || !curatorQuestion.trim()} className="bg-ebony-deep text-white p-3 hover:bg-gold-leaf transition-colors disabled:bg-surface-container-high"><Send className="w-4 h-4" /></button>
                 </form>
               </div>
+              </div>
             </div>
+
+            {/* Certificates Section */}
+            {(artwork.certificates ?? []).length > 0 && (
+              <div className="mt-8 bg-surface p-6 lg:p-8 border-t-2 border-gold-leaf">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Award className="w-5 h-5 text-gold-leaf" />
+                  <h3 className="font-serif text-[20px] font-bold text-ebony-deep">{lang === "fr" ? "Certificats d'Authenticité" : "Certificates of Authenticity"}</h3>
+                </div>
+                <div className="space-y-4">
+                  {artwork.certificates!.map((cert) => (
+                    <div key={cert.id} className="bg-surface-container-low border border-on-surface/10 p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-block w-2 h-2 rounded-full ${cert.isValid ? "bg-emerald-500" : "bg-red-500"}`} />
+                            <span className="font-sans text-sm font-semibold text-ebony-deep">{cert.certificateNumber}</span>
+                            <span className="text-[10px] font-sans px-1.5 py-0.5 bg-surface-container-high text-on-surface-variant uppercase tracking-wider">{cert.authenticationLevel}</span>
+                          </div>
+                          <p className="font-sans text-xs text-on-surface-variant">{cert.title}</p>
+                          <p className="font-sans text-[11px] text-on-surface-variant/70">
+                            {lang === "fr" ? "Émis par" : "Issued by"} {cert.certifyingBody} — {cert.issuedDate ? new Date(cert.issuedDate).toLocaleDateString(lang === "fr" ? "fr-FR" : "en-US", { year: "numeric", month: "long", day: "numeric" }) : ""}
+                          </p>
+                        </div>
+                        {cert.blockchainHash && (
+                          <span className="text-[9px] font-mono text-on-surface-variant/50 bg-surface-container-high px-2 py-0.5 truncate max-w-[180px]" title={cert.blockchainHash}>
+                            {cert.blockchainHash.slice(0, 12)}...{cert.blockchainHash.slice(-6)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
 
         {/* Curatorial Insights Section */}
         <section className="mb-20">

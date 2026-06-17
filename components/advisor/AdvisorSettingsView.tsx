@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import { adminApi } from "@/lib/api";
-import { Settings, User, Bell, Shield, Save, Eye, EyeOff, Lock } from "lucide-react";
+import { Settings, User, Bell, Shield, ShieldCheck, Save, Eye, EyeOff, Lock } from "lucide-react";
 
 export default function AdvisorSettingsView() {
   const { lang } = useTranslate();
@@ -22,6 +22,12 @@ export default function AdvisorSettingsView() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwSaved, setPwSaved] = useState(false);
   const [pwError, setPwError] = useState("");
+
+  const [twoFAEnabled, setTwoFAEnabled] = useState(user?.twoFactorEnabled ?? false);
+  const [twoFALoading, setTwoFALoading] = useState(false);
+  const [twoFAConfirmPassword, setTwoFAConfirmPassword] = useState("");
+  const [show2FAConfirm, setShow2FAConfirm] = useState(false);
+  const [twoFAError, setTwoFAError] = useState("");
 
   const handleSave = () => {
     setSaved(true);
@@ -54,6 +60,36 @@ export default function AdvisorSettingsView() {
       setPwError(err instanceof Error ? err.message : (lang === "fr" ? "Échec du changement de mot de passe" : "Failed to change password"));
     } finally {
       setPwSaving(false);
+    }
+  };
+
+  const handleToggle2FA = async () => {
+    setTwoFALoading(true);
+    setTwoFAError("");
+    try {
+      if (twoFAEnabled) {
+        if (!show2FAConfirm) {
+          setShow2FAConfirm(true);
+          setTwoFALoading(false);
+          return;
+        }
+        if (!twoFAConfirmPassword) {
+          setTwoFALoading(false);
+          return;
+        }
+        await adminApi.disable2FA(twoFAConfirmPassword);
+        setTwoFAEnabled(false);
+        setShow2FAConfirm(false);
+        setTwoFAConfirmPassword("");
+      } else {
+        await adminApi.enable2FA();
+        setTwoFAEnabled(true);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Operation failed";
+      setTwoFAError(msg);
+    } finally {
+      setTwoFALoading(false);
     }
   };
 
@@ -127,6 +163,40 @@ export default function AdvisorSettingsView() {
             <button onClick={handleChangePassword} disabled={pwSaving} className="px-4 py-2 border border-ebony-deep/20 text-terracotta-earth text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-terracotta-earth/5 transition-colors cursor-pointer bg-transparent disabled:opacity-50">
               {pwSaving ? "..." : pwSaved ? "✓ Saved" : (lang === "fr" ? "Changer le Mot de Passe" : "Change Password")}
             </button>
+          </div>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-parchment-ivory border border-ebony-deep/10 p-6">
+          <h3 className="font-serif text-base font-medium text-ebony-deep mb-4 flex items-center gap-2">
+            {twoFAEnabled ? <ShieldCheck className="w-4 h-4 text-emerald-600" /> : <Shield className="w-4 h-4 text-terracotta-earth" />}
+            {lang === "fr" ? "Authentification à Deux Facteurs" : "Two-Factor Authentication"}
+          </h3>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="font-sans text-xs font-medium text-ebony-deep">
+                  {twoFAEnabled ? (lang === "fr" ? "2FA Activé" : "2FA Enabled") : (lang === "fr" ? "2FA Désactivé" : "2FA Disabled")}
+                </p>
+                <p className="font-sans text-[10px] text-ebony-deep/50">
+                  {twoFAEnabled
+                    ? (lang === "fr" ? "Un code OTP est requis à chaque connexion" : "An OTP code is required on each login")
+                    : (lang === "fr" ? "Ajoutez une couche de sécurité supplémentaire" : "Add an extra layer of security")}
+                </p>
+              </div>
+              <button onClick={handleToggle2FA} disabled={twoFALoading} className={`w-11 h-6 rounded-full transition-colors relative ${twoFAEnabled ? "bg-emerald-600" : "bg-ebony-deep/10"}`}>
+                <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${twoFAEnabled ? "left-6" : "left-1"}`} />
+              </button>
+            </div>
+            {twoFAEnabled && show2FAConfirm && (
+              <div className="space-y-2 border-t border-ebony-deep/5 pt-3">
+                <p className="text-[10px] text-ebony-deep/50">{lang === "fr" ? "Entrez votre mot de passe pour désactiver :" : "Enter your password to disable:"}</p>
+                <input type="password" value={twoFAConfirmPassword} onChange={(e) => setTwoFAConfirmPassword(e.target.value)} placeholder={lang === "fr" ? "Mot de passe" : "Password"} className="w-full px-3 py-2 bg-surface-container-low border border-ebony-deep/10 text-xs font-sans text-ebony-deep focus:outline-none focus:border-terracotta-earth/30 transition-colors" />
+                <button onClick={handleToggle2FA} disabled={twoFALoading || !twoFAConfirmPassword} className="bg-red-600 text-white text-[10px] font-sans font-bold uppercase tracking-widest px-3 py-1.5 hover:bg-red-700 transition-colors disabled:opacity-50 cursor-pointer border-0">
+                  {twoFALoading ? "..." : (lang === "fr" ? "Désactiver" : "Disable")}
+                </button>
+                {twoFAError && <p className="text-xs text-red-600 font-sans">{twoFAError}</p>}
+              </div>
+            )}
           </div>
         </motion.div>
 

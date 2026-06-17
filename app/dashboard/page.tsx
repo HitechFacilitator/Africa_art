@@ -319,7 +319,6 @@ export default function DashboardPage() {
       <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
         if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
           logout();
-          router.push("/");
         }
       }} />
 

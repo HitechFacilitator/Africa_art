@@ -154,14 +154,14 @@ export default function AdminPage() {
     }
   };
 
-  const handleCreateCertificate = (cert: AdminCertificate) => {
-    setCertificates((prev) => [cert, ...prev]);
-    appendAudit("Admin", `Certificate created: ${cert.id} — ${cert.artworkTitle}`);
+  const handleCreateCertificate = (_cert: AdminCertificate) => {
+    fetchAllData();
+    appendAudit("Admin", `Certificate created`);
   };
 
-  const handleUpdateCertificate = (id: string, data: Partial<AdminCertificate>) => {
-    setCertificates((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
-    appendAudit("Admin", `Certificate ${id} updated`);
+  const handleUpdateCertificate = (_id: string, _data: Partial<AdminCertificate>) => {
+    fetchAllData();
+    appendAudit("Admin", `Certificate ${_id} updated`);
   };
 
   const handleDeleteCertificate = async (id: string) => {
