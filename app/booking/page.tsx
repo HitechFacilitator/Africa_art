@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Clock,
@@ -11,12 +11,14 @@ import {
   Phone,
   MapPin,
   ArrowRight,
+  AlertCircle,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import { consultationsApi } from "@/lib/api";
 import type { Artwork } from "@/lib/types";
 import AuthGuard from "@/components/AuthGuard";
 
@@ -29,9 +31,10 @@ interface Specialist {
   languages: string[];
   available: boolean;
   nextSlot: string;
+  dbUserId?: number;
 }
 
-const SPECIALISTS: Specialist[] = [
+const FALLBACK_SPECIALISTS: Specialist[] = [
   {
     id: "dr-amen",
     name: "Dr. Kofi Amen",
@@ -99,6 +102,7 @@ export default function BookingPage() {
   const { lang } = useTranslate();
   const { artworks: apiArtworks } = useArtworks();
   const displayArtworks = useTranslatedArtworks(apiArtworks as unknown as Artwork[]);
+  const [specialists, setSpecialists] = useState<Specialist[]>(FALLBACK_SPECIALISTS);
   const [selectedSpecialist, setSelectedSpecialist] = useState<Specialist | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -112,6 +116,32 @@ export default function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [bookingRef] = useState(() => `ADUNA-BKG-${Math.random().toString(36).substring(2, 8).toUpperCase()}`);
+  const [activeConsultation, setActiveConsultation] = useState<{ topic: string; status: string } | null>(null);
+  const [activeError, setActiveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    consultationsApi.getAdvisors().then((res) => {
+      const data = res.data || [];
+      if (data.length > 0) {
+        setSpecialists(data.map((a: { id: string; name: string; email: string; institution: string; avatar: string }) => ({
+          id: a.id,
+          name: a.name,
+          title: a.institution || "Art Advisor",
+          avatar: a.avatar || a.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase(),
+          specialties: ["Art Advisory", "Provenance Research"],
+          languages: ["English", "French"],
+          available: true,
+          nextSlot: "Available",
+          dbUserId: parseInt(a.id.replace("usr-", ""), 10),
+        })));
+      }
+    }).catch(() => {});
+    consultationsApi.getMy().then(res => {
+      const cons = (res.data || []) as Array<{ status: string; topic: string }>;
+      const active = cons.find(c => c.status === "Pending" || c.status === "Confirmed");
+      if (active) setActiveConsultation(active);
+    }).catch(() => {});
+  }, []);
 
   const canProceed = () => {
     if (step === 1) return selectedSpecialist !== null;
@@ -119,12 +149,30 @@ export default function BookingPage() {
     return name && email;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      await consultationsApi.create({
+        type: consultationMode === "video" ? "VIDEO" : consultationMode === "phone" ? "PHONE" : "IN_PERSON",
+        date: selectedDate,
+        timeSlot: selectedTime,
+        topic: selectedTopic,
+        notes: notes || undefined,
+        expertName: selectedSpecialist?.name,
+        expertTitle: selectedSpecialist?.title,
+        expertAvatar: selectedSpecialist?.avatar,
+        advisorId: selectedSpecialist?.dbUserId,
+        clientName: name,
+        clientEmail: email,
+        meetingFormat: consultationMode,
+      });
       setSubmitted(true);
-    }, 2000);
+    } catch (err: any) {
+      const msg = err?.message || "Failed to book consultation";
+      setActiveError(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const generateDates = () => {
@@ -212,7 +260,28 @@ export default function BookingPage() {
 
         {/* Content */}
         <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12 md:py-16">
-          {submitted ? (
+          {activeConsultation && !submitted ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg mx-auto text-center py-16">
+              <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-6" />
+              <h2 className="font-serif text-2xl text-ebony-deep mb-3">{lang === "fr" ? "Consultation Active en Cours" : "Active Consultation in Progress"}</h2>
+              <p className="font-sans text-sm text-on-surface-variant mb-2">
+                {lang === "fr"
+                  ? "Vous avez déjà une consultation active. Veuillez attendre qu'elle soit terminée ou rejetée avant d'en planifier une nouvelle."
+                  : "You already have an active consultation. Please wait for it to be completed or rejected before scheduling a new one."}
+              </p>
+              <p className="font-sans text-xs text-on-surface-variant/60 mb-8">
+                {lang === "fr" ? "Sujet" : "Topic"}: {activeConsultation.topic} · {activeConsultation.status}
+              </p>
+              <div className="flex gap-3 justify-center">
+                <a href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-6 py-3 text-xs uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors inline-block">
+                  {lang === "fr" ? "Aller au Tableau de Bord" : "Go to Dashboard"}
+                </a>
+                <a href="/catalogue" className="border border-ebony-deep/20 text-ebony-deep px-6 py-3 text-xs uppercase tracking-widest font-bold hover:border-gold-leaf hover:text-gold-leaf transition-colors inline-block">
+                  {lang === "fr" ? "Parcourir la Collection" : "Browse Collection"}
+                </a>
+              </div>
+            </motion.div>
+          ) : submitted ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg mx-auto text-center py-16">
               <CheckCircle className="w-16 h-16 text-gold-leaf mx-auto mb-6" />
               <h2 className="font-serif text-2xl text-ebony-deep mb-3">{lang === "fr" ? "Consultation Confirmée" : "Consultation Confirmed"}</h2>
@@ -244,7 +313,7 @@ export default function BookingPage() {
                     <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                       <h2 className="font-serif text-xl text-ebony-deep mb-6">{lang === "fr" ? "Choisissez Votre Spécialiste" : "Select Your Specialist"}</h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {SPECIALISTS.map((s) => (
+                        {specialists.map((s) => (
                           <button
                             key={s.id}
                             onClick={() => setSelectedSpecialist(s)}
@@ -509,6 +578,46 @@ export default function BookingPage() {
           )}
         </div>
       </main>
+
+      {/* Error Modal */}
+      <AnimatePresence>
+        {activeError && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-ebony-deep/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+            onClick={() => setActiveError(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-parchment-ivory border border-ebony-deep/10 max-w-md w-full p-8 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <h3 className="font-serif text-lg text-ebony-deep mb-3">{lang === "fr" ? "Consultation Active" : "Active Consultation"}</h3>
+              <p className="font-sans text-sm text-on-surface-variant mb-6">{activeError}</p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setActiveError(null)}
+                  className="bg-ebony-deep text-parchment-ivory px-6 py-2.5 text-xs font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-opacity cursor-pointer border-0"
+                >
+                  {lang === "fr" ? "Compris" : "Got it"}
+                </button>
+                <a
+                  href="/dashboard"
+                  className="border border-ebony-deep/20 text-ebony-deep px-6 py-2.5 text-xs font-sans font-bold uppercase tracking-widest hover:border-gold-leaf hover:text-gold-leaf transition-colors inline-flex items-center"
+                >
+                  {lang === "fr" ? "Voir le tableau de bord" : "View Dashboard"}
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
         <Footer />
       </>
     </AuthGuard>

@@ -117,6 +117,7 @@ export const INITIAL_INQUIRIES: Inquiry[] = [
     artworkYear: '2023',
     imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBxXscArJs7jm8fkVlA0HIef3hG7nB9zqwOK7BCT6Qu4klQbMUWYQgZqPNbqpJRq-MwcmGhf4mmYLiUVINuSkXR8rBU8F1ZHRF8wchLVhgPk5iAS5xT3kjYy85IbKAaxp70n1aUl_n6zBrAIntKg2Sp49BQ_UhCYts4FHBnX2N1rN3ZdNIZQ5CPx1Y-T76d-vIAr0xDMJeZ_ubf0t8oewNFH_fr-mVjel_xdJ3NupPP1Ijd0IfN5O_AXdbDAUX428Enhm26KLL0Ew',
     status: 'In Discussion',
+    category: 'Artwork',
     date: 'Jun 05, 2026',
     messages: [
       {
@@ -142,6 +143,7 @@ export const INITIAL_INQUIRIES: Inquiry[] = [
     artworkYear: '18th Century',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/Brooklyn_Museum_61.33_Ndop_Portrait_of_King_Mishe_miShyaang_maMbul_%2810%29.jpg',
     status: 'Received',
+    category: 'Acquisition',
     date: 'Jun 08, 2026',
     messages: [
       {

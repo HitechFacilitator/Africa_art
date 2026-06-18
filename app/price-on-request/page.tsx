@@ -243,8 +243,8 @@ export default function PriceOnRequestPage() {
                     <p className="font-serif text-sm text-ebony-deep font-semibold">{artwork.scarcityIndex}/100</p>
                   </div>
                   {submittedArtworkIds.has(parseInt(artwork.id.replace(/\D/g, ""), 10)) ? (
-                    <Link href="/support" className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
-                      <MessageSquare size={10} /> {lang === "fr" ? "Suivre" : "Follow Inquiry"}
+                    <Link href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
+                      <MessageSquare size={10} /> {lang === "fr" ? "Suivre" : "Track in Dashboard"}
                     </Link>
                   ) : (
                     <button

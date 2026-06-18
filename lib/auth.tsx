@@ -110,7 +110,6 @@ const TAB_VISIBILITY: Record<Role, ActiveTab[]> = {
     ActiveTab.Security,
     ActiveTab.Chat,
     ActiveTab.Documentation,
-    ActiveTab.Support,
     ActiveTab.Settings,
   ],
   prestige: [
@@ -127,7 +126,6 @@ const TAB_VISIBILITY: Record<Role, ActiveTab[]> = {
     ActiveTab.Security,
     ActiveTab.Chat,
     ActiveTab.Documentation,
-    ActiveTab.Support,
     ActiveTab.Settings,
   ],
   advisor: [],

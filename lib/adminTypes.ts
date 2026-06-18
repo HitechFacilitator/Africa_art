@@ -98,9 +98,10 @@ export interface AdminPORRequest {
   userId: number;
   artworkId: number;
   message?: string;
-  status: "PENDING" | "RESPONDED" | "CLOSED";
+  status: "PENDING" | "IN_DISCUSSION" | "CLOSED";
   response?: string;
   user?: { id: number; name: string; email: string };
   artwork?: { id: number; title: string };
+  messages: Array<{ id: number; sender: string; senderId?: number; text: string; timestamp: string }>;
   createdAt: string;
 }

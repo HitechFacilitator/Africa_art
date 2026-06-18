@@ -103,22 +103,40 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
             </div>
           ) : (
             consultations.map((item) => (
-              <div key={item.id} className="bg-parchment-ivory border border-ebony-deep/5 p-6 flex flex-col md:flex-row gap-6 justify-between shadow-level-1 hover:translate-y-[-1px] transition-all">
+              <div key={item.id} className={`bg-parchment-ivory border p-6 flex flex-col md:flex-row gap-6 justify-between shadow-level-1 hover:translate-y-[-1px] transition-all ${item.status === 'Rejected' ? 'border-red-200/40' : 'border-ebony-deep/5'}`}>
                 <div className="flex gap-4">
                   <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 border border-gold-leaf/20 select-none">{item.expertAvatar ? <img src={item.expertAvatar} alt={item.expertName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gold-leaf/20 flex items-center justify-center text-gold-leaf font-serif font-bold">{item.expertName?.charAt(0) || "?"}</div>}</div>
-                  <div>
-                    <h4 className="font-serif text-base font-semibold text-ebony-deep">{item.expertName}</h4>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <h4 className="font-serif text-base font-semibold text-ebony-deep">{item.expertName}</h4>
+                      <span className={`inline-flex px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider border ${item.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-800 border-emerald-250/30' : item.status === 'Rejected' ? 'bg-red-50 text-red-800 border-red-250/30' : item.status === 'Cancelled' ? 'bg-red-50 text-red-800 border-red-250/30' : 'bg-zinc-100 text-zinc-500 border-zinc-200'}`}>{item.status}</span>
+                    </div>
                     <p className="font-sans text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mb-2">{item.expertTitle}</p>
                     <div className="space-y-1 bg-surface-container-low p-3 max-w-md border-l-2 border-l-gold-leaf">
                       <p className="font-sans text-[10px] uppercase font-bold text-zinc-400">{lang === "fr" ? "Sujet Principal de Consultation" : "Consultation Focus Topic"}</p>
                       <p className="font-sans text-xs text-ebony-deep font-medium">{item.topic}</p>
                     </div>
                     {item.notes && <p className="font-sans text-[11px] text-zinc-400 mt-2.5 max-w-md italic leading-normal">Note: &quot;{item.notes}&quot;</p>}
+                    {item.meetingFormat && (
+                      <p className="font-sans text-[10px] text-zinc-400 mt-1 capitalize">
+                        <span className="font-bold">{lang === "fr" ? "Format" : "Format"}:</span> {item.meetingFormat}
+                      </p>
+                    )}
+                    {item.currentCollection && (
+                      <p className="font-sans text-[10px] text-zinc-400 mt-1">
+                        <span className="font-bold">{lang === "fr" ? "Collection" : "Collection"}:</span> {item.currentCollection}
+                      </p>
+                    )}
+                    {item.status === "Rejected" && item.rejectionReason && (
+                      <div className="mt-3 p-3 bg-red-50 border border-red-200/50">
+                        <p className="text-[9px] font-sans font-bold uppercase tracking-widest text-red-600 mb-1">{lang === "fr" ? "Raison du refus" : "Rejection reason"}</p>
+                        <p className="font-sans text-[11px] text-red-700">{item.rejectionReason}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col justify-between items-start md:items-end gap-4 shrink-0 text-left md:text-right border-t md:border-t-0 border-ebony-deep/5 pt-4 md:pt-0">
                   <div className="space-y-1">
-                    <span className={`inline-flex px-2 py-0.5 font-sans text-[9px] font-bold uppercase tracking-wider border ${item.status === 'Confirmed' ? 'bg-emerald-50 text-emerald-800 border-emerald-250/30' : 'bg-zinc-100 text-zinc-500 border-zinc-200'}`}>{item.status}</span>
                     <p className="font-sans text-xs text-ebony-deep font-bold flex items-center gap-1.5 justify-start md:justify-end mt-1"><CalendarDays className="w-4 h-4 text-gold-leaf" /> {item.date}</p>
                     <p className="font-sans text-[11px] text-zinc-400 flex items-center gap-1.5 justify-start md:justify-end"><Clock className="w-3.5 h-3.5" /> {item.timeSlot}</p>
                   </div>
@@ -126,6 +144,10 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
                     <button onClick={() => alert(lang === "fr" ? `Synchronisation du canal vidéo premium sécurisé. Jeton de salle émis pour ${item.expertName}.` : `Synchronizing secure premium video feed channel. Room token issued for ${item.expertName}.`)} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer">
                       <Video className="w-3.5 h-3.5" /> {lang === "fr" ? "Lancer le Conseil Vidéo" : "Launch Video Advisory"}
                     </button>
+                  ) : item.status === 'Rejected' ? (
+                    <p className="text-[10px] text-red-500 font-sans uppercase font-bold">{lang === "fr" ? "Refusé" : "Rejected"}</p>
+                  ) : item.status === 'Cancelled' ? (
+                    <p className="text-[10px] text-red-500 font-sans uppercase font-bold">{lang === "fr" ? "Annulé" : "Cancelled"}</p>
                   ) : (
                     <p className="text-[10px] text-zinc-500 font-sans uppercase">{lang === "fr" ? "En attente de validation du spécialiste" : "Awaiting Specialist Clearance"}</p>
                   )}

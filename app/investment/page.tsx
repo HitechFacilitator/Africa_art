@@ -18,6 +18,7 @@ import {
   Download,
   Building,
   ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -118,6 +119,7 @@ export default function InvestmentPage() {
   const [advisors, setAdvisors] = useState<Array<{ id: string; name: string; institution: string }>>([]);
   const [existingConsultation, setExistingConsultation] = useState<{ id: string; expertName: string; date: string; timeSlot: string; topic: string; status: string } | null>(null);
   const [consultLoading, setConsultLoading] = useState(false);
+  const [activeError, setActiveError] = useState<string | null>(null);
 
   // Gallery states
   const [regionFilter, setRegionFilter] = useState("All");
@@ -251,7 +253,7 @@ export default function InvestmentPage() {
     }).catch(() => {});
     consultationsApi.getMy().then(res => {
       const cons = res.data || [];
-      const active = cons.find((c: { status: string }) => c.status === "PENDING" || c.status === "CONFIRMED");
+      const active = cons.find((c: { status: string }) => c.status === "Pending" || c.status === "Confirmed");
       if (active) {
         setExistingConsultation(active);
         setBookingSuccess(true);
@@ -263,28 +265,32 @@ export default function InvestmentPage() {
     e.preventDefault();
     if (!fullName || !email) return;
     setConsultLoading(true);
-    const typeMap: Record<string, string> = {
-      "Portfolio Assessment & Allocation": "INVESTMENT_ADVICE",
-      "Direct Acquisition Strategy": "ACQUISITION_ADVICE",
-      "Authentication & Carbon Vetting": "COLLECTION_REVIEW",
-      "Secure Escrow Storage Setup": "INVESTMENT_ADVICE",
+    const meetingTypeMap: Record<string, string> = {
+      "Video Consultation": "VIDEO",
+      "Phone Consultation": "PHONE",
+      "In-Person Meeting": "IN_PERSON",
     };
     try {
       const res = await consultationsApi.create({
-        type: typeMap[inquiryType] || "INVESTMENT_ADVICE",
+        type: meetingTypeMap[meetingType] || "VIDEO",
         date: preferredDate || new Date().toISOString().split("T")[0],
-        notes: `${meetingType} | ${investmentTier} | ${investmentHorizon} | ${investmentGoals}`,
+        notes: [investmentTier, investmentHorizon, investmentGoals].filter(Boolean).join(" | ") || undefined,
         topic: inquiryType,
         timeSlot: preferredTime,
         expertName: preferredCurator,
         expertTitle: "Advisory Curator",
         advisorId: selectedAdvisorId,
+        clientName: fullName,
+        clientEmail: email,
+        currentCollection: currentCollection || undefined,
+        meetingFormat: meetingType,
       });
       setExistingConsultation(res.data);
       setBookingRef(res.data.id);
       setBookingSuccess(true);
-    } catch (err) {
-      console.error("Failed to create consultation:", err);
+    } catch (err: any) {
+      const msg = err?.message || "Failed to create consultation";
+      setActiveError(msg);
     } finally {
       setConsultLoading(false);
     }
@@ -618,7 +624,7 @@ export default function InvestmentPage() {
                              <div className="absolute top-0 right-0 bg-gold-leaf/10 border-l border-b border-gold-leaf/30 text-gold-leaf px-2.5 py-0.5 text-[8.5px] uppercase tracking-widest font-extrabold">{lang === "fr" ? "CONFIDENTIEL" : "CONFIDENTIAL"}</div>
                             <AnimatePresence mode="wait">
                               {!inquirySuccess ? (
-                                <motion.form key="inq" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={async (e) => { e.preventDefault(); try { await dashboardApi.createInquiry({ artworkTitle: activeGalleryArtifact?.title || "", artworkYear: activeGalleryArtifact?.period || "", imageUrl: activeGalleryArtifact?.imageUrl || "", messages: [{ sender: inquiryName, text: `Inquiry from ${inquiryName} (${inquiryEmail}) for ${activeGalleryArtifact?.title}` }] }); } catch {} setInquirySuccess(true); }} className="space-y-4">
+                                <motion.form key="inq" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={async (e) => { e.preventDefault(); try { await dashboardApi.createInquiry({ artworkTitle: activeGalleryArtifact?.title || "", artworkYear: activeGalleryArtifact?.period || "", imageUrl: activeGalleryArtifact?.imageUrl || "", category: "Investment", messages: [{ sender: inquiryName, text: `Inquiry from ${inquiryName} (${inquiryEmail}) for ${activeGalleryArtifact?.title}` }] }); } catch {} setInquirySuccess(true); }} className="space-y-4">
                                    <h4 className="font-serif text-base text-ebony-deep font-semibold">{lang === "fr" ? "Lancer une Demande d'Acquisition" : "Initiate Acquisition Inquiry"}</h4>
                                    <div className="space-y-3 font-sans text-xs">
                                      <div><label className="text-[10px] uppercase font-bold text-on-surface-variant/50 block mb-1">{lang === "fr" ? "Nom Complet" : "Full Name"}</label><input type="text" required placeholder="Baron Robert de Rothschild" value={inquiryName} onChange={(e) => setInquiryName(e.target.value)} className="w-full bg-parchment-ivory border-b border-on-surface/20 focus:border-gold-leaf focus:outline-none py-1.5 text-ebony-deep font-medium" /></div>
@@ -894,6 +900,45 @@ export default function InvestmentPage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Modal */}
+      <AnimatePresence>
+        {activeError && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-ebony-deep/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+            onClick={() => setActiveError(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-parchment-ivory border border-ebony-deep/10 max-w-md w-full p-8 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+              <h3 className="font-serif text-lg text-ebony-deep mb-3">{lang === "fr" ? "Consultation Active" : "Active Consultation"}</h3>
+              <p className="font-sans text-sm text-on-surface-variant mb-6">{activeError}</p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setActiveError(null)}
+                  className="bg-ebony-deep text-parchment-ivory px-6 py-2.5 text-xs font-sans font-bold uppercase tracking-widest hover:opacity-90 transition-opacity cursor-pointer border-0"
+                >
+                  {lang === "fr" ? "Compris" : "Got it"}
+                </button>
+                <a
+                  href="/dashboard"
+                  className="border border-ebony-deep/20 text-ebony-deep px-6 py-2.5 text-xs font-sans font-bold uppercase tracking-widest hover:border-gold-leaf hover:text-gold-leaf transition-colors inline-flex items-center"
+                >
+                  {lang === "fr" ? "Voir le tableau de bord" : "View Dashboard"}
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
       </>

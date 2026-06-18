@@ -11,14 +11,22 @@ export enum AdvisorView {
 export interface AdvisorConsultation {
   id: string;
   clientName: string;
+  clientEmail: string;
+  clientPhone: string;
+  clientInstitution: string;
+  clientCountry: string;
   clientTier: "VIP" | "Prestige" | "Standard";
   topic: string;
   date: string;
   timeSlot: string;
-  status: "Confirmed" | "Pending" | "Completed" | "Cancelled";
-  type: "Video" | "In-Person" | "Phone";
+  status: "Confirmed" | "Pending" | "Completed" | "Cancelled" | "Rejected";
+  type: string;
   notes: string;
+  rejectionReason: string;
+  currentCollection: string;
+  meetingFormat: string;
   followUpRequired: boolean;
+  createdAt: string;
 }
 
 export interface AdvisorClient {

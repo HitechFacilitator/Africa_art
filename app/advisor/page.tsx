@@ -130,7 +130,7 @@ export default function AdvisorPage() {
                   />
                 )}
                 {activeView === AdvisorView.Consultations && (
-                  <ConsultationsManageView consultations={consultations} />
+                  <ConsultationsManageView />
                 )}
                 {activeView === AdvisorView.Clients && (
                   <ClientsView clients={clients} />

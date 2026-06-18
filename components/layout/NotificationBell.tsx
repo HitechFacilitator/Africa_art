@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Bell, MessageSquare, Ticket, X } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Bell, MessageSquare, Ticket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useTranslate } from "@/lib/translations";
@@ -10,6 +10,7 @@ import { useChatSSE } from "@/lib/useChatSSE";
 
 interface Notification {
   id: string;
+  threadKey: string;
   type: "message" | "ticket";
   title: string;
   body: string;
@@ -23,6 +24,45 @@ interface NotificationBellProps {
   lightMode?: boolean;
 }
 
+function getStorageKey(userId: string | undefined): string {
+  return `aduna_read_notifs_${userId || "guest"}`;
+}
+
+function loadReadSet(userId: string | undefined): Set<string> {
+  try {
+    const raw = localStorage.getItem(getStorageKey(userId));
+    if (!raw) return new Set();
+    const arr: string[] = JSON.parse(raw);
+    return new Set(arr);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveReadSet(userId: string | undefined, readSet: Set<string>) {
+  try {
+    localStorage.setItem(getStorageKey(userId), JSON.stringify([...readSet]));
+  } catch {}
+}
+
+function getLastReadKey(userId: string | undefined): string {
+  return `aduna_last_read_${userId || "guest"}`;
+}
+
+function loadLastRead(userId: string | undefined): number {
+  try {
+    return Number(localStorage.getItem(getLastReadKey(userId))) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveLastRead(userId: string | undefined, ts: number) {
+  try {
+    localStorage.setItem(getLastReadKey(userId), String(ts));
+  } catch {}
+}
+
 export default function NotificationBell({ basePath = "/dashboard", lightMode = false }: NotificationBellProps) {
   const { user } = useAuth();
   const { lang } = useTranslate();
@@ -31,27 +71,35 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const readSetRef = useRef<Set<string>>(new Set());
 
   const t = (fr: string, en: string) => (lang === "fr" ? fr : en);
 
   useEffect(() => {
     if (!user) return;
+    readSetRef.current = loadReadSet(user.id);
+
     chatApi.getThreads().then((res) => {
       const threads = res.data || [];
-      const totalUnread = threads.reduce((sum: number, thread: { unreadCount: number }) => sum + (thread.unreadCount || 0), 0);
-      setUnreadCount(totalUnread);
       const threadNotifs: Notification[] = threads
         .filter((thread: { unreadCount: number }) => thread.unreadCount > 0)
-        .map((thread: { id: string; clientName: string; subject: string; lastMessage: string; lastMessageTime: string }) => ({
-          id: `notif-${thread.id}`,
-          type: "message" as const,
-          title: thread.subject || thread.clientName || t("Nouveau message", "New message"),
-          body: thread.lastMessage || "",
-          time: thread.lastMessageTime || "",
-          read: false,
-          threadId: thread.id,
-        }));
+        .map((thread: { id: string; clientName: string; subject: string; lastMessage: string; lastMessageTime: string }) => {
+          const threadKey = `thr-${thread.id}`;
+          const isRead = readSetRef.current.has(threadKey);
+          return {
+            id: `notif-${thread.id}`,
+            threadKey,
+            type: "message" as const,
+            title: thread.subject || thread.clientName || t("Nouveau message", "New message"),
+            body: thread.lastMessage || "",
+            time: thread.lastMessageTime || "",
+            read: isRead,
+            threadId: thread.id,
+          };
+        });
       setNotifications(threadNotifs);
+      const unread = threadNotifs.filter((n) => !n.read).length;
+      setUnreadCount(unread);
     }).catch(() => {});
   }, [user]);
 
@@ -59,10 +107,13 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
     "new-message": (data: unknown) => {
       const { threadId, message } = data as { threadId: number; message: { senderName: string; text: string; timestamp: string; senderId: string } };
       if (message.senderId === user?.id) return;
+      const threadKey = `thr-${threadId}`;
+      if (readSetRef.current.has(threadKey)) return;
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [
         {
           id: `notif-msg-${Date.now()}`,
+          threadKey,
           type: "message",
           title: message.senderName || t("Nouveau message", "New message"),
           body: message.text || "",
@@ -75,10 +126,13 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
     },
     "ticket-update": (data: unknown) => {
       const { response, ticketId } = data as { response: { author: string; text: string }; ticketId: number };
+      const threadKey = `ticket-${ticketId}`;
+      if (readSetRef.current.has(threadKey)) return;
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [
         {
           id: `notif-ticket-${Date.now()}`,
+          threadKey,
           type: "ticket",
           title: t("Mise à jour du ticket", "Ticket update"),
           body: `${response.author}: ${response.text}`.slice(0, 80),
@@ -101,9 +155,15 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleNotificationClick = (notif: Notification) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+  const markAsRead = useCallback((threadKey: string) => {
+    readSetRef.current.add(threadKey);
+    if (user) saveReadSet(user.id, readSetRef.current);
+    setNotifications((prev) => prev.map((n) => n.threadKey === threadKey ? { ...n, read: true } : n));
     setUnreadCount((prev) => Math.max(0, prev - 1));
+  }, [user]);
+
+  const handleNotificationClick = (notif: Notification) => {
+    markAsRead(notif.threadKey);
     setOpen(false);
     if (notif.type === "message" && notif.threadId) {
       router.push(`${basePath}?tab=chat&thread=${notif.threadId}`);
@@ -113,8 +173,16 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
   };
 
   const markAllRead = () => {
-    setUnreadCount(0);
+    const now = Date.now();
+    notifications.forEach((n) => {
+      readSetRef.current.add(n.threadKey);
+    });
+    if (user) {
+      saveReadSet(user.id, readSetRef.current);
+      saveLastRead(user.id, now);
+    }
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadCount(0);
   };
 
   if (!user) return null;
@@ -175,6 +243,9 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
                     <p className="font-sans text-xs font-medium text-ebony-deep truncate">{notif.title}</p>
                     <p className="font-sans text-[11px] text-on-surface-variant truncate mt-0.5">{notif.body}</p>
                   </div>
+                  {!notif.read && (
+                    <div className="shrink-0 mt-1 w-2 h-2 rounded-full bg-terracotta-earth" />
+                  )}
                 </button>
               ))
             )}

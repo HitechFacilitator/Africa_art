@@ -217,17 +217,19 @@ export const dashboardApi = {
       artworkYear: string;
       imageUrl: string;
       status: string;
+      category: string;
       date: string;
       messages: Array<{ sender: string; text: string; timestamp: string }>;
     }> }>("/dashboard/inquiries"),
 
-  createInquiry: (data: { artworkTitle: string; artworkYear?: string; imageUrl?: string; messages?: Array<{ sender: string; text: string }> }) =>
+  createInquiry: (data: { artworkTitle: string; artworkYear?: string; imageUrl?: string; category?: string; messages?: Array<{ sender: string; text: string }> }) =>
     apiRequest<{ success: boolean; data: {
       id: string;
       artworkTitle: string;
       artworkYear: string;
       imageUrl: string;
       status: string;
+      category: string;
       date: string;
       messages: Array<{ sender: string; text: string; timestamp: string }>;
     } }>("/dashboard/inquiries", { method: "POST", body: JSON.stringify(data) }),
@@ -309,9 +311,15 @@ export const consultationsApi = {
       topic: string;
       status: string;
       notes?: string;
+      type?: string;
+      rejectionReason?: string;
+      clientName?: string;
+      clientEmail?: string;
+      currentCollection?: string;
+      meetingFormat?: string;
     }> }>("/consultations/my"),
 
-  create: (data: { type: string; date: string; notes?: string; topic?: string; timeSlot?: string; expertName?: string; expertTitle?: string; expertAvatar?: string; advisorId?: number }) =>
+  create: (data: { type: string; date: string; notes?: string; topic?: string; timeSlot?: string; expertName?: string; expertTitle?: string; expertAvatar?: string; advisorId?: number; clientName?: string; clientEmail?: string; currentCollection?: string; meetingFormat?: string }) =>
     apiRequest<{ success: boolean; data: {
       id: string;
       expertName: string;
@@ -321,6 +329,10 @@ export const consultationsApi = {
       topic: string;
       status: string;
       notes?: string;
+      clientName?: string;
+      clientEmail?: string;
+      currentCollection?: string;
+      meetingFormat?: string;
     } }>("/consultations", { method: "POST", body: JSON.stringify(data) }),
 
   getAdvisors: () =>
@@ -335,18 +347,48 @@ export const consultationsApi = {
   getByAdvisor: () =>
     apiRequest<{ success: boolean; data: Array<{
       id: string;
-      expertName: string;
-      expertTitle: string;
-      expertAvatar: string;
-      date: string;
-      timeSlot: string;
-      topic: string;
-      status: string;
-      notes?: string;
       clientName: string;
       clientEmail: string;
+      clientPhone: string;
+      clientInstitution: string;
+      clientCountry: string;
+      clientTier: string;
+      currentCollection: string;
+      meetingFormat: string;
+      topic: string;
+      date: string;
+      timeSlot: string;
+      status: string;
       type: string;
+      notes: string;
+      rejectionReason: string;
+      followUpRequired: boolean;
+      createdAt: string;
     }> }>("/consultations/advisor"),
+
+  confirm: (id: string) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/consultations/${id.replace("cons-", "")}/confirm`,
+      { method: "PATCH", body: JSON.stringify({}) }
+    ),
+
+  reject: (id: string, reason?: string) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/consultations/${id.replace("cons-", "")}/reject`,
+      { method: "PATCH", body: JSON.stringify({ reason }) }
+    ),
+
+  complete: (id: string) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/consultations/${id.replace("cons-", "")}/complete`,
+      { method: "PATCH" }
+    ),
+
+  cancel: (id: string) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/consultations/${id.replace("cons-", "")}/cancel`,
+      { method: "PATCH" }
+    ),
 };
 
 // ─── Favorites API ──────────────────────────────────────────────────
@@ -373,6 +415,7 @@ export const porApi = {
       status: string;
       response?: string;
       artwork?: { id: number; title: string; images?: Array<{ url: string }> };
+      messages: Array<{ id: number; sender: string; senderId?: number; text: string; timestamp: string }>;
       createdAt: string;
     }> }>("/por/my"),
 
@@ -407,6 +450,7 @@ export const porApi = {
       response?: string;
       user?: { id: number; name: string; email: string };
       artwork?: { id: number; title: string };
+      messages: Array<{ id: number; sender: string; senderId?: number; text: string; timestamp: string }>;
       createdAt: string;
     }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
       `/por${qs ? `?${qs}` : ""}`
@@ -423,6 +467,18 @@ export const porApi = {
     apiRequest<{ success: boolean; data: { id: string; status: string } }>(
       `/por/${id}/close`,
       { method: "PATCH" }
+    ),
+
+  changeStatus: (id: number, status: string) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/por/${id}/status`,
+      { method: "PATCH", body: JSON.stringify({ status }) }
+    ),
+
+  addMessage: (id: number, text: string) =>
+    apiRequest<{ success: boolean; data: { id: number; sender: string; senderId: number; text: string; timestamp: string } }>(
+      `/por/${id}/messages`,
+      { method: "POST", body: JSON.stringify({ text }) }
     ),
 };
 

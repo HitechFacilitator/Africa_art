@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
-import { useChatSSE } from "@/lib/useChatSSE";
+import { useChatSSE, useSSE } from "@/lib/useChatSSE";
 import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -133,6 +133,28 @@ export default function DashboardPage() {
     },
   });
 
+  // Realtime SSE for consultations (status changes)
+  useSSE("/api/v1/events", {
+    "consultation-update": (data: unknown) => {
+      const { action } = data as { action: string };
+      if (["confirmed", "completed", "cancelled", "rejected", "created"].includes(action)) {
+        consultationsApi.getMy().then(res => setConsultations(res.data as Consultation[])).catch(() => {});
+      }
+    },
+    "inquiry-update": (data: unknown) => {
+      const { inquiryId, message } = data as { inquiryId: number; message?: { sender: string; text: string; timestamp: string } };
+      if (message) {
+        setInquiries(prev => prev.map(inq => {
+          const numId = parseInt(inq.id.replace("inq-", ""), 10);
+          if (numId !== inquiryId) return inq;
+          const alreadyExists = inq.messages.some(m => m.timestamp === message.timestamp && m.text === message.text);
+          if (alreadyExists) return inq;
+          return { ...inq, messages: [...inq.messages, message as Inquiry["messages"][0]] };
+        }));
+      }
+    },
+  });
+
   // Auto-translate dynamic data when language changes
   const translatedAcquisitions = useTranslatedAcquisitions(acquisitions);
   const translatedInquiries = useTranslatedInquiries(inquiries);
@@ -197,6 +219,7 @@ export default function DashboardPage() {
         artworkTitle,
         artworkYear: year,
         imageUrl: "",
+        category: "Investment",
         messages: [{ sender: "collector", text: initText }],
       });
       const newInquiry = res.data as Inquiry;

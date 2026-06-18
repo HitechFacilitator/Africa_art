@@ -41,6 +41,7 @@ export interface Inquiry {
   artworkYear: string;
   imageUrl: string;
   status: 'Received' | 'In Discussion' | 'Offer Presented' | 'Completed' | 'Archived';
+  category: string;
   date: string;
   messages: Array<{
     sender: 'collector' | 'curator';
@@ -57,8 +58,14 @@ export interface Consultation {
   date: string;
   timeSlot: string;
   topic: string;
-  status: 'Confirmed' | 'Pending' | 'Completed';
+  status: 'Confirmed' | 'Pending' | 'Completed' | 'Cancelled' | 'Rejected';
   notes?: string;
+  type?: string;
+  rejectionReason?: string;
+  clientName?: string;
+  clientEmail?: string;
+  currentCollection?: string;
+  meetingFormat?: string;
 }
 
 export interface LogisticsShipment {
