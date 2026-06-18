@@ -194,6 +194,7 @@ export default function AuctionAcquisitionPage() {
                     .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
                     @media print{body{border:none;margin:0;padding:20px}}
                   </style></head><body>
+                    <img src="/logo.png" style="width:60px;height:60px;display:block;margin:0 auto 8px" alt="Aduna Gallery" />
                     <h1>Auction Receipt</h1>
                     <h2>Aduna Gallery — Official Transaction Record</h2>
                     <div class="meta">

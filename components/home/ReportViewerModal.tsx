@@ -130,6 +130,7 @@ export default function ReportViewerModal({ onClose }: ReportViewerModalProps) {
                       .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
                       @media print{body{border:none;margin:0;padding:20px}}
                     </style></head><body>
+                      <img src="/logo.png" style="width:60px;height:60px;display:block;margin:0 auto 8px" alt="Aduna Gallery" />
                       <h1>Heritage Assets Report</h1>
                       <h2>The New Sovereign Reserve — Institutional Intelligence Report</h2>
                       <div class="meta">

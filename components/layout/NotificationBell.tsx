@@ -18,7 +18,12 @@ interface Notification {
   threadId?: string;
 }
 
-export default function NotificationBell() {
+interface NotificationBellProps {
+  basePath?: string;
+  lightMode?: boolean;
+}
+
+export default function NotificationBell({ basePath = "/dashboard", lightMode = false }: NotificationBellProps) {
   const { user } = useAuth();
   const { lang } = useTranslate();
   const router = useRouter();
@@ -52,7 +57,8 @@ export default function NotificationBell() {
 
   useChatSSE({
     "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { senderName: string; text: string; timestamp: string } };
+      const { threadId, message } = data as { threadId: number; message: { senderName: string; text: string; timestamp: string; senderId: string } };
+      if (message.senderId === user?.id) return;
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [
         {
@@ -68,7 +74,7 @@ export default function NotificationBell() {
       ]);
     },
     "ticket-update": (data: unknown) => {
-      const { response } = data as { response: { author: string; text: string } };
+      const { response, ticketId } = data as { response: { author: string; text: string }; ticketId: number };
       setUnreadCount((prev) => prev + 1);
       setNotifications((prev) => [
         {
@@ -78,6 +84,7 @@ export default function NotificationBell() {
           body: `${response.author}: ${response.text}`.slice(0, 80),
           time: new Date().toISOString(),
           read: false,
+          threadId: `ticket-${ticketId}`,
         },
         ...prev,
       ]);
@@ -99,9 +106,9 @@ export default function NotificationBell() {
     setUnreadCount((prev) => Math.max(0, prev - 1));
     setOpen(false);
     if (notif.type === "message" && notif.threadId) {
-      router.push(`/dashboard?tab=chat&thread=${notif.threadId}`);
+      router.push(`${basePath}?tab=chat&thread=${notif.threadId}`);
     } else if (notif.type === "ticket") {
-      router.push(`/dashboard?tab=support`);
+      router.push(`${basePath}?tab=tickets`);
     }
   };
 
@@ -116,12 +123,12 @@ export default function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 text-on-surface-variant/60 hover:text-gold-leaf transition-colors duration-300 cursor-pointer"
+        className={`relative flex items-center justify-center w-8 h-8 transition-colors cursor-pointer border-0 bg-transparent ${lightMode ? "text-parchment-ivory/60 hover:text-gold-leaf" : "text-ebony-deep/40 hover:text-terracotta-earth"}`}
         aria-label={t("Notifications", "Notifications")}
       >
-        <Bell size={17} strokeWidth={1.5} />
+        <Bell size={15} />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 flex items-center justify-center bg-terracotta-earth text-parchment-ivory text-[9px] font-sans font-bold rounded-full px-1">
+          <span className="absolute top-0.5 right-0.5 min-w-[14px] h-3.5 flex items-center justify-center bg-terracotta-earth text-parchment-ivory text-[8px] font-sans font-bold rounded-full px-0.5">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -173,7 +180,7 @@ export default function NotificationBell() {
             )}
           </div>
           <div className="px-4 py-2.5 border-t border-on-surface/5 text-center">
-            <a href="/dashboard" className="font-sans text-[10px] font-bold uppercase tracking-wider text-terracotta-earth hover:text-ebony-deep transition-colors">
+            <a href={basePath} className="font-sans text-[10px] font-bold uppercase tracking-wider text-terracotta-earth hover:text-ebony-deep transition-colors">
               {t("Voir toutes les notifications", "View all notifications")}
             </a>
           </div>

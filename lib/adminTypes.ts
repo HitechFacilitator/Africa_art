@@ -8,6 +8,7 @@ export enum AdminView {
   Compliance = "compliance",
   Settings = "settings",
   SupportManagement = "support_mgmt",
+  POR = "por",
 }
 
 export interface AdminArtwork {
@@ -90,4 +91,16 @@ export interface ComplianceScanResult {
   culturalSafeguard: string;
   treaties: string[];
   guidelines: string[];
+}
+
+export interface AdminPORRequest {
+  id: string;
+  userId: number;
+  artworkId: number;
+  message?: string;
+  status: "PENDING" | "RESPONDED" | "CLOSED";
+  response?: string;
+  user?: { id: number; name: string; email: string };
+  artwork?: { id: number; title: string };
+  createdAt: string;
 }

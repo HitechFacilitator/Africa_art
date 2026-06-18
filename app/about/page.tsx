@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "motion/react";
 import {
   ShieldCheck,
@@ -53,6 +54,9 @@ export default function AboutPage() {
       <section className="bg-ebony-deep py-20 md:py-28 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5 bg-[radial-gradient(ellipse_at_60%_50%,_#C5A059_0%,_transparent_70%)]" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-gold-leaf/5 blur-[120px] rounded-full" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+          <Image src="/logo.png" alt="" width={600} height={600} className="object-contain" priority />
+        </div>
         <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
             <div className="flex items-center gap-2 mb-4">

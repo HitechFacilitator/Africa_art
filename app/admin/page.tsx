@@ -20,6 +20,7 @@ import ComplianceView from "@/components/admin/ComplianceView";
 import SettingsView from "@/components/admin/SettingsView";
 import SupportManagementView from "@/components/admin/SupportManagementView";
 import ArtworkWizard from "@/components/admin/ArtworkWizard";
+import PORView from "@/components/admin/PORView";
 
 export default function AdminPage() {
   const { lang } = useTranslate();
@@ -278,7 +279,9 @@ export default function AdminPage() {
   return (
     <AuthGuard permission="admin_panel">
       <div className="bg-parchment-ivory min-h-screen font-sans flex flex-col">
-        <AdminSidebar activeView={activeView} setActiveView={(view) => { setViewHistory((prev) => [...prev, activeView]); setActiveView(view); }} open={sidebarOpen} setOpen={setSidebarOpen} />
+        <AdminSidebar activeView={activeView} setActiveView={(view) => { setViewHistory((prev) => [...prev, activeView]); setActiveView(view); }} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={{
+          [AdminView.SupportManagement]: supportTickets.filter(t => t.status === "Open" || t.status === "In Progress").length,
+        }} />
 
         <div className="flex-1 min-h-screen flex flex-col">
           <AdminHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
@@ -357,6 +360,7 @@ export default function AdminPage() {
                     onAddResponse={handleAddTicketResponse}
                   />
                 )}
+                {activeView === AdminView.POR && <PORView />}
               </motion.div>
             </AnimatePresence>
           </main>

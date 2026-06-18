@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ShieldCheck, Globe } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 
@@ -46,9 +47,9 @@ export default function Footer() {
           <div className="md:col-span-4 flex flex-col gap-6">
             <Link
               href="/"
-              className="font-serif text-2xl font-light tracking-tight text-gold-leaf hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-90 transition-opacity"
             >
-              ADUNA <span className="text-parchment-ivory/90">GALLERY</span>
+              <Image src="/logo.png" alt="Aduna Gallery" width={32} height={32} className="h-8 w-auto" />
             </Link>
 
             <p className="font-sans text-xs text-parchment-ivory/50 leading-relaxed max-w-xs">

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { AdvisorView } from "@/lib/advisorTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
@@ -21,9 +22,10 @@ interface AdvisorSidebarProps {
   setActiveView: (view: AdvisorView) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  unreadCounts?: Partial<Record<AdvisorView, number>>;
 }
 
-export default function AdvisorSidebar({ activeView, setActiveView, open, setOpen }: AdvisorSidebarProps) {
+export default function AdvisorSidebar({ activeView, setActiveView, open, setOpen, unreadCounts }: AdvisorSidebarProps) {
   const { lang } = useTranslate();
   const { user, logout } = useAuth();
 
@@ -48,9 +50,14 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
       <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 z-40">
         <div className="flex flex-col h-full bg-parchment-ivory border-r border-ebony-deep/10 py-8 text-ebony-deep">
           <div className="px-6 mb-10">
-            <h1 className="font-serif text-2xl font-medium tracking-tight text-terracotta-earth">
-              Aduna Gallery
-            </h1>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 overflow-hidden relative shrink-0">
+                <Image src="/logo.png" alt="Aduna Gallery" width={32} height={32} className="object-contain" />
+              </div>
+              <h1 className="font-serif text-2xl font-medium tracking-tight text-terracotta-earth">
+                Aduna Gallery
+              </h1>
+            </div>
             <p className="text-[10px] font-sans font-bold tracking-[0.12em] uppercase text-ebony-deep/40 mt-1">
               {lang === "fr" ? "Espace Conseiller" : "Advisor Portal"}
             </p>
@@ -60,6 +67,7 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
+              const count = unreadCounts?.[item.id] ?? 0;
               return (
                 <button
                   key={item.id}
@@ -71,7 +79,13 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? "text-terracotta-earth" : "text-ebony-deep/40"}`} />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {count > 0 && !isActive && (
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -109,9 +123,12 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
               className="lg:hidden fixed left-0 top-0 w-72 h-full z-50 flex flex-col bg-parchment-ivory shadow-2xl"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-ebony-deep/10">
-                <div>
-                  <h1 className="font-serif text-xl font-medium text-terracotta-earth">Aduna Gallery</h1>
-                  <p className="text-[9px] font-sans font-bold tracking-[0.1em] uppercase text-ebony-deep/40">{lang === "fr" ? "Espace Conseiller" : "Advisor Portal"}</p>
+                <div className="flex items-center gap-2">
+                  <Image src="/logo.png" alt="Aduna Gallery" width={28} height={28} className="h-7 w-auto" />
+                  <div>
+                    <h1 className="font-serif text-xl font-medium text-terracotta-earth">Aduna Gallery</h1>
+                    <p className="text-[9px] font-sans font-bold tracking-[0.1em] uppercase text-ebony-deep/40">{lang === "fr" ? "Espace Conseiller" : "Advisor Portal"}</p>
+                  </div>
                 </div>
                 <button onClick={() => setOpen(false)} className="text-ebony-deep/40 hover:text-terracotta-earth transition-colors cursor-pointer bg-transparent border-0">
                   <ChevronLeft className="w-5 h-5" />
@@ -122,6 +139,7 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeView === item.id;
+                  const count = unreadCounts?.[item.id] ?? 0;
                   return (
                     <button
                       key={item.id}
@@ -133,7 +151,13 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
                       }`}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? "text-terracotta-earth" : "text-ebony-deep/40"}`} />
-                      <span>{item.label}</span>
+                      <span className="flex-1">{item.label}</span>
+                      {count > 0 && !isActive && (
+                        <span className="relative flex h-2 w-2 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                      )}
                     </button>
                   );
                 })}

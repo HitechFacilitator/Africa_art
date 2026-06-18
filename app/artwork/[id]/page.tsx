@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -21,13 +21,14 @@ import {
   Briefcase,
   ChevronDown,
   ShoppingCart,
+  MessageSquare,
 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtwork, useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
-import { dashboardApi } from "@/lib/api";
+import { dashboardApi, porApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import type { Artwork } from "@/lib/types";
 
@@ -66,6 +67,23 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   const [curatorQuestion, setCuratorQuestion] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [curatorLoading, setCuratorLoading] = useState(false);
+  const [porAlreadySubmitted, setPorAlreadySubmitted] = useState(false);
+  const [porSubmittedId, setPorSubmittedId] = useState<string | null>(null);
+
+  const isPor = typeof artwork?.label === "string";
+
+  useEffect(() => {
+    if (!isPor || !artwork) return;
+    const artworkId = parseInt(artwork.id.replace(/\D/g, ""), 10);
+    if (isNaN(artworkId)) return;
+    porApi.getByArtwork(artworkId).then((res) => {
+      const data = res.data || [];
+      if (data.length > 0) {
+        setPorAlreadySubmitted(true);
+        setPorSubmittedId(data[0].id);
+      }
+    }).catch(() => {});
+  }, [artwork, isPor]);
 
   if (loading || !rawArtwork) {
     return (
@@ -82,8 +100,6 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
     );
   }
 
-  const isPor = typeof artwork.label === "string";
-
   const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
   const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
 
@@ -95,13 +111,11 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
     }
     setSubmittingInquiry(true);
     try {
-      const initText = `Confidential acquisition inquiry for "${artwork.title}" (${artwork.era}). Contact: ${inquiryFirstName} ${inquiryLastName} (${inquiryEmail}). Status: ${clientStatus}. Budget: ${budgetRange}. ${inquiryNotes || ""}`;
-      await dashboardApi.createInquiry({
-        artworkTitle: artwork.title,
-        artworkYear: artwork.era,
-        imageUrl: artwork.imageUrl,
-        messages: [{ sender: "collector", text: initText }],
-      });
+      const artworkId = parseInt(artwork.id.replace(/\D/g, ""), 10);
+      const message = `Confidential acquisition inquiry for "${artwork.title}" (${artwork.era}). Contact: ${inquiryFirstName} ${inquiryLastName} (${inquiryEmail}). Status: ${clientStatus}. Budget: ${budgetRange}. ${inquiryNotes || ""}`;
+      const res = await porApi.create(artworkId, message);
+      setPorAlreadySubmitted(true);
+      setPorSubmittedId(res.data.id);
       setInquiryResult(`Dear ${inquiryFirstName} ${inquiryLastName},\n\nYour application regarding the potential allocation of "${artwork.title}" has been securely logged with our advisory council in London.\n\nOur representatives will verify your credentials and dispatch the hardcopy Authentication Dossier to the primary advisor email: ${inquiryEmail}.\n\nWarm regards,\nPrivate Placement Desk, Aduna Gallery`);
     } catch (err) {
       console.error("Failed to submit inquiry:", err);
@@ -301,17 +315,18 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                     <span className="text-xs text-on-surface-variant">{lang === "fr" ? "Classification des Prix" : "Pricing Classification"}</span>
                     <span className="font-serif text-lg font-bold text-ebony-deep">{lang === "fr" ? "Prix sur Demande" : "Price on Request"}</span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                    <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms and transport insurance parameters for ${artwork.title}.`); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors">
-                      {lang === "fr" ? "Demander en Confiance" : "Inquire Confidentially"}
-                    </button>
-                    <a href={`/acquisition?artwork=${artwork.id}`} className="w-full border border-gold-leaf text-gold-leaf bg-transparent font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf/10 transition-colors text-center">
-                      {lang === "fr" ? "Acquérir Maintenant" : "Acquire Now"}
-                    </a>
+                  <div className="flex flex-col gap-3.5">
+                    {porAlreadySubmitted ? (
+                      <Link href="/support" className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors text-center flex items-center justify-center gap-2">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        {lang === "fr" ? "Suivre Ma Demande" : "Follow My Inquiry"}
+                      </Link>
+                    ) : (
+                      <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms and transport insurance parameters for ${artwork.title}.`); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors">
+                        {lang === "fr" ? "Demander en Confiance" : "Inquire Confidentially"}
+                      </button>
+                    )}
                   </div>
-                  <button onClick={() => setShowReserveModal(true)} className="w-full mt-3 border border-ebony-deep/20 text-ebony-deep bg-transparent font-sans text-xs font-semibold py-3 px-6 uppercase tracking-wider hover:border-gold-leaf hover:text-gold-leaf transition-colors">
-                    {lang === "fr" ? "Réserver pour 48 Heures" : "Reserve for 48 Hours"}
-                  </button>
                 </div>
               ) : (
                 /* Fixed Price Section */
@@ -476,16 +491,27 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
           </div>
           {isPor ? (
             <div className="flex items-center gap-2">
-              <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms for ${artwork.title}.`); }} className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:block">
-                {lang === "fr" ? "Demander" : "Inquire Now"}
-              </button>
-              <a href={`/acquisition?artwork=${artwork.id}`} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-colors border border-gold-leaf">
-                {lang === "fr" ? "Acquérir" : "Acquire"}
-              </a>
+              {porAlreadySubmitted ? (
+                <Link href="/support" className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:flex items-center gap-2">
+                  <MessageSquare className="w-3 h-3" />
+                  {lang === "fr" ? "Suivre Ma Demande" : "Follow My Inquiry"}
+                </Link>
+              ) : (
+                <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms for ${artwork.title}.`); }} className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:block">
+                  {lang === "fr" ? "Demander" : "Inquire Now"}
+                </button>
+              )}
             </div>
           ) : (
-            <Link href="/login" className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity flex items-center gap-2">
-              <Lock className="w-3 h-3" /> {lang === "fr" ? "Connexion pour Acheter" : "Login to Purchase"}
+            <Link
+              href={isAuthenticated ? "#" : "/login"}
+              onClick={isAuthenticated ? (e) => { e.preventDefault(); setShowReserveModal(true); } : undefined}
+              className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity flex items-center gap-2"
+            >
+              <Lock className="w-3 h-3" />
+              {isAuthenticated
+                ? (lang === "fr" ? "Réserver pour 48 Heures" : "Reserve for 48 Hours")
+                : (lang === "fr" ? "Connexion pour Acheter" : "Login to Purchase")}
             </Link>
           )}
         </div>
@@ -591,8 +617,8 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
       {/* Dossier Modal */}
       <AnimatePresence>
         {showDossierModal && (
-          <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+            <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory border border-gold-leaf max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 text-ebony-deep shadow-2xl relative">
               <button onClick={() => setShowDossierModal(false)} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep"><X className="w-6 h-6" /></button>
               <div className="text-center mb-6">
                 <Briefcase className="w-12 h-12 text-gold-leaf mx-auto mb-3" />

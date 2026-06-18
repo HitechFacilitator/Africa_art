@@ -104,7 +104,9 @@ export default function AdvisorPage() {
   return (
     <AuthGuard permission="advisor_dashboard">
       <div className="bg-background min-h-screen font-sans flex flex-col">
-        <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} />
+        <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={{
+          [AdvisorView.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
+        }} />
 
         <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
           <AdvisorHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />

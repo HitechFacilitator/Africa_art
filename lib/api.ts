@@ -311,7 +311,7 @@ export const consultationsApi = {
       notes?: string;
     }> }>("/consultations/my"),
 
-  create: (data: { type: string; date: string; notes?: string; topic?: string; timeSlot?: string; expertName?: string; expertTitle?: string; expertAvatar?: string }) =>
+  create: (data: { type: string; date: string; notes?: string; topic?: string; timeSlot?: string; expertName?: string; expertTitle?: string; expertAvatar?: string; advisorId?: number }) =>
     apiRequest<{ success: boolean; data: {
       id: string;
       expertName: string;
@@ -331,6 +331,22 @@ export const consultationsApi = {
       institution: string;
       avatar: string;
     }> }>("/consultations/advisors"),
+
+  getByAdvisor: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      expertName: string;
+      expertTitle: string;
+      expertAvatar: string;
+      date: string;
+      timeSlot: string;
+      topic: string;
+      status: string;
+      notes?: string;
+      clientName: string;
+      clientEmail: string;
+      type: string;
+    }> }>("/consultations/advisor"),
 };
 
 // ─── Favorites API ──────────────────────────────────────────────────
@@ -344,6 +360,70 @@ export const favoritesApi = {
 
   remove: (artworkId: string) =>
     apiRequest<{ success: boolean }>(`/favorites/${artworkId}`, { method: "DELETE" }),
+};
+
+// ─── POR (Price on Request) API ──────────────────────────────────────
+
+export const porApi = {
+  getMy: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      artworkId: number;
+      message?: string;
+      status: string;
+      response?: string;
+      artwork?: { id: number; title: string; images?: Array<{ url: string }> };
+      createdAt: string;
+    }> }>("/por/my"),
+
+  getByArtwork: (artworkId: number) =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      userId: number;
+      message?: string;
+      status: string;
+      response?: string;
+      user?: { id: number; name: string; email: string };
+      createdAt: string;
+    }> }>(`/por/artwork/${artworkId}`),
+
+  create: (artworkId: number, message?: string) =>
+    apiRequest<{ success: boolean; data: { id: string; artworkId: number; status: string } }>(
+      `/por/${artworkId}`,
+      { method: "POST", body: JSON.stringify({ message }) }
+    ),
+
+  getAll: (params?: { page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    const qs = searchParams.toString();
+    return apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      userId: number;
+      artworkId: number;
+      message?: string;
+      status: string;
+      response?: string;
+      user?: { id: number; name: string; email: string };
+      artwork?: { id: number; title: string };
+      createdAt: string;
+    }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
+      `/por${qs ? `?${qs}` : ""}`
+    );
+  },
+
+  respond: (id: number, response: string) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/por/${id}/respond`,
+      { method: "PATCH", body: JSON.stringify({ response }) }
+    ),
+
+  close: (id: number) =>
+    apiRequest<{ success: boolean; data: { id: string; status: string } }>(
+      `/por/${id}/close`,
+      { method: "PATCH" }
+    ),
 };
 
 // ─── Advisor API ────────────────────────────────────────────────────

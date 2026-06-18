@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Acquisition, ActiveTab, AcquisitionStatus } from "@/lib/dashboardTypes";
+import { Acquisition, ActiveTab, AcquisitionStatus, Consultation } from "@/lib/dashboardTypes";
 import { useAuth } from "@/lib/auth";
 import {
   Download,
@@ -19,7 +19,9 @@ import {
   History,
   TrendingUp,
   Gavel,
-  Search
+  Search,
+  Video,
+  BookmarkCheck
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
@@ -27,6 +29,7 @@ import Link from "next/link";
 
 interface DashboardViewProps {
   acquisitions: Acquisition[];
+  consultations: Consultation[];
   onExpressInterest: (artworkTitle: string, year: string) => void;
   setActiveTab: (tab: ActiveTab) => void;
   setSelectedAcquisition: (acq: Acquisition | null) => void;
@@ -35,6 +38,7 @@ interface DashboardViewProps {
 
 export default function DashboardView({
   acquisitions,
+  consultations,
   onExpressInterest,
   setActiveTab,
   setSelectedAcquisition,
@@ -136,6 +140,47 @@ export default function DashboardView({
           </div>
         </div>
       </section>
+
+      {consultations.length > 0 && (
+        <section className="mb-12">
+          <div className="flex justify-between items-end mb-6 border-b border-ebony-deep/10 pb-4">
+            <h3 className="font-serif text-xl font-medium text-ebony-deep">{lang === "fr" ? "Consultations à Venir" : "Upcoming Consultations"}</h3>
+            <button onClick={() => setActiveTab(ActiveTab.Consultations)} className="font-sans text-xs font-semibold uppercase tracking-widest text-gold-leaf hover:text-terracotta-earth underline transition-colors cursor-pointer border-0 bg-transparent">
+              {lang === "fr" ? "Voir Tout" : "View All"}
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {consultations.slice(0, 2).map((c) => (
+              <div key={c.id} className="bg-surface-container-low border border-on-surface/5 p-5 flex items-center gap-4 group hover:border-gold-leaf/30 transition-colors">
+                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-surface-container-highest flex items-center justify-center">
+                  {c.expertAvatar ? (
+                    <img src={c.expertAvatar} alt={c.expertName} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-serif text-ebony-deep">{c.expertName?.charAt(0) || '?'}</span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <BookmarkCheck className="w-3.5 h-3.5 text-gold-leaf shrink-0" />
+                    <p className="font-serif text-sm text-ebony-deep font-medium truncate">{c.topic || (lang === "fr" ? "Consultation" : "Consultation")}</p>
+                  </div>
+                  <p className="font-sans text-xs text-on-surface-variant truncate">{c.expertName} • {c.expertTitle}</p>
+                  <p className="font-sans text-[11px] text-zinc-400 mt-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" /> {c.date} • {c.timeSlot || (lang === "fr" ? "À confirmer" : "TBC")}
+                  </p>
+                </div>
+                <span className={`font-sans text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 border shrink-0 ${
+                  c.status === 'Confirmed' ? 'bg-emerald-50/40 text-emerald-800 border-emerald-200/40'
+                    : c.status === 'Pending' ? 'bg-amber-50 text-amber-800 border-amber-200/50'
+                      : 'bg-zinc-50 text-zinc-600 border-zinc-200'
+                }`}>
+                  {c.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         <div className="lg:col-span-7">

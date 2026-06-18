@@ -1,6 +1,7 @@
 "use client";
 
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
+import Image from "next/image";
 import {
   LayoutDashboard,
   Landmark,
@@ -33,6 +34,7 @@ interface SidebarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onLogout: () => void;
+  unreadCounts?: Partial<Record<ActiveTab, number>>;
 }
 
 export default function Sidebar({
@@ -43,7 +45,8 @@ export default function Sidebar({
   setIsOpenMobile,
   open,
   setOpen,
-  onLogout
+  onLogout,
+  unreadCounts
 }: SidebarProps) {
   const { lang, setLang } = useTranslate();
   const { canAccessTab, user } = useAuth();
@@ -77,9 +80,14 @@ export default function Sidebar({
     <div className="flex flex-col h-full bg-surface border-r border-ebony-deep/5 shadow-sm py-6 text-on-surface">
       {/* Header */}
       <div className="px-5 mb-6 flex items-center justify-between">
-        <h1 className="font-serif text-2xl font-medium tracking-tight text-ebony-deep">
-          {lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}
-        </h1>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 overflow-hidden relative shrink-0">
+            <Image src="/logo.png" alt="Aduna Gallery" width={32} height={32} className="object-contain" />
+          </div>
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-ebony-deep">
+            {lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}
+          </h1>
+        </div>
         <button
           onClick={() => setOpen(false)}
           className="p-1.5 text-on-surface-variant/50 hover:text-ebony-deep transition-colors cursor-pointer"
@@ -107,6 +115,7 @@ export default function Sidebar({
         {navItems.map((item) => {
           const IconComponent = item.icon;
           const isActive = activeTab === item.id;
+          const count = unreadCounts?.[item.id] ?? 0;
           return (
             <button
               key={item.id}
@@ -119,7 +128,13 @@ export default function Sidebar({
               }`}
             >
               <IconComponent className={`w-[18px] h-[18px] shrink-0 ${isActive ? 'text-terracotta-earth' : 'text-on-surface-variant/60'}`} />
-              <span className="tracking-wide text-[13px]">{item.label}</span>
+              <span className="tracking-wide text-[13px] flex-1">{item.label}</span>
+              {count > 0 && !isActive && (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              )}
             </button>
           );
         })}
@@ -205,7 +220,10 @@ export default function Sidebar({
 
       {/* ─── Mobile: top bar ─── */}
       <div className="lg:hidden w-full h-16 bg-surface border-b border-ebony-deep/5 fixed top-0 left-0 px-6 flex items-center justify-between z-30">
-        <h1 className="font-serif text-xl font-medium tracking-tight text-ebony-deep">{lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}</h1>
+        <div className="flex items-center gap-2">
+          <Image src="/logo.png" alt="Aduna Gallery" width={28} height={28} className="h-7 w-auto" />
+          <h1 className="font-serif text-xl font-medium tracking-tight text-ebony-deep">{lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}</h1>
+        </div>
         <button
           onClick={() => setIsOpenMobile(!isOpenMobile)}
           className="p-2 border border-ebony-deep/10 text-ebony-deep"

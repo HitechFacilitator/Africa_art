@@ -18,6 +18,9 @@ export const metadata: Metadata = {
     "African artifacts",
     "luxury art marketplace",
   ],
+  icons: {
+    icon: "/favicon.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_GB",
@@ -25,6 +28,7 @@ export const metadata: Metadata = {
     title: "Aduna Gallery — Premium African Art",
     description:
       "Discover, acquire and invest in prestigious African artworks with verified provenance and institutional trust.",
+    images: ["/logo.png"],
   },
 };
 

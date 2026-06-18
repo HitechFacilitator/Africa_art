@@ -2,35 +2,31 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ArrowLeft, Menu, Search } from "lucide-react";
+import { ArrowLeft, Menu } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { AdvisorView } from "@/lib/advisorTypes";
+import { SupportTab } from "@/lib/supportTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth, ROLE_INFO } from "@/lib/auth";
 import NotificationBell from "@/components/layout/NotificationBell";
 
-interface AdvisorHeaderProps {
-  activeView: AdvisorView;
+interface SupportHeaderProps {
+  activeTab: SupportTab;
   onMenuToggle: () => void;
   onBack: () => void;
   canGoBack: boolean;
 }
 
-const TAB_LABELS: Record<AdvisorView, { en: string; fr: string; icon: string }> = {
-  [AdvisorView.Overview]: { en: "Overview", fr: "Vue d'Ensemble", icon: "📊" },
-  [AdvisorView.Consultations]: { en: "Consultations", fr: "Consultations", icon: "📅" },
-  [AdvisorView.Clients]: { en: "Clients", fr: "Clients", icon: "👥" },
-  [AdvisorView.Placements]: { en: "Placements", fr: "Placements", icon: "📦" },
-  [AdvisorView.Activity]: { en: "Activity", fr: "Activité", icon: "⚡" },
-  [AdvisorView.Chat]: { en: "Messages", fr: "Messages", icon: "💬" },
-  [AdvisorView.Settings]: { en: "Settings", fr: "Paramètres", icon: "⚙️" },
+const TAB_LABELS: Record<SupportTab, { en: string; fr: string; icon: string }> = {
+  [SupportTab.Tickets]: { en: "Ticket Management", fr: "Gestion des Tickets", icon: "🎫" },
+  [SupportTab.Chat]: { en: "Messages", fr: "Messages", icon: "💬" },
+  [SupportTab.Settings]: { en: "Settings", fr: "Paramètres", icon: "⚙️" },
 };
 
-export default function AdvisorHeader({ activeView, onMenuToggle, onBack, canGoBack }: AdvisorHeaderProps) {
+export default function SupportHeader({ activeTab, onMenuToggle, onBack, canGoBack }: SupportHeaderProps) {
   const { lang } = useTranslate();
   const { user } = useAuth();
   const [time, setTime] = useState<string>("");
-  const tabInfo = TAB_LABELS[activeView] || { en: "Dashboard", fr: "Tableau de Bord", icon: "📊" };
+  const tabInfo = TAB_LABELS[activeTab] || { en: "Dashboard", fr: "Tableau de Bord", icon: "📊" };
   const roleInfo = user ? ROLE_INFO[user.role] : null;
 
   useEffect(() => {
@@ -50,7 +46,7 @@ export default function AdvisorHeader({ activeView, onMenuToggle, onBack, canGoB
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onMenuToggle}
-            className="flex items-center justify-center w-8 h-8 text-terracotta-earth hover:bg-terracotta-earth/10 rounded-sm transition-all cursor-pointer border-0 bg-transparent group lg:hidden"
+            className="flex items-center justify-center w-8 h-8 text-ebony-deep/60 hover:text-terracotta-earth hover:bg-terracotta-earth/10 rounded-sm transition-all cursor-pointer border-0 bg-transparent group lg:hidden"
           >
             <Menu size={16} className="group-hover:rotate-90 transition-transform duration-300" />
           </button>
@@ -78,7 +74,7 @@ export default function AdvisorHeader({ activeView, onMenuToggle, onBack, canGoB
               <Image src="/logo.png" alt="Aduna Gallery" width={24} height={24} className="object-contain" />
             </div>
             <span className="hidden sm:inline font-serif text-sm font-medium text-terracotta-earth">{lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}</span>
-            <span className="hidden md:inline text-[8px] text-ebony-deep/30 font-mono uppercase tracking-widest">{lang === "fr" ? "Espace Conseiller" : "Advisor Portal"}</span>
+            <span className="hidden md:inline text-[8px] text-ebony-deep/30 font-mono uppercase tracking-widest">{lang === "fr" ? "Espace Support" : "Support Portal"}</span>
           </div>
 
           <div className="w-px h-5 bg-ebony-deep/10 hidden sm:block" />
@@ -98,24 +94,20 @@ export default function AdvisorHeader({ activeView, onMenuToggle, onBack, canGoB
 
           <div className="w-px h-5 bg-ebony-deep/10 hidden lg:block" />
 
-          <button className="flex items-center justify-center w-8 h-8 text-ebony-deep/40 hover:text-terracotta-earth transition-colors cursor-pointer border-0 bg-transparent">
-            <Search size={15} />
-          </button>
-
-          <NotificationBell basePath="/advisor" />
+          <NotificationBell basePath="/support" />
 
           <div className="w-px h-5 bg-ebony-deep/10" />
 
           <div className="flex items-center gap-2.5">
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-terracotta-earth">{roleInfo?.tierFr || "Conseiller"}</span>
-              <span className="text-[9px] text-ebony-deep/40">{user?.name || (lang === "fr" ? "Dr. Fatima Benali" : "Dr. Fatima Benali")}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-terracotta-earth">{roleInfo?.tierFr || "Support"}</span>
+              <span className="text-[9px] text-ebony-deep/40">{user?.name || "Support Staff"}</span>
             </div>
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="w-8 h-8 rounded-full bg-terracotta-earth/10 flex items-center justify-center border border-ebony-deep/10"
             >
-              <span className="font-serif text-xs font-bold text-terracotta-earth">{user?.avatar || "FB"}</span>
+              <span className="font-serif text-xs font-bold text-terracotta-earth">{user?.avatar || "SP"}</span>
             </motion.div>
           </div>
         </div>

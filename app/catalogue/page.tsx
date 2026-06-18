@@ -49,13 +49,23 @@ export default function CataloguePage() {
       id: "welcome",
       sender: "advisor",
       text: lang === "fr" ? "Bonjour. Je suis votre conseiller en art Aduna. Comment puis-je orienter votre investissement aujourd'hui ?" : "Greetings. I am your Aduna Art Advisor. How may I direct your investment today?",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: "",
     },
   ]);
   const [userInput, setUserInput] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const nextMsgId = useRef(0);
+
+  useEffect(() => {
+    setChatMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === "welcome" && !msg.timestamp
+          ? { ...msg, timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }
+          : msg
+      )
+    );
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

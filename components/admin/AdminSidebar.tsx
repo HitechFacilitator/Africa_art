@@ -18,6 +18,7 @@ import {
   Globe,
   FileCheck,
   UserCog,
+  Lock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -26,9 +27,10 @@ interface AdminSidebarProps {
   setActiveView: (view: AdminView) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  unreadCounts?: Partial<Record<AdminView, number>>;
 }
 
-export default function AdminSidebar({ activeView, setActiveView, open, setOpen }: AdminSidebarProps) {
+export default function AdminSidebar({ activeView, setActiveView, open, setOpen, unreadCounts }: AdminSidebarProps) {
   const { lang, setLang } = useTranslate();
   const { user, logout } = useAuth();
 
@@ -48,6 +50,7 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
     { id: AdminView.Escrow, label: lang === "fr" ? "Séquestre" : "Escrow", icon: Shield },
     { id: AdminView.AuditLog, label: lang === "fr" ? "Journal d'Audit" : "Audit Log", icon: History },
     { id: AdminView.Compliance, label: lang === "fr" ? "Conformité" : "Compliance", icon: BadgeCheck },
+    { id: AdminView.POR, label: lang === "fr" ? "Prix sur Demande" : "Price on Request", icon: Lock },
     { id: AdminView.Settings, label: lang === "fr" ? "Paramètres" : "Settings", icon: Settings },
   ];
 
@@ -83,6 +86,7 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
+          const count = unreadCounts?.[item.id] ?? 0;
           return (
             <button
               key={item.id}
@@ -94,7 +98,13 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen 
               }`}
             >
               <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-terracotta-earth" : "text-ebony-deep/40"}`} />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate flex-1">{item.label}</span>
+              {count > 0 && !isActive && (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                </span>
+              )}
             </button>
           );
         })}

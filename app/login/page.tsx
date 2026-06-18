@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { Lock, Fingerprint, ArrowLeft, ShieldCheck, Clock, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -93,6 +94,7 @@ export default function LoginPage() {
     } else if (result.user) {
       if (result.user.role === "admin") router.push("/admin");
       else if (result.user.role === "advisor") router.push("/advisor");
+      else if (result.user.role === "support") router.push("/support");
       else router.push("/dashboard");
     }
   };
@@ -132,6 +134,7 @@ export default function LoginPage() {
     if (result.success && result.user) {
       if (result.user.role === "admin") router.push("/admin");
       else if (result.user.role === "advisor") router.push("/advisor");
+      else if (result.user.role === "support") router.push("/support");
       else router.push("/dashboard");
     } else {
       setFailedAttempts(newAttempts);
@@ -187,7 +190,7 @@ export default function LoginPage() {
                 <motion.div key="login" initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 15 }} transition={{ duration: 0.35 }} className="w-full flex flex-col justify-between h-full">
                   <div>
                     <div className="text-center mb-6">
-                      <div className="inline-flex items-center justify-center w-12 h-12 bg-ebony-deep/5 mb-3"><Lock className="w-6 h-6 text-ebony-deep" strokeWidth={1.5} /></div>
+                      <div className="inline-flex items-center justify-center w-12 h-12 mb-3 overflow-hidden"><Image src="/logo.png" alt="Aduna Gallery" width={48} height={48} className="object-contain" /></div>
                       <h2 className="font-display-lg text-ebony-deep">Collector Login</h2>
                     </div>
 
@@ -221,7 +224,7 @@ export default function LoginPage() {
                   <button onClick={() => { setStep("login"); setErrorMsg(null); }} className="absolute top-0 left-0 text-on-surface-variant hover:text-ebony-deep transition-colors inline-flex items-center gap-1.5 text-xs tracking-wider uppercase font-medium"><ArrowLeft className="w-4 h-4" /><span>Back</span></button>
                   <div className="mt-4">
                     <div className="text-center mb-5">
-                      <div className="inline-flex items-center justify-center w-12 h-12 bg-gold-leaf/5 mb-3"><Fingerprint className="w-6 h-6 text-gold-leaf" strokeWidth={1.5} /></div>
+                      <div className="inline-flex items-center justify-center w-12 h-12 mb-3 overflow-hidden"><Image src="/logo.png" alt="Aduna Gallery" width={48} height={48} className="object-contain" /></div>
                       <h2 className="font-display-lg text-ebony-deep mb-2">Verify Identity</h2>
                       <p className="font-sans text-xs text-on-surface-variant px-4">Enter the 6-digit code sent to your registered email address.</p>
                     </div>

@@ -33,11 +33,16 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: 
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [selected?.messages.length]);
 
+  const lastMarkedRef = useRef<string | null>(null);
+  const onMarkReadRef = useRef(onMarkRead);
+  onMarkReadRef.current = onMarkRead;
+
   useEffect(() => {
-    if (selectedId) {
-      chatApi.markThreadRead(selectedId).then(() => onMarkRead(selectedId)).catch(() => {});
+    if (selectedId && selectedId !== lastMarkedRef.current) {
+      lastMarkedRef.current = selectedId;
+      chatApi.markThreadRead(selectedId).then(() => onMarkReadRef.current(selectedId)).catch(() => {});
     }
-  }, [selectedId, onMarkRead]);
+  }, [selectedId]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();

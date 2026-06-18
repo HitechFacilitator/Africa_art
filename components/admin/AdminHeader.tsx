@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Bell, Search, PanelLeftOpen } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Search, PanelLeftOpen } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AdminView } from "@/lib/adminTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth, ROLE_INFO } from "@/lib/auth";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 interface AdminHeaderProps {
   activeView: AdminView;
@@ -24,6 +26,7 @@ const TAB_LABELS: Record<AdminView, { en: string; fr: string; icon: string }> = 
   [AdminView.Compliance]: { en: "Compliance", fr: "Conformité", icon: "✅" },
   [AdminView.Settings]: { en: "Settings", fr: "Paramètres", icon: "⚙️" },
   [AdminView.SupportManagement]: { en: "Support", fr: "Support", icon: "💬" },
+  [AdminView.POR]: { en: "Price Requests", fr: "Demandes de Prix", icon: "💰" },
 };
 
 export default function AdminHeader({ activeView, onMenuToggle, onBack, canGoBack }: AdminHeaderProps) {
@@ -72,8 +75,8 @@ export default function AdminHeader({ activeView, onMenuToggle, onBack, canGoBac
           </AnimatePresence>
 
           <div className="flex items-center gap-2.5 shrink-0">
-            <div className="w-6 h-6 rounded bg-terracotta-earth/10 flex items-center justify-center border border-terracotta-earth/25">
-              <span className="text-[10px]">🛡️</span>
+            <div className="w-6 h-6 rounded overflow-hidden relative">
+              <Image src="/logo.png" alt="Aduna Gallery" width={24} height={24} className="object-contain" />
             </div>
             <span className="hidden sm:inline font-serif text-sm font-medium text-terracotta-earth">{lang === "fr" ? "Aduna Gallery" : "Aduna Gallery"}</span>
             <span className="hidden md:inline text-[8px] text-terracotta-earth/40 font-mono uppercase tracking-widest">{lang === "fr" ? "Centre de Contrôle" : "Control Hub"}</span>
@@ -100,10 +103,7 @@ export default function AdminHeader({ activeView, onMenuToggle, onBack, canGoBac
             <Search size={15} />
           </button>
 
-          <button className="relative flex items-center justify-center w-8 h-8 text-ebony-deep/40 hover:text-terracotta-earth transition-colors cursor-pointer border-0 bg-transparent">
-            <Bell size={15} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-terracotta-earth rounded-full" />
-          </button>
+          <NotificationBell basePath="/admin" />
 
           <div className="w-px h-5 bg-ebony-deep/10" />
 

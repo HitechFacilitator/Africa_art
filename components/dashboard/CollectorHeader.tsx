@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Menu, Bell, Search } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Menu, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ActiveTab } from "@/lib/dashboardTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth, ROLE_INFO } from "@/lib/auth";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 interface CollectorHeaderProps {
   activeTab: ActiveTab;
@@ -82,12 +84,10 @@ export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuTo
           {/* Branding */}
           <div className="flex items-center gap-2 shrink-0">
             <motion.div
-              className="w-6 h-6 bg-gold-leaf/15 flex items-center justify-center relative"
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400 }}
+              whileHover={{ scale: 1.05 }}
+              className="w-8 h-8 overflow-hidden relative"
             >
-              <span className="font-serif text-[10px] font-bold text-gold-leaf">A</span>
-              <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+              <Image src="/logo.png" alt="Aduna Gallery" width={32} height={32} className="object-contain" />
             </motion.div>
             <span className="font-serif text-sm text-parchment-ivory tracking-wide hidden md:inline">Aduna Gallery</span>
           </div>
@@ -128,10 +128,7 @@ export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuTo
           </button>
 
           {/* Notifications */}
-          <button className="relative flex items-center justify-center w-8 h-8 text-parchment-ivory/40 hover:text-gold-leaf transition-colors cursor-pointer border-0 bg-transparent">
-            <Bell size={15} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-terracotta-earth rounded-full" />
-          </button>
+          <NotificationBell basePath="/dashboard" lightMode />
 
           <div className="w-px h-5 bg-parchment-ivory/15" />
 

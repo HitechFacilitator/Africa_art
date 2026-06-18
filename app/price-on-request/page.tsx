@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Lock,
@@ -13,12 +14,14 @@ import {
   Eye,
   FileText,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
+import { porApi } from "@/lib/api";
 import type { Artwork } from "@/lib/types";
 
 export default function PriceOnRequestPage() {
@@ -38,10 +41,20 @@ export default function PriceOnRequestPage() {
   const [submitted, setSubmitted] = useState(false);
   const [filterMaterial, setFilterMaterial] = useState("All");
   const [filterRegion, setFilterRegion] = useState("All");
+  const [submittedArtworkIds, setSubmittedArtworkIds] = useState<Set<number>>(new Set());
 
   const { artworks: apiArtworks } = useArtworks();
   const porArtworks = (apiArtworks as unknown as Artwork[]).filter((a) => a.label === "Price on Request");
   const displayPorArtworks = useTranslatedArtworks(porArtworks);
+
+  useEffect(() => {
+    porApi.getMy().then((res) => {
+      const data = res.data || [];
+      const ids = new Set<number>();
+      data.forEach((req: { artworkId: number }) => ids.add(req.artworkId));
+      setSubmittedArtworkIds(ids);
+    }).catch(() => {});
+  }, []);
 
   const materials = ["All", ...Array.from(new Set(displayPorArtworks.map((a) => a.material)))];
   const regions = ["All", ...Array.from(new Set(displayPorArtworks.map((a) => a.region)))];
@@ -58,14 +71,22 @@ export default function PriceOnRequestPage() {
     setInquiryNotes(`Requesting confidential pricing and allocation terms for ${artwork.title}.`);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inquiryFirstName || !inquiryLastName || !inquiryEmail || !gdprConsent) return;
+    if (!selectedArtwork) return;
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    try {
+      const artworkId = parseInt(selectedArtwork.id.replace(/\D/g, ""), 10);
+      await porApi.create(artworkId, `${inquiryNotes}\n\nProfile: ${clientProfile}\nBudget: ${budgetRange}\nPhone: ${inquiryPhone}`);
+      setSubmittedArtworkIds((prev) => new Set(prev).add(artworkId));
       setSubmitted(true);
-    }, 2000);
+    } catch (err: any) {
+      const msg = err?.message || "Failed to submit inquiry";
+      alert(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const resetModal = () => {
@@ -196,6 +217,12 @@ export default function PriceOnRequestPage() {
                     <Lock size={9} className="text-gold-leaf" />
                     <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">POR</span>
                   </div>
+                  {submittedArtworkIds.has(parseInt(artwork.id.replace(/\D/g, ""), 10)) && (
+                    <div className="absolute top-3 right-3 bg-emerald-600/90 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5">
+                      <CheckCircle size={9} className="text-white" />
+                      <span className="text-[9px] text-white font-bold uppercase tracking-widest">{lang === "fr" ? "Demandé" : "Inquired"}</span>
+                    </div>
+                  )}
                   <div className="absolute bottom-3 right-3 flex gap-2">
                     <button
                       onClick={() => router.push(`/artwork/${artwork.id}`)}
@@ -215,12 +242,18 @@ export default function PriceOnRequestPage() {
                     <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">{lang === "fr" ? "Indice de Rareté" : "Scarcity Index"}</p>
                     <p className="font-serif text-sm text-ebony-deep font-semibold">{artwork.scarcityIndex}/100</p>
                   </div>
-                  <button
-                    onClick={() => openInquiry(artwork)}
-                    className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5"
-                  >
-                    <Send size={10} /> {lang === "fr" ? "Demander" : "Inquire"}
-                  </button>
+                  {submittedArtworkIds.has(parseInt(artwork.id.replace(/\D/g, ""), 10)) ? (
+                    <Link href="/support" className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
+                      <MessageSquare size={10} /> {lang === "fr" ? "Suivre" : "Follow Inquiry"}
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => openInquiry(artwork)}
+                      className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5"
+                    >
+                      <Send size={10} /> {lang === "fr" ? "Demander" : "Inquire"}
+                    </button>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -241,7 +274,7 @@ export default function PriceOnRequestPage() {
       <AnimatePresence>
         {showInquiryModal && (
           <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full p-8 text-ebony-deep shadow-2xl relative">
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-parchment-ivory max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 text-ebony-deep shadow-2xl relative">
               <button onClick={resetModal} className="absolute top-4 right-4 text-zinc-400 hover:text-ebony-deep cursor-pointer border-0 bg-transparent"><X className="w-6 h-6" /></button>
               {submitted ? (
                 <div className="text-center">

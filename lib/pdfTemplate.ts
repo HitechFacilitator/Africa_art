@@ -26,6 +26,7 @@ export const pdfStyles = `
   .corner.bl { bottom: 18mm; left: 18mm; } .corner.br { bottom: 18mm; right: 18mm; }
 
   .header { text-align: center; margin-bottom: 24px; padding-top: 10px; }
+  .header-logo { width: 60px; height: 60px; margin: 0 auto 8px; display: block; }
   .est { font-size: 9px; letter-spacing: 6px; color: #999; font-family: 'Helvetica', 'Arial', sans-serif; text-transform: uppercase; }
   .gallery-name { font-size: 30px; font-weight: bold; color: #1a1a1a; letter-spacing: 4px; margin: 8px 0 4px; }
   .gallery-sub { font-size: 10px; color: #666; letter-spacing: 2px; }
@@ -91,6 +92,7 @@ export function buildPdfShell(title: string, content: string): string {
     <div class="inner-border"></div>
     <div class="corner tl"></div><div class="corner tr"></div>
     <div class="corner bl"></div><div class="corner br"></div>
+    <img src="/logo.png" class="header-logo" alt="Aduna Gallery" />
     ${content}
   </div>
 </body>

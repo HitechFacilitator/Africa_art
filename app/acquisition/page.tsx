@@ -869,6 +869,7 @@ function AcquisitionContent() {
                               .footer{text-align:center;font-size:10px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
                               @media print{body{border:none;margin:0;padding:20px}}
                             </style></head><body>
+                              <img src="/logo.png" style="width:60px;height:60px;display:block;margin:0 auto 8px" alt="Aduna Gallery" />
                               <h1>Certificate of Absolute Provenance</h1>
                               <h2>Official Legal Deed of Ownership Transfer</h2>
                               <div class="meta">

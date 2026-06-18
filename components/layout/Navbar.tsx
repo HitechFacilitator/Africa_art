@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, Menu, X, Lock, ShieldCheck, ChevronDown } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
@@ -82,10 +83,11 @@ export default function Navbar() {
           <Link
             href="/"
             id="nav-logo"
-            className="font-serif text-2xl md:text-[1.75rem] tracking-tight font-light text-ebony-deep hover:text-gold-leaf transition-colors duration-300 select-none shrink-0"
+            className="flex items-center gap-2 shrink-0"
             aria-label="Aduna Gallery — Go to homepage"
           >
-            ADUNA <span className="text-gold-leaf">GALLERY</span>
+            <Image src="/logo.png" alt="Aduna Gallery" width={36} height={36} className="h-9 w-auto" priority />
+            <span className="font-serif text-lg font-medium tracking-tight text-ebony-deep hidden sm:inline">ADUNA Gallery</span>
           </Link>
 
           {/* Desktop Nav — Home + Explorer */}
@@ -294,9 +296,10 @@ export default function Navbar() {
             aria-label="Mobile navigation"
           >
             <div className="flex justify-between items-center px-8 h-20 border-b border-on-surface/5">
-              <span className="font-serif text-lg tracking-tight text-ebony-deep">
-                ADUNA <span className="text-gold-leaf">GALLERY</span>
-              </span>
+              <div className="flex items-center gap-2">
+                <Image src="/logo.png" alt="Aduna Gallery" width={28} height={28} className="h-7 w-auto" />
+                <span className="font-serif text-base font-medium text-ebony-deep">ADUNA</span>
+              </div>
               <button
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"

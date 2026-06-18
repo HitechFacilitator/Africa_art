@@ -107,10 +107,16 @@ export default function DashboardPage() {
   };
   const [profile, setProfile] = useState<CollectorProfile>(defaultProfile);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [supportTicketCount, setSupportTicketCount] = useState(0);
 
   // Fetch chat threads from API
   useEffect(() => {
     chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
+    dashboardApi.getMyTickets().then(res => {
+      const tickets = res.data || [];
+      const openTickets = tickets.filter((t: { status: string }) => t.status === "Open" || t.status === "In Progress");
+      setSupportTicketCount(openTickets.length);
+    }).catch(() => {});
   }, []);
 
   // Realtime SSE for new messages
@@ -295,6 +301,7 @@ export default function DashboardPage() {
       .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
       @media print{body{border:none;margin:0;padding:20px}}
     </style></head><body>
+      <img src="/logo.png" style="width:60px;height:60px;display:block;margin:0 auto 8px" alt="Aduna Gallery" />
       <h1>Collector Portfolio Deed Report</h1>
       <h2>Aduna Gallery — Institutional Ledger Registry</h2>
       <div class="meta">
@@ -323,6 +330,9 @@ export default function DashboardPage() {
         if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
           logout();
         }
+      }} unreadCounts={{
+        [ActiveTab.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
+        [ActiveTab.Support]: supportTicketCount,
       }} />
 
       <CollectorHeader activeTab={activeTab} onBack={goBack} canGoBack={canGoBack} onMenuToggle={() => setSidebarOpen(true)} />
@@ -367,7 +377,7 @@ export default function DashboardPage() {
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3 }}>
             {activeTab === ActiveTab.Dashboard && (
-              <DashboardView acquisitions={translatedAcquisitions} onExpressInterest={handleExpressInterest} setActiveTab={navigateTab} setSelectedAcquisition={(acq) => { setSelectedAcquisition(acq); navigateTab(ActiveTab.Portfolio); }} onExportReport={handleExportReport} />
+              <DashboardView acquisitions={translatedAcquisitions} consultations={translatedConsultations} onExpressInterest={handleExpressInterest} setActiveTab={navigateTab} setSelectedAcquisition={(acq) => { setSelectedAcquisition(acq); navigateTab(ActiveTab.Portfolio); }} onExportReport={handleExportReport} />
             )}
             {activeTab === ActiveTab.Portfolio && (
               <PortfolioView acquisitions={translatedAcquisitions} onAddAcquisition={handleAddAcquisition} onRemoveAcquisition={handleRemoveAcquisition} selectedAcquisition={selectedAcquisition} setSelectedAcquisition={setSelectedAcquisition} />

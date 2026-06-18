@@ -32,7 +32,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useTranslate } from "@/lib/translations";
 import AuthGuard from "@/components/AuthGuard";
-import { artworksApi, consultationsApi, ArtworkData } from "@/lib/api";
+import { artworksApi, consultationsApi, dashboardApi, ArtworkData } from "@/lib/api";
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -103,6 +103,7 @@ export default function InvestmentPage() {
   // Form states
   const [inquiryType, setInquiryType] = useState("Portfolio Assessment");
   const [preferredCurator, setPreferredCurator] = useState("Dr. Elena Rostova (African Antiquities)");
+  const [selectedAdvisorId, setSelectedAdvisorId] = useState<number | undefined>(undefined);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [investmentTier, setInvestmentTier] = useState("$500,000 - $2,000,000");
@@ -240,7 +241,14 @@ export default function InvestmentPage() {
 
   // Fetch advisors + existing consultation on mount
   useEffect(() => {
-    consultationsApi.getAdvisors().then(res => setAdvisors(res.data || [])).catch(() => {});
+    consultationsApi.getAdvisors().then(res => {
+      const list = res.data || [];
+      setAdvisors(list);
+      if (list.length > 0 && !selectedAdvisorId) {
+        setPreferredCurator(list[0].name);
+        setSelectedAdvisorId(parseInt(list[0].id.replace(/\D/g, ""), 10));
+      }
+    }).catch(() => {});
     consultationsApi.getMy().then(res => {
       const cons = res.data || [];
       const active = cons.find((c: { status: string }) => c.status === "PENDING" || c.status === "CONFIRMED");
@@ -255,15 +263,22 @@ export default function InvestmentPage() {
     e.preventDefault();
     if (!fullName || !email) return;
     setConsultLoading(true);
+    const typeMap: Record<string, string> = {
+      "Portfolio Assessment & Allocation": "INVESTMENT_ADVICE",
+      "Direct Acquisition Strategy": "ACQUISITION_ADVICE",
+      "Authentication & Carbon Vetting": "COLLECTION_REVIEW",
+      "Secure Escrow Storage Setup": "INVESTMENT_ADVICE",
+    };
     try {
       const res = await consultationsApi.create({
-        type: inquiryType,
+        type: typeMap[inquiryType] || "INVESTMENT_ADVICE",
         date: preferredDate || new Date().toISOString().split("T")[0],
         notes: `${meetingType} | ${investmentTier} | ${investmentHorizon} | ${investmentGoals}`,
-        topic: preferredCurator,
+        topic: inquiryType,
         timeSlot: preferredTime,
         expertName: preferredCurator,
         expertTitle: "Advisory Curator",
+        advisorId: selectedAdvisorId,
       });
       setExistingConsultation(res.data);
       setBookingRef(res.data.id);
@@ -472,7 +487,7 @@ export default function InvestmentPage() {
                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Type de Demande" : "Inquiry Type"}</label><select value={inquiryType} onChange={(e) => setInquiryType(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>{lang === "fr" ? "Évaluation & Allocation de Portefeuille" : "Portfolio Assessment & Allocation"}</option><option>{lang === "fr" ? "Stratégie d'Acquisition Directe" : "Direct Acquisition Strategy"}</option><option>{lang === "fr" ? "Authentification & Vérification du Carbone" : "Authentication & Carbon Vetting"}</option><option>{lang === "fr" ? "Configuration de Stockage Sécurisé" : "Secure Escrow Storage Setup"}</option></select></div>
                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Nom Complet" : "Full Name"}</label><input type="text" required placeholder="Baron Robert de Rothschild" value={fullName} onChange={(e) => setFullName(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none placeholder:text-on-surface-variant/30" /></div>
                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Email de Contact Chiffré" : "Encrypted Contact Email"}</label><input type="email" required placeholder="r.rothschild@sovereign-vault.ch" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none placeholder:text-on-surface-variant/30" /></div>
-                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Conservateur Conseil Préféré" : "Preferred Advisory Curator"}</label><select value={preferredCurator} onChange={(e) => setPreferredCurator(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer">{advisors.length > 0 ? advisors.map(a => <option key={a.id} value={a.name}>{a.name} {a.institution ? `(${a.institution})` : ""}</option>) : <option>{lang === "fr" ? "Aucun conseiller disponible" : "No advisors available"}</option>}</select></div>
+                           <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Conservateur Conseil Préféré" : "Preferred Advisory Curator"}</label><select value={preferredCurator} onChange={(e) => { setPreferredCurator(e.target.value); const adv = advisors.find(a => a.name === e.target.value); setSelectedAdvisorId(adv ? parseInt(adv.id.replace(/\D/g, ""), 10) : undefined); }} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer">{advisors.length > 0 ? advisors.map(a => <option key={a.id} value={a.name}>{a.name} {a.institution ? `(${a.institution})` : ""}</option>) : <option>{lang === "fr" ? "Aucun conseiller disponible" : "No advisors available"}</option>}</select></div>
                            <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Cible d'Allocation Principale" : "Primary Allocation Target"}</label><select value={investmentTier} onChange={(e) => setInvestmentTier(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>$250,000 - $500,000</option><option>$500,000 - $2,000,000</option><option>$2,000,000 - $5,000,000</option><option>$5,000,000+ ({lang === "fr" ? "Mandat Institutionnel" : "Institutional Mandate"})</option></select></div>
                            <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Horizon d'Investissement" : "Investment Horizon"}</label><select value={investmentHorizon} onChange={(e) => setInvestmentHorizon(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>1-2 {lang === "fr" ? "Ans" : "Years"}</option><option>3-5 {lang === "fr" ? "Ans" : "Years"}</option><option>5-10 {lang === "fr" ? "Ans" : "Years"}</option><option>10+ {lang === "fr" ? "Ans (Héritage)" : "Years (Legacy)"}</option></select></div>
                            <div className="flex flex-col"><label className="font-sans text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-2 font-bold">{lang === "fr" ? "Objectifs d'Investissement" : "Investment Goals"}</label><select value={investmentGoals} onChange={(e) => setInvestmentGoals(e.target.value)} className="bg-transparent border-0 border-b border-on-surface/20 focus:ring-0 focus:border-gold-leaf py-2 px-0 font-sans text-sm text-ebony-deep outline-none cursor-pointer"><option>{lang === "fr" ? "Appréciation du Capital" : "Capital Appreciation"}</option><option>{lang === "fr" ? "Diversification" : "Diversification"}</option><option>{lang === "fr" ? "Préservation Culturelle" : "Cultural Preservation"}</option><option>{lang === "fr" ? "Optimisation Fiscale" : "Tax Optimization"}</option><option>{lang === "fr" ? "Couverture de Portefeuille" : "Portfolio Hedging"}</option></select></div>
@@ -603,7 +618,7 @@ export default function InvestmentPage() {
                              <div className="absolute top-0 right-0 bg-gold-leaf/10 border-l border-b border-gold-leaf/30 text-gold-leaf px-2.5 py-0.5 text-[8.5px] uppercase tracking-widest font-extrabold">{lang === "fr" ? "CONFIDENTIEL" : "CONFIDENTIAL"}</div>
                             <AnimatePresence mode="wait">
                               {!inquirySuccess ? (
-                                <motion.form key="inq" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={(e) => { e.preventDefault(); setInquirySuccess(true); }} className="space-y-4">
+                                <motion.form key="inq" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onSubmit={async (e) => { e.preventDefault(); try { await dashboardApi.createInquiry({ artworkTitle: activeGalleryArtifact?.title || "", artworkYear: activeGalleryArtifact?.period || "", imageUrl: activeGalleryArtifact?.imageUrl || "", messages: [{ sender: inquiryName, text: `Inquiry from ${inquiryName} (${inquiryEmail}) for ${activeGalleryArtifact?.title}` }] }); } catch {} setInquirySuccess(true); }} className="space-y-4">
                                    <h4 className="font-serif text-base text-ebony-deep font-semibold">{lang === "fr" ? "Lancer une Demande d'Acquisition" : "Initiate Acquisition Inquiry"}</h4>
                                    <div className="space-y-3 font-sans text-xs">
                                      <div><label className="text-[10px] uppercase font-bold text-on-surface-variant/50 block mb-1">{lang === "fr" ? "Nom Complet" : "Full Name"}</label><input type="text" required placeholder="Baron Robert de Rothschild" value={inquiryName} onChange={(e) => setInquiryName(e.target.value)} className="w-full bg-parchment-ivory border-b border-on-surface/20 focus:border-gold-leaf focus:outline-none py-1.5 text-ebony-deep font-medium" /></div>
@@ -767,6 +782,7 @@ export default function InvestmentPage() {
                                       .footer{text-align:center;font-size:9px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
                                       @media print{body{border:none;margin:0;padding:20px}}
                                     </style></head><body>
+                                      <img src="/logo.png" style="width:60px;height:60px;display:block;margin:0 auto 8px" alt="Aduna Gallery" />
                                       <h1>${titles[i]}</h1>
                                       <h2>Aduna Gallery — Sovereign Vault Document</h2>
                                       <div class="meta">

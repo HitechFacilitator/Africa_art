@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Consultation } from "@/lib/dashboardTypes";
+import { consultationsApi } from "@/lib/api";
 import {
   Clock,
   Video,
@@ -34,22 +35,46 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
     { id: 'Vanhoutte', name: 'Christian Vanhoutte', title: 'Chief Conservator & Materials Analyst', avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=150&h=150' }
   ];
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topic) return;
     const chosenExpert = experts.find(ex => ex.id === selectedExpert) || experts[0];
-    const newConsultation: Consultation = {
-      id: `cons_${Date.now()}`,
-      expertName: chosenExpert.name,
-      expertTitle: chosenExpert.title,
-      expertAvatar: chosenExpert.avatar,
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-      timeSlot: slot,
-      topic: topic,
-      status: 'Confirmed',
-      notes: customNotes || (lang === "fr" ? 'Vérification des images d\'artefacts physiques chargées.' : 'Vetting of physical artifact images loaded.')
-    };
-    onAddConsultation(newConsultation);
+    try {
+      const res = await consultationsApi.create({
+        type: "COLLECTION_REVIEW",
+        date: date,
+        notes: customNotes || (lang === "fr" ? 'Vérification des images d\'artefacts physiques chargées.' : 'Vetting of physical artifact images loaded.'),
+        topic: topic,
+        timeSlot: slot,
+        expertName: chosenExpert.name,
+        expertTitle: chosenExpert.title,
+      });
+      const newConsultation: Consultation = {
+        id: res.data.id,
+        expertName: res.data.expertName || chosenExpert.name,
+        expertTitle: res.data.expertTitle || chosenExpert.title,
+        expertAvatar: chosenExpert.avatar,
+        date: res.data.date,
+        timeSlot: res.data.timeSlot || slot,
+        topic: res.data.topic || topic,
+        status: 'Pending',
+        notes: res.data.notes,
+      };
+      onAddConsultation(newConsultation);
+    } catch {
+      const newConsultation: Consultation = {
+        id: `cons_${Date.now()}`,
+        expertName: chosenExpert.name,
+        expertTitle: chosenExpert.title,
+        expertAvatar: chosenExpert.avatar,
+        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+        timeSlot: slot,
+        topic: topic,
+        status: 'Pending',
+        notes: customNotes || (lang === "fr" ? 'Vérification des images d\'artefacts physiques chargées.' : 'Vetting of physical artifact images loaded.')
+      };
+      onAddConsultation(newConsultation);
+    }
     setShowBookingModal(false);
     setTopic('');
     setCustomNotes('');
@@ -80,7 +105,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
             consultations.map((item) => (
               <div key={item.id} className="bg-parchment-ivory border border-ebony-deep/5 p-6 flex flex-col md:flex-row gap-6 justify-between shadow-level-1 hover:translate-y-[-1px] transition-all">
                 <div className="flex gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 border border-gold-leaf/20 select-none"><img src={item.expertAvatar} alt={item.expertName} className="w-full h-full object-cover" /></div>
+                  <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 border border-gold-leaf/20 select-none">{item.expertAvatar ? <img src={item.expertAvatar} alt={item.expertName} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gold-leaf/20 flex items-center justify-center text-gold-leaf font-serif font-bold">{item.expertName?.charAt(0) || "?"}</div>}</div>
                   <div>
                     <h4 className="font-serif text-base font-semibold text-ebony-deep">{item.expertName}</h4>
                     <p className="font-sans text-[11px] text-zinc-400 font-semibold uppercase tracking-wider mb-2">{item.expertTitle}</p>
