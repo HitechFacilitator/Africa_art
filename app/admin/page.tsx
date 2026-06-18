@@ -5,7 +5,10 @@ import { useTranslate } from "@/lib/translations";
 import { AdminView, AdminArtwork, AdminCollector, AdminUser, AdminCertificate, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
 import { adminApi } from "@/lib/api";
 import type { SupportTicket } from "@/lib/chatTypes";
+import type { Inquiry } from "@/lib/dashboardTypes";
 import { AnimatePresence, motion } from "motion/react";
+import { useChatSSE } from "@/lib/useChatSSE";
+import { useSSE } from "@/lib/useChatSSE";
 
 import AuthGuard from "@/components/AuthGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -36,6 +39,7 @@ export default function AdminPage() {
   const [escrows, setEscrows] = useState<EscrowTransaction[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editingArtworkId, setEditingArtworkId] = useState<string | null>(null);
 
@@ -48,11 +52,52 @@ export default function AdminPage() {
     adminApi.getEscrow().then(res => setEscrows(res.data as EscrowTransaction[])).catch(() => {});
     adminApi.getAuditLogs().then(res => setAuditLogs(res.data as AuditLogEntry[])).catch(() => {});
     adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
+    adminApi.getInquiries().then(res => setInquiries(res.data as Inquiry[])).catch(() => {});
   }, []);
 
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
+
+  // Real-time SSE: chat messages and ticket updates
+  useChatSSE({
+    "new-message": () => {
+      // A new chat message arrived — refetch tickets (may affect support view)
+      adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
+    },
+    "ticket-update": (data: unknown) => {
+      const { ticketId, response } = data as { ticketId: number; response?: { author: string; text: string; timestamp: string } };
+      setSupportTickets(prev => prev.map(t => {
+        const numId = parseInt(t.id.replace("tkt-", ""), 10);
+        if (numId !== ticketId) return t;
+        if (response) {
+          const alreadyExists = t.responses.some(r => r.timestamp === response.timestamp && r.text === response.text);
+          if (alreadyExists) return t;
+          return { ...t, responses: [...t.responses, response], lastUpdate: new Date().toISOString().slice(0, 10) };
+        }
+        return t;
+      }));
+    },
+  });
+
+  // Real-time SSE: inquiry updates, consultation updates
+  useSSE("/api/v1/events", {
+    "inquiry-update": (data: unknown) => {
+      const { inquiryId, message } = data as { inquiryId: number; message?: { sender: string; text: string; timestamp: string } };
+      if (message) {
+        setInquiries(prev => prev.map(inq => {
+          const numId = parseInt(inq.id.replace("inq-", ""), 10);
+          if (numId !== inquiryId) return inq;
+          const alreadyExists = inq.messages.some(m => m.timestamp === message.timestamp && m.text === message.text);
+          if (alreadyExists) return inq;
+          return { ...inq, messages: [...inq.messages, message as Inquiry["messages"][0]] };
+        }));
+      }
+    },
+    "consultation-update": () => {
+      // Consultation status changed — no admin consultation view but keep data fresh
+    },
+  });
 
   const canGoBack = viewHistory.length > 0;
 

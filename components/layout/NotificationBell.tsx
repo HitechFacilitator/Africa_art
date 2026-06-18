@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Bell, MessageSquare, Ticket } from "lucide-react";
+import { Bell, MessageSquare, Ticket, CalendarCheck, HelpCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useTranslate } from "@/lib/translations";
 import { chatApi } from "@/lib/api";
-import { useChatSSE } from "@/lib/useChatSSE";
+import { useChatSSE, useSSE } from "@/lib/useChatSSE";
 
 interface Notification {
   id: string;
   threadKey: string;
-  type: "message" | "ticket";
+  type: "message" | "ticket" | "consultation" | "por" | "inquiry";
   title: string;
   body: string;
   time: string;
@@ -145,6 +145,84 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
     },
   });
 
+  useSSE("/api/v1/events", {
+    "consultation-update": (data: unknown) => {
+      const { action, consultation } = data as { action: string; consultation?: { id: string; status: string } };
+      if (action === "created") return;
+      const threadKey = `cons-${consultation?.id || Date.now()}`;
+      if (readSetRef.current.has(threadKey)) return;
+      const statusLabel = consultation?.status || action;
+      setUnreadCount((prev) => prev + 1);
+      setNotifications((prev) => [
+        {
+          id: `notif-cons-${Date.now()}`,
+          threadKey,
+          type: "consultation",
+          title: t("Mise à jour de consultation", "Consultation update"),
+          body: t(`Statut: ${statusLabel}`, `Status: ${statusLabel}`),
+          time: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
+    },
+    "por-update": (data: unknown) => {
+      const { porId, status } = data as { porId: string; status?: string };
+      const threadKey = `por-${porId}`;
+      if (readSetRef.current.has(threadKey)) return;
+      setUnreadCount((prev) => prev + 1);
+      setNotifications((prev) => [
+        {
+          id: `notif-por-${Date.now()}`,
+          threadKey,
+          type: "por",
+          title: t("Mise à jour du prix", "Price request update"),
+          body: t(`Statut: ${status || "mis à jour"}`, `Status: ${status || "updated"}`),
+          time: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
+    },
+    "por-message": (data: unknown) => {
+      const { porId, message } = data as { porId: string; message?: { sender: string; text: string } };
+      if (!message) return;
+      const threadKey = `por-${porId}`;
+      if (readSetRef.current.has(threadKey)) return;
+      setUnreadCount((prev) => prev + 1);
+      setNotifications((prev) => [
+        {
+          id: `notif-por-msg-${Date.now()}`,
+          threadKey,
+          type: "por",
+          title: t("Nouveau message POR", "POR message"),
+          body: `${message.sender}: ${message.text}`.slice(0, 80),
+          time: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
+    },
+    "inquiry-update": (data: unknown) => {
+      const { inquiryId } = data as { inquiryId: number };
+      const threadKey = `inq-${inquiryId}`;
+      if (readSetRef.current.has(threadKey)) return;
+      setUnreadCount((prev) => prev + 1);
+      setNotifications((prev) => [
+        {
+          id: `notif-inq-${Date.now()}`,
+          threadKey,
+          type: "inquiry",
+          title: t("Nouvelle réponse à l'enquête", "Inquiry reply"),
+          body: t("Un administrateur a répondu à votre demande", "An admin replied to your inquiry"),
+          time: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ]);
+    },
+  });
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -169,6 +247,10 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
       router.push(`${basePath}?tab=chat&thread=${notif.threadId}`);
     } else if (notif.type === "ticket") {
       router.push(`${basePath}?tab=tickets`);
+    } else if (notif.type === "consultation") {
+      router.push(`${basePath}?tab=consultations`);
+    } else if (notif.type === "por" || notif.type === "inquiry") {
+      router.push(`${basePath}?tab=inquiries`);
     }
   };
 
@@ -235,8 +317,12 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
                   <div className="shrink-0 mt-0.5">
                     {notif.type === "message" ? (
                       <MessageSquare size={14} className="text-terracotta-earth" />
-                    ) : (
+                    ) : notif.type === "ticket" ? (
                       <Ticket size={14} className="text-gold-leaf" />
+                    ) : notif.type === "consultation" ? (
+                      <CalendarCheck size={14} className="text-emerald-600" />
+                    ) : (
+                      <HelpCircle size={14} className="text-blue-600" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">

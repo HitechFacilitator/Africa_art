@@ -682,6 +682,25 @@ export const adminApi = {
       responses: Array<{ author: string; text: string; timestamp: string }>;
     }> }>("/chat/tickets"),
 
+  getInquiries: () =>
+    apiRequest<{ success: boolean; data: Array<{
+      id: string;
+      artworkTitle: string;
+      artworkYear: string;
+      imageUrl: string;
+      status: string;
+      category: string;
+      date: string;
+      clientName: string;
+      messages: Array<{ sender: string; text: string; timestamp: string }>;
+    }> }>("/inquiries/all"),
+
+  addInquiryMessage: (inquiryId: string, data: { sender: string; text: string }) =>
+    apiRequest<{ success: boolean; data: { sender: string; text: string; timestamp: string } }>(
+      `/inquiries/${inquiryId.replace("inq-", "")}/messages`,
+      { method: "POST", body: JSON.stringify(data) }
+    ),
+
   getAuditLogs: () =>
     apiRequest<{ success: boolean; data: Array<{
       id: string;
