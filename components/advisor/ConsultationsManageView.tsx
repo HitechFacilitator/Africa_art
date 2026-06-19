@@ -59,13 +59,13 @@ const STATUS_COLORS: Record<string, string> = {
   Rejected: "bg-red-50 text-red-800 border-red-250/30",
 };
 
-const MEETING_FORMAT_LABELS: Record<string, string> = {
+const TYPE_ICONS: Record<string, string> = {
   VIDEO: "Video",
   PHONE: "Phone",
-  IN_PERSON: "In Person",
-  video: "Video",
-  phone: "Phone",
-  in_person: "In Person",
+  IN_PERSON: "InPerson",
+  ACQUISITION_ADVICE: "Acquisition",
+  INVESTMENT_ADVICE: "Investment",
+  COLLECTION_REVIEW: "Collection",
 };
 
 export default function ConsultationsManageView() {
@@ -97,7 +97,7 @@ export default function ConsultationsManageView() {
 
   useSSE("/api/v1/events", {
     "consultation-update": (data: unknown) => {
-      const { action } = data as { action: string };
+      const { action, consultation } = data as { action: string; consultation: { id: string; status: string } };
       if (["confirmed", "completed", "cancelled", "rejected", "created"].includes(action)) {
         fetchConsultations();
       }
@@ -105,7 +105,21 @@ export default function ConsultationsManageView() {
   });
 
   const filtered = filter === "All" ? consultations : consultations.filter(c => c.status === filter);
-  const selected = consultations.find(c => c.id === selectedId) || null;
+  const selected = consultations.find(c => c.id === selectedId);
+
+  const handleAction = async (id: string, action: "confirm" | "complete" | "cancel") => {
+    setUpdatingId(id);
+    try {
+      if (action === "confirm") await consultationsApi.confirm(id);
+      else if (action === "complete") await consultationsApi.complete(id);
+      else if (action === "cancel") await consultationsApi.cancel(id);
+      await fetchConsultations();
+    } catch (err: any) {
+      console.error("Failed to update consultation:", err?.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const handleReject = async () => {
     if (!rejectTargetId) return;
@@ -116,8 +130,9 @@ export default function ConsultationsManageView() {
       setShowRejectModal(false);
       setRejectReason("");
       setRejectTargetId(null);
+      setSelectedId(null);
     } catch (err: any) {
-      alert(err?.message || "Failed to reject consultation");
+      console.error("Failed to reject consultation:", err?.message);
     } finally {
       setUpdatingId(null);
     }
@@ -215,11 +230,9 @@ export default function ConsultationsManageView() {
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider border ${STATUS_COLORS[c.status] || STATUS_COLORS.Pending}`}>
                             {c.status}
                           </span>
-                          {c.meetingFormat && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider bg-surface-container-low text-ebony-deep/60 border border-ebony-deep/10">
-                              {MEETING_FORMAT_LABELS[c.meetingFormat] || c.meetingFormat}
-                            </span>
-                          )}
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider bg-surface-container-low text-ebony-deep/60 border border-ebony-deep/10">
+                            {TYPE_ICONS[c.type] || c.type}
+                          </span>
                           {c.followUpRequired && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider bg-terracotta-earth/10 text-terracotta-earth border border-terracotta-earth/20">
                               <AlertCircle className="w-2.5 h-2.5" /> {lang === "fr" ? "Suivi" : "Follow-up"}
@@ -254,17 +267,12 @@ export default function ConsultationsManageView() {
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 className="bg-parchment-ivory border border-ebony-deep/10 p-6 sticky top-20"
               >
-                {/* Header with status badge */}
+                {/* Header */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-ebony-deep/5">
                   <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <h3 className="font-serif text-lg font-medium text-ebony-deep">
-                        {lang === "fr" ? "Détails de la Consultation" : "Consultation Details"}
-                      </h3>
-                      <span className={`inline-flex px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider border ${STATUS_COLORS[selected.status] || STATUS_COLORS.Pending}`}>
-                        {selected.status}
-                      </span>
-                    </div>
+                    <h3 className="font-serif text-lg font-medium text-ebony-deep">
+                      {lang === "fr" ? "Détails de la Consultation" : "Consultation Details"}
+                    </h3>
                     <p className="font-sans text-[10px] text-ebony-deep/40 mt-1">{selected.id}</p>
                   </div>
                   <button onClick={() => setSelectedId(null)} className="text-ebony-deep/40 hover:text-terracotta-earth transition-colors cursor-pointer bg-transparent border-0">
@@ -272,98 +280,55 @@ export default function ConsultationsManageView() {
                   </button>
                 </div>
 
-                {/* Status change — only for Pending */}
-                {selected.status === "Pending" && (
-                  <div className="mb-6">
-                    <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-2 block">
-                      {lang === "fr" ? "Changer le Statut" : "Change Status"}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={async () => {
-                          setUpdatingId(selected.id);
-                          try { await consultationsApi.confirm(selected.id); await fetchConsultations(); } catch (err: any) { alert(err?.message || "Failed"); } finally { setUpdatingId(null); }
-                        }}
-                        disabled={updatingId === selected.id}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-emerald-700 transition-colors cursor-pointer border-0 disabled:opacity-50"
-                      >
-                        {updatingId === selected.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
-                        {lang === "fr" ? "Confirmer" : "Confirm"}
-                      </button>
-                      <button
-                        onClick={() => openRejectModal(selected.id)}
-                        disabled={updatingId === selected.id}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 text-white text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-red-700 transition-colors cursor-pointer border-0 disabled:opacity-50"
-                      >
-                        <Ban className="w-3 h-3" />
-                        {lang === "fr" ? "Refuser" : "Reject"}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          setUpdatingId(selected.id);
-                          try { await consultationsApi.cancel(selected.id); await fetchConsultations(); } catch (err: any) { alert(err?.message || "Failed"); } finally { setUpdatingId(null); }
-                        }}
-                        disabled={updatingId === selected.id}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-transparent text-ebony-deep/60 text-[10px] font-sans font-bold uppercase tracking-widest border border-ebony-deep/20 hover:border-ebony-deep/40 transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        {lang === "fr" ? "Annuler" : "Cancel"}
-                      </button>
+                {/* Status — clickable dropdown */}
+                <div className="mb-6">
+                  <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-2 block">
+                    {lang === "fr" ? "Statut de la Consultation" : "Consultation Status"}
+                  </label>
+                  <select
+                    value={selected.status}
+                    onChange={async (e) => {
+                      const newStatus = e.target.value;
+                      if (newStatus === selected.status) return;
+                      if (newStatus === "Rejected") {
+                        openRejectModal(selected.id);
+                        return;
+                      }
+                      setUpdatingId(selected.id);
+                      try {
+                        if (newStatus === "Confirmed") await consultationsApi.confirm(selected.id);
+                        else if (newStatus === "Completed") await consultationsApi.complete(selected.id);
+                        else if (newStatus === "Cancelled") await consultationsApi.cancel(selected.id);
+                        await fetchConsultations();
+                      } catch (err: any) {
+                        alert(err?.message || "Failed to update status");
+                      } finally {
+                        setUpdatingId(null);
+                      }
+                    }}
+                    disabled={updatingId === selected.id || selected.status === "Completed" || selected.status === "Rejected" || selected.status === "Cancelled"}
+                    className={`w-full px-4 py-3 text-[11px] font-sans font-bold uppercase tracking-wider border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold-leaf/30 ${STATUS_COLORS[selected.status] || STATUS_COLORS.Pending} disabled:opacity-60 disabled:cursor-not-allowed`}
+                  >
+                    <option value="Pending">{lang === "fr" ? "En attente" : "Pending"}</option>
+                    <option value="Confirmed">{lang === "fr" ? "Confirmé" : "Confirmed"}</option>
+                    <option value="Completed">{lang === "fr" ? "Terminé" : "Completed"}</option>
+                    <option value="Cancelled">{lang === "fr" ? "Annulé" : "Cancelled"}</option>
+                    <option value="Rejected">{lang === "fr" ? "Refusé" : "Rejected"}</option>
+                  </select>
+                  {selected.status === "Rejected" && selected.rejectionReason && (
+                    <div className="mt-3 p-3 bg-red-100/50 border border-red-200/30">
+                      <p className="text-[10px] font-sans font-bold uppercase tracking-widest text-red-600 mb-1">
+                        {lang === "fr" ? "Raison du refus" : "Rejection reason"}
+                      </p>
+                      <p className="font-sans text-xs text-red-700">{selected.rejectionReason}</p>
                     </div>
-                  </div>
-                )}
-
-                {/* Confirmed → can complete */}
-                {selected.status === "Confirmed" && (
-                  <div className="mb-6">
-                    <label className="text-[10px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-2 block">
-                      {lang === "fr" ? "Changer le Statut" : "Change Status"}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={async () => {
-                          setUpdatingId(selected.id);
-                          try { await consultationsApi.complete(selected.id); await fetchConsultations(); } catch (err: any) { alert(err?.message || "Failed"); } finally { setUpdatingId(null); }
-                        }}
-                        disabled={updatingId === selected.id}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-emerald-600 text-white text-[10px] font-sans font-bold uppercase tracking-widest hover:bg-emerald-700 transition-colors cursor-pointer border-0 disabled:opacity-50"
-                      >
-                        {updatingId === selected.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckSquare className="w-3 h-3" />}
-                        {lang === "fr" ? "Terminer" : "Complete"}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          setUpdatingId(selected.id);
-                          try { await consultationsApi.cancel(selected.id); await fetchConsultations(); } catch (err: any) { alert(err?.message || "Failed"); } finally { setUpdatingId(null); }
-                        }}
-                        disabled={updatingId === selected.id}
-                        className="flex items-center gap-1.5 px-4 py-2.5 bg-transparent text-ebony-deep/60 text-[10px] font-sans font-bold uppercase tracking-widest border border-ebony-deep/20 hover:border-ebony-deep/40 transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        {lang === "fr" ? "Annuler" : "Cancel"}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Rejection reason */}
-                {selected.status === "Rejected" && selected.rejectionReason && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200/50">
-                    <p className="text-[9px] font-sans font-bold uppercase tracking-widest text-red-600 mb-1">
-                      {lang === "fr" ? "Raison du refus" : "Rejection reason"}
+                  )}
+                  {updatingId === selected.id && (
+                    <p className="text-[10px] text-gold-leaf mt-1 flex items-center gap-1">
+                      <Loader2 className="w-3 h-3 animate-spin" /> {lang === "fr" ? "Mise à jour..." : "Updating..."}
                     </p>
-                    <p className="font-sans text-xs text-red-700">{selected.rejectionReason}</p>
-                  </div>
-                )}
-
-                {/* Terminal state notice */}
-                {["Completed", "Rejected", "Cancelled"].includes(selected.status) && (
-                  <div className="mb-6 p-3 bg-surface-container-low border border-ebony-deep/5">
-                    <p className="font-sans text-[10px] text-ebony-deep/40 uppercase font-bold tracking-wider">
-                      {selected.status === "Completed" && (lang === "fr" ? "Cette consultation est terminée" : "This consultation is completed")}
-                      {selected.status === "Rejected" && (lang === "fr" ? "Cette consultation a été refusée" : "This consultation was rejected")}
-                      {selected.status === "Cancelled" && (lang === "fr" ? "Cette consultation a été annulée" : "This consultation was cancelled")}
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Consultation Info */}
                 <div className="space-y-5">
@@ -396,7 +361,7 @@ export default function ConsultationsManageView() {
                         <p className="text-[9px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1">
                           {lang === "fr" ? "Format" : "Format"}
                         </p>
-                        <p className="font-sans text-xs font-semibold text-ebony-deep capitalize">{MEETING_FORMAT_LABELS[selected.meetingFormat] || selected.meetingFormat}</p>
+                        <p className="font-sans text-xs font-semibold text-ebony-deep capitalize">{selected.meetingFormat}</p>
                       </div>
                     )}
                   </div>
