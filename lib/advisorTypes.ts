@@ -10,6 +10,9 @@ export enum AdvisorView {
 
 export interface AdvisorConsultation {
   id: string;
+  expertName: string;
+  expertTitle: string;
+  expertAvatar: string;
   clientName: string;
   clientEmail: string;
   clientPhone: string;

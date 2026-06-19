@@ -149,6 +149,7 @@ export default function ConsultationsManageView() {
     Pending: consultations.filter(c => c.status === "Pending").length,
     Confirmed: consultations.filter(c => c.status === "Confirmed").length,
     Completed: consultations.filter(c => c.status === "Completed").length,
+    Cancelled: consultations.filter(c => c.status === "Cancelled").length,
     Rejected: consultations.filter(c => c.status === "Rejected").length,
   };
 
@@ -168,7 +169,7 @@ export default function ConsultationsManageView() {
       </header>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         {Object.entries(counts).map(([key, count], i) => (
           <motion.button
             key={key}

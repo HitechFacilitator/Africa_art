@@ -8,6 +8,9 @@ import type {
 export const INITIAL_CONSULTATIONS: AdvisorConsultation[] = [
   {
     id: "CONS-001",
+    expertName: "Dr. Fatima Benali",
+    expertTitle: "Senior Advisor — African Antiquities",
+    expertAvatar: "FB",
     clientName: "E. Sterling",
     clientEmail: "e.sterling@sterlingfoundation.org",
     clientPhone: "+44 7700 900000",
@@ -28,6 +31,9 @@ export const INITIAL_CONSULTATIONS: AdvisorConsultation[] = [
   },
   {
     id: "CONS-002",
+    expertName: "Dr. Fatima Benali",
+    expertTitle: "Senior Advisor — African Antiquities",
+    expertAvatar: "FB",
     clientName: "J. Rothschild",
     clientEmail: "j.rothschild@rothschildart.com",
     clientPhone: "+41 22 818 0000",
@@ -48,6 +54,9 @@ export const INITIAL_CONSULTATIONS: AdvisorConsultation[] = [
   },
   {
     id: "CONS-003",
+    expertName: "Dr. Fatima Benali",
+    expertTitle: "Senior Advisor — African Antiquities",
+    expertAvatar: "FB",
     clientName: "M. Koffi",
     clientEmail: "m.koffi@lagosartgroup.ng",
     clientPhone: "+234 801 234 5678",
@@ -68,6 +77,9 @@ export const INITIAL_CONSULTATIONS: AdvisorConsultation[] = [
   },
   {
     id: "CONS-004",
+    expertName: "Dr. Fatima Benali",
+    expertTitle: "Senior Advisor — African Antiquities",
+    expertAvatar: "FB",
     clientName: "Sheikh Al-Maktoum",
     clientEmail: "office@almaktoum-collect.ae",
     clientPhone: "+971 4 555 0000",

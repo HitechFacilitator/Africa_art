@@ -488,15 +488,25 @@ export const advisorApi = {
   getConsultations: () =>
     apiRequest<{ success: boolean; data: Array<{
       id: string;
+      expertName: string;
+      expertTitle: string;
+      expertAvatar: string;
       clientName: string;
-      clientTier: string;
+      clientEmail: string;
+      clientPhone: string;
+      clientInstitution: string;
+      clientCountry: string;
+      currentCollection: string;
+      meetingFormat: string;
       topic: string;
       date: string;
       timeSlot: string;
       status: string;
       type: string;
       notes: string;
+      rejectionReason: string;
       followUpRequired: boolean;
+      createdAt: string;
     }> }>("/advisor/consultations"),
 
   getClients: () =>
