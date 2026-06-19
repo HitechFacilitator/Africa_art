@@ -59,13 +59,13 @@ const STATUS_COLORS: Record<string, string> = {
   Rejected: "bg-red-50 text-red-800 border-red-250/30",
 };
 
-const TYPE_ICONS: Record<string, string> = {
+const MEETING_FORMAT_LABELS: Record<string, string> = {
   VIDEO: "Video",
   PHONE: "Phone",
-  IN_PERSON: "InPerson",
-  ACQUISITION_ADVICE: "Acquisition",
-  INVESTMENT_ADVICE: "Investment",
-  COLLECTION_REVIEW: "Collection",
+  IN_PERSON: "In Person",
+  video: "Video",
+  phone: "Phone",
+  "in-person": "In Person",
 };
 
 export default function ConsultationsManageView() {
@@ -79,20 +79,20 @@ export default function ConsultationsManageView() {
   const [rejectReason, setRejectReason] = useState("");
   const [rejectTargetId, setRejectTargetId] = useState<string | null>(null);
 
-  const fetchConsultations = async () => {
-    setLoading(true);
+  const fetchConsultations = async (isInitial = false) => {
+    if (isInitial) setLoading(true);
     try {
       const res = await advisorApi.getConsultations();
       setConsultations(res.data as unknown as AdvisorConsultation[]);
     } catch (err) {
       console.error("Failed to fetch consultations:", err);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchConsultations();
+    fetchConsultations(true);
   }, []);
 
   useSSE("/api/v1/events", {
@@ -231,7 +231,7 @@ export default function ConsultationsManageView() {
                             {c.status}
                           </span>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider bg-surface-container-low text-ebony-deep/60 border border-ebony-deep/10">
-                            {TYPE_ICONS[c.type] || c.type}
+                            {MEETING_FORMAT_LABELS[c.meetingFormat] || c.meetingFormat || "—"}
                           </span>
                           {c.followUpRequired && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider bg-terracotta-earth/10 text-terracotta-earth border border-terracotta-earth/20">
@@ -260,7 +260,7 @@ export default function ConsultationsManageView() {
           <AnimatePresence mode="wait">
             {selected ? (
               <motion.div
-                key={selected.id}
+                key={`${selected.id}-${selected.status}`}
                 initial={{ opacity: 0, x: 30, scale: 0.98 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 30, scale: 0.98 }}
@@ -270,9 +270,14 @@ export default function ConsultationsManageView() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-ebony-deep/5">
                   <div>
-                    <h3 className="font-serif text-lg font-medium text-ebony-deep">
-                      {lang === "fr" ? "Détails de la Consultation" : "Consultation Details"}
-                    </h3>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="font-serif text-lg font-medium text-ebony-deep">
+                        {lang === "fr" ? "Détails de la Consultation" : "Consultation Details"}
+                      </h3>
+                      <span className={`inline-flex px-2 py-0.5 text-[9px] font-sans font-bold uppercase tracking-wider border ${STATUS_COLORS[selected.status] || STATUS_COLORS.Pending}`}>
+                        {selected.status}
+                      </span>
+                    </div>
                     <p className="font-sans text-[10px] text-ebony-deep/40 mt-1">{selected.id}</p>
                   </div>
                   <button onClick={() => setSelectedId(null)} className="text-ebony-deep/40 hover:text-terracotta-earth transition-colors cursor-pointer bg-transparent border-0">
@@ -340,7 +345,7 @@ export default function ConsultationsManageView() {
                     <p className="font-serif text-sm text-ebony-deep">{selected.topic}</p>
                   </div>
 
-                  {/* Schedule + Format row */}
+                  {/* Schedule row */}
                   <div className="grid grid-cols-3 gap-3">
                     <div className="bg-surface-container-low p-3 border border-ebony-deep/5">
                       <p className="text-[9px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1">
@@ -356,14 +361,15 @@ export default function ConsultationsManageView() {
                       </p>
                       <p className="font-sans text-xs font-semibold text-ebony-deep">{selected.timeSlot}</p>
                     </div>
-                    {selected.meetingFormat && (
-                      <div className="bg-surface-container-low p-3 border border-ebony-deep/5">
-                        <p className="text-[9px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1">
-                          {lang === "fr" ? "Format" : "Format"}
-                        </p>
-                        <p className="font-sans text-xs font-semibold text-ebony-deep capitalize">{selected.meetingFormat}</p>
-                      </div>
-                    )}
+                    <div className="bg-surface-container-low p-3 border border-ebony-deep/5">
+                      <p className="text-[9px] font-sans font-bold uppercase tracking-widest text-ebony-deep/40 mb-1">
+                        {selected.meetingFormat === "video" || selected.meetingFormat === "VIDEO" ? <Video className="w-3 h-3 inline mr-1" /> : selected.meetingFormat === "phone" || selected.meetingFormat === "PHONE" ? <Phone className="w-3 h-3 inline mr-1" /> : <MapPin className="w-3 h-3 inline mr-1" />}
+                        {lang === "fr" ? "Format" : "Format"}
+                      </p>
+                      <p className="font-sans text-xs font-semibold text-ebony-deep capitalize">
+                        {MEETING_FORMAT_LABELS[selected.meetingFormat] || selected.meetingFormat || "—"}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Client Info */}
