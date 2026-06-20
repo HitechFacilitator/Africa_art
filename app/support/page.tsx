@@ -130,7 +130,7 @@ function SupportPageContent() {
           unreadCounts={supportUnreadCounts}
         />
 
-        <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+        <div className="flex-1 min-h-screen flex flex-col">
           <SupportHeader
             activeTab={activeTab}
             onMenuToggle={handleMenuToggle}
@@ -138,7 +138,7 @@ function SupportPageContent() {
             canGoBack={canGoBack}
           />
 
-          <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
+          <main className={`flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full transition-all duration-300 ${sidebarOpen ? "blur-sm pointer-events-none" : ""}`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
