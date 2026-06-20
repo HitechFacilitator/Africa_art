@@ -178,6 +178,7 @@ interface AuthCtx {
   user: UserSession | null;
   isAuthenticated: boolean;
   loading: boolean;
+  loggingOut: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresOTP?: boolean; pendingEmail?: string; user?: UserSession }>;
   loginAs: (role: Role) => Promise<void>;
   verifyOTP: (code: string) => Promise<{ success: boolean; user?: UserSession }>;
@@ -191,6 +192,7 @@ const AuthContext = createContext<AuthCtx>({
   user: null,
   isAuthenticated: false,
   loading: true,
+  loggingOut: false,
   login: async () => ({ success: false }),
   loginAs: async () => {},
   verifyOTP: async () => ({ success: false }),
@@ -211,6 +213,7 @@ const PENDING_EMAIL_KEY = "aduna_pending_email";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
   const router = useRouter();
 
   // Restore session from JWT on mount
@@ -285,6 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    setLoggingOut(true);
     setUser(null);
     removeToken();
     localStorage.removeItem(PENDING_EMAIL_KEY);
@@ -311,6 +315,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isAuthenticated: !!user,
       loading,
+      loggingOut,
       login,
       loginAs,
       verifyOTP,
