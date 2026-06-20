@@ -8,7 +8,8 @@ type SSEEventHandler = (data: unknown) => void;
 function createSSE(
   url: string,
   handlers: Record<string, SSEEventHandler>,
-  onReconnect?: () => void
+  onReconnect?: () => void,
+  shouldReconnect?: () => boolean
 ): EventSource {
   const es = new EventSource(url);
 
@@ -23,7 +24,9 @@ function createSSE(
 
   es.onerror = () => {
     es.close();
+    if (shouldReconnect && !shouldReconnect()) return;
     setTimeout(() => {
+      if (shouldReconnect && !shouldReconnect()) return;
       onReconnect?.();
     }, 3000);
   };
@@ -48,7 +51,8 @@ export function useChatSSE(handlers: Record<string, SSEEventHandler>) {
       es = createSSE(
         `${baseUrl}/api/v1/chat/events?token=${token}`,
         handlersRef.current,
-        () => connect()
+        () => connect(),
+        () => !stopped && !!getToken()
       );
     }
 
@@ -83,7 +87,8 @@ export function useSSE(
       es = createSSE(
         `${baseUrl}${url}?token=${token}`,
         handlersRef.current,
-        () => connect()
+        () => connect(),
+        () => !stopped && !!getToken()
       );
     }
 

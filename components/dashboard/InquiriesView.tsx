@@ -38,6 +38,7 @@ interface InquiriesViewProps {
   onAddMessage: (inquiryId: string, text: string) => void;
   selectedInquiryId: string | null;
   setSelectedInquiryId: (id: string | null) => void;
+  initialSubTab?: "inquiries" | "por";
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: typeof Palette; color: string; bg: string }> = {
@@ -71,12 +72,13 @@ export default function InquiriesView({
   onAddMessage,
   selectedInquiryId,
   setSelectedInquiryId,
+  initialSubTab,
 }: InquiriesViewProps) {
   const { lang } = useTranslate();
   const [activeId, setActiveId] = useState<string>(selectedInquiryId || inquiries[0]?.id || "");
   const [typedMessage, setTypedMessage] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("All");
-  const [activeTab, setActiveTab] = useState<"inquiries" | "por">("inquiries");
+  const [activeTab, setActiveTab] = useState<"inquiries" | "por">(initialSubTab === "por" ? "por" : "inquiries");
   const [porDemands, setPorDemands] = useState<PORDemand[]>([]);
   const [loadingPOR, setLoadingPOR] = useState(true);
   const [selectedPorId, setSelectedPorId] = useState<string | null>(null);

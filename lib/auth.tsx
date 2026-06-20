@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { ActiveTab } from "@/lib/dashboardTypes";
 import { authApi, setToken, getToken, removeToken } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 // ── Roles ──────────────────────────────────────────────────────────────
 export type Role = "visitor" | "collector" | "prestige" | "advisor" | "admin" | "support";
@@ -210,6 +211,7 @@ const PENDING_EMAIL_KEY = "aduna_pending_email";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Restore session from JWT on mount
   useEffect(() => {
@@ -286,8 +288,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     removeToken();
     localStorage.removeItem(PENDING_EMAIL_KEY);
-    window.location.href = "/";
-  }, []);
+    router.push("/");
+  }, [router]);
 
   const hasPermission = useCallback((permission: string): boolean => {
     if (!user) return false;

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useTranslate } from "@/lib/translations";
 import { AdminView, AdminArtwork, AdminCollector, AdminUser, AdminCertificate, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
 import { adminApi } from "@/lib/api";
@@ -13,21 +15,29 @@ import { useSSE } from "@/lib/useChatSSE";
 import AuthGuard from "@/components/AuthGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
-import ArtworksView from "@/components/admin/ArtworksView";
-import UsersView from "@/components/admin/UsersView";
-import CollectorsView from "@/components/admin/CollectorsView";
-import CertificatesView from "@/components/admin/CertificatesView";
-import EscrowView from "@/components/admin/EscrowView";
-import AuditLogView from "@/components/admin/AuditLogView";
-import ComplianceView from "@/components/admin/ComplianceView";
-import SettingsView from "@/components/admin/SettingsView";
-import SupportManagementView from "@/components/admin/SupportManagementView";
-import ArtworkWizard from "@/components/admin/ArtworkWizard";
-import PORView from "@/components/admin/PORView";
 
-export default function AdminPage() {
+const ArtworksView = dynamic(() => import("@/components/admin/ArtworksView"), { ssr: false });
+const UsersView = dynamic(() => import("@/components/admin/UsersView"), { ssr: false });
+const CollectorsView = dynamic(() => import("@/components/admin/CollectorsView"), { ssr: false });
+const CertificatesView = dynamic(() => import("@/components/admin/CertificatesView"), { ssr: false });
+const EscrowView = dynamic(() => import("@/components/admin/EscrowView"), { ssr: false });
+const AuditLogView = dynamic(() => import("@/components/admin/AuditLogView"), { ssr: false });
+const ComplianceView = dynamic(() => import("@/components/admin/ComplianceView"), { ssr: false });
+const SettingsView = dynamic(() => import("@/components/admin/SettingsView"), { ssr: false });
+const SupportManagementView = dynamic(() => import("@/components/admin/SupportManagementView"), { ssr: false });
+const ArtworkWizard = dynamic(() => import("@/components/admin/ArtworkWizard"), { ssr: false });
+const PORView = dynamic(() => import("@/components/admin/PORView"), { ssr: false });
+
+function AdminPageContent() {
   const { lang } = useTranslate();
-  const [activeView, setActiveView] = useState<AdminView>(AdminView.Artworks);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewFromUrl = searchParams.get("tab") as AdminView | null;
+  const [activeView, setActiveView] = useState<AdminView>(
+    viewFromUrl && Object.values(AdminView).includes(viewFromUrl as AdminView)
+      ? (viewFromUrl as AdminView)
+      : AdminView.Artworks
+  );
   const [viewHistory, setViewHistory] = useState<AdminView[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prefilledArtwork, setPrefilledArtwork] = useState<AdminArtwork | null>(null);
@@ -111,7 +121,10 @@ export default function AdminPage() {
   const navigateView = useCallback((view: AdminView) => {
     setViewHistory((prev) => [...prev, activeView]);
     setActiveView(view);
-  }, [activeView]);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", view);
+    router.replace(`/admin?${params.toString()}`, { scroll: false });
+  }, [activeView, router, searchParams]);
 
   const appendAudit = useCallback((user: string, action: string) => {
     setAuditLogs((prev) => [
@@ -321,15 +334,19 @@ export default function AdminPage() {
     }
   };
 
+  const adminUnreadCounts = useMemo(() => ({
+    [AdminView.SupportManagement]: supportTickets.filter(t => t.status === "Open" || t.status === "In Progress").length,
+  }), [supportTickets]);
+
+  const handleMenuToggle = useCallback(() => setSidebarOpen(prev => !prev), []);
+
   return (
     <AuthGuard permission="admin_panel">
       <div className="bg-parchment-ivory min-h-screen font-sans flex flex-col">
-        <AdminSidebar activeView={activeView} setActiveView={(view) => { setViewHistory((prev) => [...prev, activeView]); setActiveView(view); }} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={{
-          [AdminView.SupportManagement]: supportTickets.filter(t => t.status === "Open" || t.status === "In Progress").length,
-        }} />
+        <AdminSidebar activeView={activeView} setActiveView={navigateView} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={adminUnreadCounts} />
 
         <div className="flex-1 min-h-screen flex flex-col">
-          <AdminHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
+          <AdminHeader activeView={activeView} onMenuToggle={handleMenuToggle} onBack={handleBack} canGoBack={canGoBack} />
 
           <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
             <AnimatePresence mode="wait">
@@ -419,5 +436,13 @@ export default function AdminPage() {
         />
       )}
     </AuthGuard>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-parchment-ivory flex items-center justify-center"><div className="w-8 h-8 border-2 border-terracotta-earth border-t-transparent rounded-full animate-spin" /></div>}>
+      <AdminPageContent />
+    </Suspense>
   );
 }

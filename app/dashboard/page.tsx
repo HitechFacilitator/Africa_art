@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
 import { dashboardApi, consultationsApi, chatApi } from "@/lib/api";
 import type { ChatThread } from "@/lib/chatTypes";
@@ -17,22 +18,30 @@ import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsult
 
 import Sidebar from "@/components/dashboard/Sidebar";
 import CollectorHeader from "@/components/dashboard/CollectorHeader";
-import DashboardView from "@/components/dashboard/DashboardView";
-import PortfolioView from "@/components/dashboard/PortfolioView";
-import InquiriesView from "@/components/dashboard/InquiriesView";
-import ConsultationsView from "@/components/dashboard/ConsultationsView";
-import LogisticsView from "@/components/dashboard/LogisticsView";
-import SecurityView from "@/components/dashboard/SecurityView";
-import SettingsView from "@/components/dashboard/SettingsView";
-import CertificatesView from "@/components/dashboard/CertificatesView";
-import ChatView from "@/components/dashboard/ChatView";
-import SupportView from "@/components/dashboard/SupportView";
 
-export default function DashboardPage() {
+const DashboardView = dynamic(() => import("@/components/dashboard/DashboardView"), { ssr: false });
+const PortfolioView = dynamic(() => import("@/components/dashboard/PortfolioView"), { ssr: false });
+const InquiriesView = dynamic(() => import("@/components/dashboard/InquiriesView"), { ssr: false });
+const ConsultationsView = dynamic(() => import("@/components/dashboard/ConsultationsView"), { ssr: false });
+const LogisticsView = dynamic(() => import("@/components/dashboard/LogisticsView"), { ssr: false });
+const SecurityView = dynamic(() => import("@/components/dashboard/SecurityView"), { ssr: false });
+const SettingsView = dynamic(() => import("@/components/dashboard/SettingsView"), { ssr: false });
+const CertificatesView = dynamic(() => import("@/components/dashboard/CertificatesView"), { ssr: false });
+const ChatView = dynamic(() => import("@/components/dashboard/ChatView"), { ssr: false });
+const SupportView = dynamic(() => import("@/components/dashboard/SupportView"), { ssr: false });
+
+function DashboardPageContent() {
   const { lang } = useTranslate();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { canAccessTab, user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.Dashboard);
+  const tabFromUrl = searchParams.get("tab") as ActiveTab | null;
+  const showPor = searchParams.get("por") === "true";
+  const [activeTab, setActiveTab] = useState<ActiveTab>(
+    tabFromUrl && Object.values(ActiveTab).includes(tabFromUrl as ActiveTab)
+      ? (tabFromUrl as ActiveTab)
+      : ActiveTab.Dashboard
+  );
   const [tabHistory, setTabHistory] = useState<ActiveTab[]>([]);
   const [acquisitions, setAcquisitions] = useState<Acquisition[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -56,23 +65,27 @@ export default function DashboardPage() {
     dashboardApi.getSecurity().then(res => setSecurity(res.data as SecurityRecord[])).catch(() => {});
   }, []);
 
-  // Tab navigation with history tracking
-  const navigateTab = (tab: ActiveTab) => {
+  // Tab navigation with history tracking and URL sync
+  const navigateTab = useCallback((tab: ActiveTab) => {
     if (!canAccessTab(tab)) return;
     setTabHistory(prev => [...prev, activeTab]);
     setActiveTab(tab);
-  };
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    params.delete("por");
+    router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+  }, [canAccessTab, activeTab, searchParams, router]);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     if (tabHistory.length === 0) return;
     const prev = tabHistory[tabHistory.length - 1];
     setTabHistory(h => h.slice(0, -1));
     setActiveTab(prev);
-  };
+  }, [tabHistory]);
 
   const canGoBack = tabHistory.length > 0;
 
-  const allMobileTabs = [
+  const allMobileTabs = useMemo(() => [
     { id: ActiveTab.Dashboard, label: lang === "fr" ? "Vue d'ensemble" : "Overview" },
     { id: ActiveTab.Portfolio, label: lang === "fr" ? "Acquisitions" : "Acquisitions" },
     { id: ActiveTab.Certificates, label: lang === "fr" ? "Certificats" : "Certificates" },
@@ -84,10 +97,10 @@ export default function DashboardPage() {
     { id: ActiveTab.Previews, label: lang === "fr" ? "Aperçus" : "Previews" },
     { id: ActiveTab.Logistics, label: lang === "fr" ? "Logistique" : "Logistics" },
     { id: ActiveTab.Security, label: lang === "fr" ? "Sécurité" : "Security" },
-  ];
-  const mobileTabs = allMobileTabs.filter(tab => canAccessTab(tab.id));
+  ], [lang]);
+  const mobileTabs = useMemo(() => allMobileTabs.filter(tab => canAccessTab(tab.id)), [allMobileTabs, canAccessTab]);
 
-  const scrollMobileTabs = (direction: "left" | "right") => {
+  const scrollMobileTabs = useCallback((direction: "left" | "right") => {
     if (mobileTabsRef.current) {
       const scrollAmount = 150;
       mobileTabsRef.current.scrollBy({
@@ -95,7 +108,7 @@ export default function DashboardPage() {
         behavior: "smooth",
       });
     }
-  };
+  }, []);
 
   const defaultProfile: CollectorProfile = {
     name: user?.name || "Guest",
@@ -344,21 +357,27 @@ export default function DashboardPage() {
     if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
   };
 
-  const totalValueEur = acquisitions.reduce((acc, item) => acc + item.estimatedValueEur, 0);
+  const totalValueEur = useMemo(() => acquisitions.reduce((acc, item) => acc + item.estimatedValueEur, 0), [acquisitions]);
+
+  const sidebarUnreadCounts = useMemo(() => ({
+    [ActiveTab.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
+    [ActiveTab.Support]: supportTicketCount,
+  }), [chatThreads, supportTicketCount]);
+
+  const handleLogout = useCallback(() => {
+    if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
+      logout();
+    }
+  }, [lang, logout]);
+
+  const handleMenuToggle = useCallback(() => setSidebarOpen(true), []);
 
   return (
     <AuthGuard permission="dashboard">
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
-      <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={() => {
-        if (confirm(lang === "fr" ? "Révoquer la session de placement privé ? Les paramètres et fichiers de portefeuille persisteront dans le stockage local sécurisé." : 'De-authorize private placement session? Settings and portfolio files will persist in secure local storage.')) {
-          logout();
-        }
-      }} unreadCounts={{
-        [ActiveTab.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
-        [ActiveTab.Support]: supportTicketCount,
-      }} />
+      <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={handleLogout} unreadCounts={sidebarUnreadCounts} />
 
-      <CollectorHeader activeTab={activeTab} onBack={goBack} canGoBack={canGoBack} onMenuToggle={() => setSidebarOpen(true)} />
+      <CollectorHeader activeTab={activeTab} onBack={goBack} canGoBack={canGoBack} onMenuToggle={handleMenuToggle} />
 
       {/* Mobile Horizontal Tabs */}
       <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-surface border-b border-ebony-deep/5">
@@ -406,7 +425,7 @@ export default function DashboardPage() {
               <PortfolioView acquisitions={translatedAcquisitions} onAddAcquisition={handleAddAcquisition} onRemoveAcquisition={handleRemoveAcquisition} selectedAcquisition={selectedAcquisition} setSelectedAcquisition={setSelectedAcquisition} />
             )}
             {activeTab === ActiveTab.Inquiries && (
-              <InquiriesView inquiries={translatedInquiries} onAddMessage={handleAddMessage} selectedInquiryId={selectedInquiryId} setSelectedInquiryId={setSelectedInquiryId} />
+              <InquiriesView inquiries={translatedInquiries} onAddMessage={handleAddMessage} selectedInquiryId={selectedInquiryId} setSelectedInquiryId={setSelectedInquiryId} initialSubTab={showPor ? "por" : undefined} />
             )}
             {activeTab === ActiveTab.Consultations && (
               <ConsultationsView consultations={translatedConsultations} onAddConsultation={handleAddConsultation} />
@@ -769,5 +788,13 @@ export default function DashboardPage() {
       </AnimatePresence>
     </div>
     </AuthGuard>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface flex items-center justify-center"><div className="w-8 h-8 border-2 border-gold-leaf border-t-transparent rounded-full animate-spin" /></div>}>
+      <DashboardPageContent />
+    </Suspense>
   );
 }

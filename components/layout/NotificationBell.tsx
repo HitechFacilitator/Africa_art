@@ -22,6 +22,7 @@ interface Notification {
 interface NotificationBellProps {
   basePath?: string;
   lightMode?: boolean;
+  tabMap?: Partial<Record<Notification["type"], string>>;
 }
 
 function getStorageKey(userId: string | undefined): string {
@@ -63,7 +64,7 @@ function saveLastRead(userId: string | undefined, ts: number) {
   } catch {}
 }
 
-export default function NotificationBell({ basePath = "/dashboard", lightMode = false }: NotificationBellProps) {
+export default function NotificationBell({ basePath = "/dashboard", lightMode = false, tabMap }: NotificationBellProps) {
   const { user } = useAuth();
   const { lang } = useTranslate();
   const router = useRouter();
@@ -243,14 +244,19 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
   const handleNotificationClick = (notif: Notification) => {
     markAsRead(notif.threadKey);
     setOpen(false);
+    const defaultTabs: Record<Notification["type"], string> = {
+      message: "chat",
+      ticket: "tickets",
+      consultation: "consultations",
+      por: "inquiries",
+      inquiry: "inquiries",
+    };
+    const tabs = { ...defaultTabs, ...tabMap };
+    const tab = tabs[notif.type];
     if (notif.type === "message" && notif.threadId) {
-      router.push(`${basePath}?tab=chat&thread=${notif.threadId}`);
-    } else if (notif.type === "ticket") {
-      router.push(`${basePath}?tab=tickets`);
-    } else if (notif.type === "consultation") {
-      router.push(`${basePath}?tab=consultations`);
-    } else if (notif.type === "por" || notif.type === "inquiry") {
-      router.push(`${basePath}?tab=inquiries`);
+      router.push(`${basePath}?tab=${tab}&thread=${notif.threadId}`);
+    } else if (tab) {
+      router.push(`${basePath}?tab=${tab}`);
     }
   };
 

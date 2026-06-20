@@ -165,7 +165,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <Navbar />
-      <main className="flex-1 max-w-[1440px] mx-auto w-full px-6 md:px-16 py-10 md:py-16">
+      <main className="flex-1 max-w-[1440px] mx-auto w-full px-6 md:px-16 pt-10 md:pt-16 pb-24">
         {/* Back Button */}
         <button onClick={() => router.back()} className="flex items-center gap-2 text-on-surface-variant hover:text-ebony-deep transition-colors mb-8 text-xs font-semibold uppercase tracking-wider">
           <ArrowLeft className="w-4 h-4" /> {lang === "fr" ? "Retour à la Collection" : "Back to Collection"}
@@ -317,7 +317,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <div className="flex flex-col gap-3.5">
                     {porAlreadySubmitted ? (
-                      <Link href="/support" className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors text-center flex items-center justify-center gap-2">
+                      <Link href="/dashboard?tab=Inquiries&por=true" className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors text-center flex items-center justify-center gap-2">
                         <MessageSquare className="w-3.5 h-3.5" />
                         {lang === "fr" ? "Suivre Ma Demande" : "Follow My Inquiry"}
                       </Link>
@@ -492,7 +492,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
           {isPor ? (
             <div className="flex items-center gap-2">
               {porAlreadySubmitted ? (
-                <Link href="/support" className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:flex items-center gap-2">
+                <Link href="/dashboard?tab=Inquiries&por=true" className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:flex items-center gap-2">
                   <MessageSquare className="w-3 h-3" />
                   {lang === "fr" ? "Suivre Ma Demande" : "Follow My Inquiry"}
                 </Link>

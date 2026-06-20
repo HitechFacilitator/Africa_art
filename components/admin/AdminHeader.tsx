@@ -103,7 +103,7 @@ export default function AdminHeader({ activeView, onMenuToggle, onBack, canGoBac
             <Search size={15} />
           </button>
 
-          <NotificationBell basePath="/admin" />
+          <NotificationBell basePath="/admin" tabMap={{ ticket: "support_mgmt", por: "por", inquiry: "por" }} />
 
           <div className="w-px h-5 bg-ebony-deep/10" />
 

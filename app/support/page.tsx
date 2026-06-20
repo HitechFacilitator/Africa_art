@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { SupportTab } from "@/lib/supportTypes";
 import { chatApi, dashboardApi } from "@/lib/api";
 import type { ChatThread } from "@/lib/chatTypes";
@@ -13,14 +15,22 @@ import { useChatSSE } from "@/lib/useChatSSE";
 
 import SupportSidebar from "@/components/support/SupportSidebar";
 import SupportHeader from "@/components/support/SupportHeader";
-import SupportView from "@/components/dashboard/SupportView";
-import ChatView from "@/components/dashboard/ChatView";
-import SettingsView from "@/components/dashboard/SettingsView";
 
-export default function SupportPage() {
+const SupportView = dynamic(() => import("@/components/dashboard/SupportView"), { ssr: false });
+const ChatView = dynamic(() => import("@/components/dashboard/ChatView"), { ssr: false });
+const SettingsView = dynamic(() => import("@/components/dashboard/SettingsView"), { ssr: false });
+
+function SupportPageContent() {
   const { lang } = useTranslate();
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<SupportTab>(SupportTab.Tickets);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get("tab") as SupportTab | null;
+  const [activeTab, setActiveTab] = useState<SupportTab>(
+    tabFromUrl && Object.values(SupportTab).includes(tabFromUrl as SupportTab)
+      ? (tabFromUrl as SupportTab)
+      : SupportTab.Tickets
+  );
   const [viewHistory, setViewHistory] = useState<SupportTab[]>([SupportTab.Tickets]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
@@ -45,20 +55,23 @@ export default function SupportPage() {
 
   const canGoBack = viewHistory.length > 1;
 
-  const handleSetActiveTab = (tab: SupportTab) => {
+  const handleSetActiveTab = useCallback((tab: SupportTab) => {
     setViewHistory(prev => [...prev, tab]);
     setActiveTab(tab);
-  };
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`/support?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (viewHistory.length > 1) {
       const newHistory = viewHistory.slice(0, -1);
       setViewHistory(newHistory);
       setActiveTab(newHistory[newHistory.length - 1]);
     }
-  };
+  }, [viewHistory]);
 
-  const handleSendMessage = async (threadId: string, text: string) => {
+  const handleSendMessage = useCallback(async (threadId: string, text: string) => {
     const tempMsg = {
       id: `msg-${Date.now()}`,
       senderId: user?.id || "support",
@@ -87,36 +100,40 @@ export default function SupportPage() {
     } catch (err) {
       console.error("Failed to send message:", err);
     }
-  };
+  }, [user]);
 
-  const totalUnreadMessages = chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0);
+  const totalUnreadMessages = useMemo(() => chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0), [chatThreads]);
 
-  const defaultProfile = {
+  const supportUnreadCounts = useMemo(() => ({
+    [SupportTab.Chat]: totalUnreadMessages,
+  }), [totalUnreadMessages]);
+
+  const handleMenuToggle = useCallback(() => setSidebarOpen(prev => !prev), []);
+
+  const defaultProfile = useMemo(() => ({
     name: user?.name || "Support Staff",
     tier: "Support",
     currency: "EUR (€)",
     joinedDate: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
     curatorName: "Aduna Support Desk",
     regionsOfInterest: ["West Africa", "Central Africa", "East Africa"],
-  };
+  }), [user]);
 
   return (
-    <AuthGuard permission="dashboard">
+    <AuthGuard permission="support_panel">
       <div className="bg-background min-h-screen font-sans flex flex-col">
         <SupportSidebar
           activeTab={activeTab}
           setActiveTab={handleSetActiveTab}
           open={sidebarOpen}
           setOpen={setSidebarOpen}
-          unreadCounts={{
-            [SupportTab.Chat]: totalUnreadMessages,
-          }}
+          unreadCounts={supportUnreadCounts}
         />
 
         <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
           <SupportHeader
             activeTab={activeTab}
-            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+            onMenuToggle={handleMenuToggle}
             onBack={handleBack}
             canGoBack={canGoBack}
           />
@@ -155,5 +172,13 @@ export default function SupportPage() {
         </div>
       </div>
     </AuthGuard>
+  );
+}
+
+export default function SupportPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-terracotta-earth border-t-transparent rounded-full animate-spin" /></div>}>
+      <SupportPageContent />
+    </Suspense>
   );
 }

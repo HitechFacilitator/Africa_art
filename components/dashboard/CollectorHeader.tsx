@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Image from "next/image";
 import { ArrowLeft, Menu, Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -31,13 +31,8 @@ const TAB_LABELS: Record<string, { en: string; fr: string; icon: string }> = {
   [ActiveTab.Settings]: { en: "Settings", fr: "Paramètres", icon: "⚙" },
 };
 
-export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuToggle }: CollectorHeaderProps) {
-  const { lang } = useTranslate();
-  const { user } = useAuth();
+const LiveClock = memo(function LiveClock({ lang }: { lang: string }) {
   const [time, setTime] = useState<string>("");
-  const tabInfo = TAB_LABELS[activeTab] || { en: "Dashboard", fr: "Tableau de Bord", icon: "📊" };
-  const roleInfo = user ? ROLE_INFO[user.role] : null;
-
   useEffect(() => {
     const update = () => {
       const now = new Date();
@@ -47,6 +42,19 @@ export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuTo
     const id = setInterval(update, 1000);
     return () => clearInterval(id);
   }, [lang]);
+  return (
+    <div className="hidden lg:flex items-center gap-1.5 text-parchment-ivory/40">
+      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+      <span className="text-[10px] font-mono tracking-wider tabular-nums">{time}</span>
+    </div>
+  );
+});
+
+export default memo(function CollectorHeader({ activeTab, onBack, canGoBack, onMenuToggle }: CollectorHeaderProps) {
+  const { lang } = useTranslate();
+  const { user } = useAuth();
+  const tabInfo = TAB_LABELS[activeTab] || { en: "Dashboard", fr: "Tableau de Bord", icon: "📊" };
+  const roleInfo = user ? ROLE_INFO[user.role] : null;
 
   return (
     <header className="sticky top-0 z-40 bg-ebony-deep border-b border-gold-leaf/15 shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
@@ -115,10 +123,7 @@ export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuTo
         {/* Right: Time + Notifications + Badge */}
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
           {/* Live clock */}
-          <div className="hidden lg:flex items-center gap-1.5 text-parchment-ivory/40">
-            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-            <span className="text-[10px] font-mono tracking-wider tabular-nums">{time}</span>
-          </div>
+          <LiveClock lang={lang} />
 
           <div className="w-px h-5 bg-parchment-ivory/15 hidden lg:block" />
 
@@ -149,4 +154,4 @@ export default function CollectorHeader({ activeTab, onBack, canGoBack, onMenuTo
       </div>
     </header>
   );
-}
+});

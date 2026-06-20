@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
 import { AdvisorView, AdvisorConsultation, AdvisorClient, AdvisorPlacement, AdvisorActivity } from "@/lib/advisorTypes";
 import { advisorApi, chatApi } from "@/lib/api";
 import type { ChatThread } from "@/lib/chatTypes";
@@ -12,20 +14,28 @@ import AuthGuard from "@/components/AuthGuard";
 import { useChatSSE } from "@/lib/useChatSSE";
 import AdvisorSidebar from "@/components/advisor/AdvisorSidebar";
 import AdvisorHeader from "@/components/advisor/AdvisorHeader";
-import OverviewView from "@/components/advisor/OverviewView";
-import ConsultationsManageView from "@/components/advisor/ConsultationsManageView";
-import ClientsView from "@/components/advisor/ClientsView";
-import PlacementsView from "@/components/advisor/PlacementsView";
-import ActivityView from "@/components/advisor/ActivityView";
-import AdvisorSettingsView from "@/components/advisor/AdvisorSettingsView";
-import AdvisorChatView from "@/components/advisor/AdvisorChatView";
+
+const OverviewView = dynamic(() => import("@/components/advisor/OverviewView"), { ssr: false });
+const ConsultationsManageView = dynamic(() => import("@/components/advisor/ConsultationsManageView"), { ssr: false });
+const ClientsView = dynamic(() => import("@/components/advisor/ClientsView"), { ssr: false });
+const PlacementsView = dynamic(() => import("@/components/advisor/PlacementsView"), { ssr: false });
+const ActivityView = dynamic(() => import("@/components/advisor/ActivityView"), { ssr: false });
+const AdvisorSettingsView = dynamic(() => import("@/components/advisor/AdvisorSettingsView"), { ssr: false });
+const AdvisorChatView = dynamic(() => import("@/components/advisor/AdvisorChatView"), { ssr: false });
 
 const VIEW_STACK = [AdvisorView.Overview];
 
-export default function AdvisorPage() {
+function AdvisorPageContent() {
   const { lang } = useTranslate();
   const { user } = useAuth();
-  const [activeView, setActiveView] = useState<AdvisorView>(AdvisorView.Overview);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const viewFromUrl = searchParams.get("tab") as AdvisorView | null;
+  const [activeView, setActiveView] = useState<AdvisorView>(
+    viewFromUrl && Object.values(AdvisorView).includes(viewFromUrl as AdvisorView)
+      ? (viewFromUrl as AdvisorView)
+      : AdvisorView.Overview
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewHistory, setViewHistory] = useState<AdvisorView[]>([AdvisorView.Overview]);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
@@ -57,20 +67,23 @@ export default function AdvisorPage() {
 
   const canGoBack = viewHistory.length > 1;
 
-  const handleSetActiveView = (view: AdvisorView) => {
+  const handleSetActiveView = useCallback((view: AdvisorView) => {
     setViewHistory(prev => [...prev, view]);
     setActiveView(view);
-  };
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", view);
+    router.replace(`/advisor?${params.toString()}`, { scroll: false });
+  }, [searchParams, router]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (viewHistory.length > 1) {
       const newHistory = viewHistory.slice(0, -1);
       setViewHistory(newHistory);
       setActiveView(newHistory[newHistory.length - 1]);
     }
-  };
+  }, [viewHistory]);
 
-  const handleSendMessage = async (threadId: string, text: string) => {
+  const handleSendMessage = useCallback(async (threadId: string, text: string) => {
     const tempMsg = {
       id: `msg-${Date.now()}`,
       senderId: user?.id || "advisor",
@@ -99,17 +112,21 @@ export default function AdvisorPage() {
     } catch (err) {
       console.error("Failed to send message:", err);
     }
-  };
+  }, [user]);
+
+  const advisorUnreadCounts = useMemo(() => ({
+    [AdvisorView.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
+  }), [chatThreads]);
+
+  const handleMenuToggle = useCallback(() => setSidebarOpen(prev => !prev), []);
 
   return (
     <AuthGuard permission="advisor_dashboard">
       <div className="bg-background min-h-screen font-sans flex flex-col">
-        <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={{
-          [AdvisorView.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
-        }} />
+        <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={advisorUnreadCounts} />
 
         <div className="flex-1 lg:ml-64 min-h-screen flex flex-col">
-          <AdvisorHeader activeView={activeView} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} onBack={handleBack} canGoBack={canGoBack} />
+          <AdvisorHeader activeView={activeView} onMenuToggle={handleMenuToggle} onBack={handleBack} canGoBack={canGoBack} />
 
           <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
             <AnimatePresence mode="wait">
@@ -153,5 +170,13 @@ export default function AdvisorPage() {
         </div>
       </div>
     </AuthGuard>
+  );
+}
+
+export default function AdvisorPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-terracotta-earth border-t-transparent rounded-full animate-spin" /></div>}>
+      <AdvisorPageContent />
+    </Suspense>
   );
 }

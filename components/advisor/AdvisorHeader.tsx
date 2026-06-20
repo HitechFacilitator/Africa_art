@@ -102,7 +102,7 @@ export default function AdvisorHeader({ activeView, onMenuToggle, onBack, canGoB
             <Search size={15} />
           </button>
 
-          <NotificationBell basePath="/advisor" />
+          <NotificationBell basePath="/advisor" tabMap={{ message: "chat", consultation: "consultations", ticket: "chat", por: "chat", inquiry: "chat" }} />
 
           <div className="w-px h-5 bg-ebony-deep/10" />
 

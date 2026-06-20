@@ -94,7 +94,7 @@ export default function SupportHeader({ activeTab, onMenuToggle, onBack, canGoBa
 
           <div className="w-px h-5 bg-ebony-deep/10 hidden lg:block" />
 
-          <NotificationBell basePath="/support" />
+          <NotificationBell basePath="/support" tabMap={{ message: "chat", ticket: "tickets", consultation: "tickets", por: "tickets", inquiry: "tickets" }} />
 
           <div className="w-px h-5 bg-ebony-deep/10" />
 
