@@ -46,7 +46,7 @@ export default function SupportHeader({ activeTab, onMenuToggle, onBack, canGoBa
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={onMenuToggle}
-            className="flex items-center justify-center w-8 h-8 text-ebony-deep/60 hover:text-terracotta-earth hover:bg-terracotta-earth/10 rounded-sm transition-all cursor-pointer border-0 bg-transparent group lg:hidden"
+            className="flex items-center justify-center w-8 h-8 text-ebony-deep/60 hover:text-terracotta-earth hover:bg-terracotta-earth/10 rounded-sm transition-all cursor-pointer border-0 bg-transparent group"
           >
             <Menu size={16} className="group-hover:rotate-90 transition-transform duration-300" />
           </button>

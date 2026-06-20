@@ -12,7 +12,6 @@ import {
   Activity,
   Settings,
   LogOut,
-  Menu,
   ChevronLeft,
   MessageSquare,
 } from "lucide-react";
@@ -111,15 +110,6 @@ export default function AdvisorSidebar({ activeView, setActiveView, open, setOpe
 
   return (
     <>
-      {/* Desktop: Trigger button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="hidden lg:flex fixed left-5 top-5 z-30 p-2.5 bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep/60 hover:text-terracotta-earth hover:bg-terracotta-earth/5 transition-all shadow-sm cursor-pointer"
-        title={lang === "fr" ? "Ouvrir le menu" : "Open menu"}
-      >
-        <Menu size={18} />
-      </button>
-
       {/* Desktop: Overlay sidebar */}
       <div className={`hidden lg:flex fixed inset-0 z-50 transition-all duration-300 ${open ? "visible" : "invisible"}`}>
         <div
