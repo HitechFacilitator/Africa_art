@@ -19,6 +19,7 @@ import {
   FileCheck,
   UserCog,
   Lock,
+  MessageSquare,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -51,6 +52,7 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen,
     { id: AdminView.AuditLog, label: lang === "fr" ? "Journal d'Audit" : "Audit Log", icon: History },
     { id: AdminView.Compliance, label: lang === "fr" ? "Conformité" : "Compliance", icon: BadgeCheck },
     { id: AdminView.POR, label: lang === "fr" ? "Prix sur Demande" : "Price on Request", icon: Lock },
+    { id: AdminView.Chat, label: lang === "fr" ? "Messages" : "Messages", icon: MessageSquare },
     { id: AdminView.Settings, label: lang === "fr" ? "Paramètres" : "Settings", icon: Settings },
   ];
 

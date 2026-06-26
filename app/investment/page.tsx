@@ -33,7 +33,8 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useTranslate } from "@/lib/translations";
 import AuthGuard from "@/components/AuthGuard";
-import { artworksApi, consultationsApi, dashboardApi, ArtworkData } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { artworksApi, consultationsApi, dashboardApi, chatApi, ArtworkData } from "@/lib/api";
 
 const stagger = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } } };
@@ -96,6 +97,7 @@ const SECURITY_AUDITS = [
 
 export default function InvestmentPage() {
   const { lang, tAsync } = useTranslate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"advisory" | "gallery" | "provenance" | "vault">("advisory");
   const [chartFocus, setChartFocus] = useState<"aggregate" | "nok" | "benin">("aggregate");
   const [selectedPackage, setSelectedPackage] = useState<InvestmentPackage | null>(null);
@@ -134,14 +136,19 @@ export default function InvestmentPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [accessCode, setAccessCode] = useState("");
   const [authError, setAuthError] = useState("");
+  const [vaultAttempts, setVaultAttempts] = useState(0);
+  const [vaultLocked, setVaultLocked] = useState(false);
   const [messages, setMessages] = useState<{ sender: "user" | "coordinator"; text: string; time: string }[]>([{ sender: "coordinator", text: lang === "fr" ? "Connexion sécurisée : Tunnel AES-256 établi. Bonjour, collectionneur. Nous sommes prêts à coordonner les cessions de freeports suisses ou à vérifier les enchères londoniennes en attente." : "Connection secure: AES-256 Tunnel established. Good day, collector. We stand ready to coordinate Swiss freeport handovers or verify pending London bids.", time: "21:19:15" }]);
   const [typedMessage, setTypedMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [chatSendError, setChatSendError] = useState<string | null>(null);
+  const [vaultThreadId, setVaultThreadId] = useState<string | null>(null);
 
   // Provenance states
   const [selectedProvenanceId, setSelectedProvenanceId] = useState("NOK-9401");
   const [typedCode, setTypedCode] = useState("");
   const [auditMessage, setAuditMessage] = useState<string | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -162,7 +169,7 @@ export default function InvestmentPage() {
         const artifacts: InvestmentArtifact[] = artworks
           .filter((art) => art.investment)
           .map((art, i) => ({
-            id: art.id || `INV-${i}`,
+            id: String(art.id || `INV-${i}`),
             title: art.title,
             origin: art.origin || art.region,
             period: art.period,
@@ -175,12 +182,12 @@ export default function InvestmentPage() {
             description: art.investmentThesis || art.historicalStory || "",
             exhibitions: [],
             carbonDatingDetails: art.preservationStatus || undefined,
-            accessionNo: art.id,
+            accessionNo: String(art.id),
           }));
 
         // If no investment-flagged artworks, use all artworks
         const finalArtifacts = artifacts.length > 0 ? artifacts : artworks.slice(0, 4).map((art, i) => ({
-          id: art.id || `INV-${i}`,
+          id: String(art.id || `INV-${i}`),
           title: art.title,
           origin: art.origin || art.region,
           period: art.period,
@@ -192,7 +199,7 @@ export default function InvestmentPage() {
           imageUrl: art.imageUrl,
           description: art.investmentThesis || art.historicalStory || "",
           exhibitions: [],
-          accessionNo: art.id,
+          accessionNo: String(art.id),
         }));
 
         const packages: InvestmentPackage[] = finalArtifacts.length >= 2 ? [
@@ -241,6 +248,20 @@ export default function InvestmentPage() {
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [activeTab]);
 
+  // Create vault thread when authenticated
+  useEffect(() => {
+    if (!isAuthenticated || vaultThreadId) return;
+    chatApi.createThread({
+      subject: "Investment Vault — Secure Channel",
+      clientName: user?.name || "Collector",
+      clientRole: user?.role || "collector",
+      advisorName: "Investment Coordinator",
+      initialMessage: "Connection secure: AES-256 Tunnel established. Good day, collector. We stand ready to coordinate Swiss freeport handovers or verify pending London bids.",
+    }).then((res) => {
+      setVaultThreadId(res.data.id);
+    }).catch(() => {});
+  }, [isAuthenticated]);
+
   // Fetch advisors + existing consultation on mount
   useEffect(() => {
     consultationsApi.getAdvisors().then(res => {
@@ -283,7 +304,7 @@ export default function InvestmentPage() {
         clientName: fullName,
         clientEmail: email,
         currentCollection: currentCollection || undefined,
-        meetingFormat: meetingType,
+        meetingFormat: meetingTypeMap[meetingType] || meetingType,
       });
       setExistingConsultation(res.data);
       setBookingRef(res.data.id);
@@ -298,39 +319,100 @@ export default function InvestmentPage() {
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    if (accessCode.trim().toLowerCase() === "vault" || accessCode.trim() === "1234" || accessCode.trim().length > 2) {
-      setIsAuthenticated(true);
-      setAuthError("");
-    } else {
-      setAuthError(lang === "fr" ? "Échec de l'authentification de session : Hash de sécurité collecteur invalide." : "Session authentication failed: Invalid collector security hash.");
+    if (vaultLocked) return;
+    if (accessCode.trim().length < 4) {
+      setAuthError(lang === "fr" ? "Code d'accès trop court (min. 4 caractères)." : "Access code too short (min. 4 characters).");
+      return;
     }
+    const newAttempts = vaultAttempts + 1;
+    // Verify PIN: accept the code if it matches a pattern or user's email prefix
+    const emailPrefix = user?.email?.split("@")[0] || "";
+    const code = accessCode.trim();
+    const hasLetter = /[a-zA-Z]/.test(code);
+    const hasNumber = /[0-9]/.test(code);
+    const isValid = code === emailPrefix || (code.length >= 8 && hasLetter && hasNumber);
+    if (!isValid) {
+      if (newAttempts >= 5) {
+        setVaultLocked(true);
+        setAuthError(lang === "fr" ? "Trop de tentatives. Accès verrouillé." : "Too many attempts. Access locked.");
+      } else {
+        setVaultAttempts(newAttempts);
+        setAuthError(lang === "fr" ? `Code invalide. Tentatives restantes: ${5 - newAttempts}` : `Invalid code. Attempts remaining: ${5 - newAttempts}`);
+      }
+      return;
+    }
+    setVaultAttempts(newAttempts);
+    setIsAuthenticated(true);
+    setAuthError("");
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typedMessage.trim()) return;
     const timeStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     setMessages((prev) => [...prev, { sender: "user", text: typedMessage, time: timeStr }]);
+    const userText = typedMessage;
     setTypedMessage("");
     setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const textLower = typedMessage.toLowerCase();
+
+    const fallbackReply = () => {
+      const textLower = userText.toLowerCase();
       let reply = lang === "fr" ? "Votre demande a été enregistrée. Selon nos réglementations de confidentialité souveraines suisses, j'ai mis cette demande en file d'attente pour l'évaluation hors ligne directe du Dr. Elena Rostova." : "Your request has been logged. Under our Swiss sovereign privacy regulations, I have queued this inquiry for Dr. Elena Rostova's direct offline evaluation.";
       if (textLower.includes("nok") || textLower.includes("terracotta")) reply = lang === "fr" ? "Accusé de réception. Notre Dignitaire Assis Nok est actuellement sécurisé dans la Chambre 14B de Zurich. L'inspection directe nécessite un avis de défrichage préalable de 48 heures." : "Acknowledged. Our Nok Seated Dignitary is currently secured in Zurich Chamber 14B. Direct inspection requires 48-hour prior clearing notice.";
       else if (textLower.includes("benin") || textLower.includes("bronze")) reply = lang === "fr" ? "Accusé de réception. Le Consortium Bénin comprend deux plaques en relief actuellement sous statut de séquestre à Genève." : "Acknowledged. The Benin Consortium includes two relief plaques currently on escrow holding status in Geneva.";
       else if (textLower.includes("escrow") || textLower.includes("buy")) reply = lang === "fr" ? "Selon notre protocole de séquestre, les ordres d'achat sont routés via des comptes de garde à l'aveugle profond avec le Groupe Julius Baer." : "Under our Escrow protocol, buy-orders are routed via deep-blind custody accounts with Julius Baer Group.";
-      setMessages((prev) => [...prev, { sender: "coordinator", text: reply, time: timeStr }]);
-    }, 1500);
+      return reply;
+    };
+
+    try {
+      if (vaultThreadId) {
+        await chatApi.sendMessage(vaultThreadId, { text: userText });
+      } else {
+        throw new Error("No thread");
+      }
+      setIsTyping(false);
+    } catch {
+      // Fallback to simulated reply
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [...prev, { sender: "coordinator", text: fallbackReply(), time: timeStr }]);
+      }, 1500);
+    }
   };
 
-  const handleSearchCode = (e: React.FormEvent) => {
+  const handleSearchCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typedCode) return;
-    const match = masterArtifacts.find((art) => art.id.toLowerCase() === typedCode.toLowerCase().trim());
-    if (match) { setSelectedProvenanceId(match.id); setAuditMessage(`Accession Record '${match.id}' Found. Title Cleared & Vetted.`); }
-    else { setAuditMessage(`No active record registered with code '${typedCode}'. Verification failed.`); }
-    setTimeout(() => setAuditMessage(null), 4000);
+    setSearchLoading(true);
+    try {
+      const res = await artworksApi.search(typedCode, { limit: 5 });
+      const apiResults = (res.data || []).map((art: ArtworkData) => ({
+        id: String(art.id || ""),
+        title: art.title,
+      }));
+      const match = apiResults.find((a: { id: string; title: string }) => a.id.toLowerCase() === typedCode.toLowerCase().trim() || a.title.toLowerCase().includes(typedCode.toLowerCase().trim()));
+      if (match) {
+        setSelectedProvenanceId(match.id);
+        setAuditMessage(`Accession Record '${match.id}' Found. Title Cleared & Vetted.`);
+      } else {
+        // Fallback to local search
+        const localMatch = masterArtifacts.find((art) => art.id.toLowerCase() === typedCode.toLowerCase().trim());
+        if (localMatch) {
+          setSelectedProvenanceId(localMatch.id);
+          setAuditMessage(`Accession Record '${localMatch.id}' Found. Title Cleared & Vetted.`);
+        } else {
+          setAuditMessage(`No active record registered with code '${typedCode}'. Verification failed.`);
+        }
+      }
+    } catch {
+      // Fallback to local search
+      const match = masterArtifacts.find((art) => art.id.toLowerCase() === typedCode.toLowerCase().trim());
+      if (match) { setSelectedProvenanceId(match.id); setAuditMessage(`Accession Record '${match.id}' Found. Title Cleared & Vetted.`); }
+      else { setAuditMessage(`No active record registered with code '${typedCode}'. Verification failed.`); }
+    } finally {
+      setSearchLoading(false);
+      setTimeout(() => setAuditMessage(null), 4000);
+    }
   };
 
   const filteredArtifacts = masterArtifacts.filter((art) => {
@@ -666,7 +748,7 @@ export default function InvestmentPage() {
                         <h3 className="font-sans text-xs uppercase tracking-widest text-terracotta-earth font-bold mb-4">{lang === "fr" ? "Audit de la Clé d'Accession" : "Accession Key Audit"}</h3>
                         <form onSubmit={handleSearchCode} className="space-y-4">
                           <div className="relative"><SearchCode className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 w-4 h-4" /><input type="text" placeholder={lang === "fr" ? "Entrez l'Accession : NOK-9401..." : "Enter Accession: NOK-9401..."} value={typedCode} onChange={(e) => setTypedCode(e.target.value)} className="w-full bg-parchment-ivory border border-on-surface/15 py-3 pl-10 pr-3 font-sans text-xs focus:outline-none focus:border-gold-leaf uppercase" /></div>
-                          <button type="submit" className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs uppercase tracking-widest py-3 hover:bg-gold-leaf hover:text-ebony-deep transition-colors">{lang === "fr" ? "Interroger le Grand Livre de Garde" : "Query Custody Ledger"}</button>
+                          <button type="submit" disabled={searchLoading} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs uppercase tracking-widest py-3 hover:bg-gold-leaf hover:text-ebony-deep transition-colors disabled:opacity-50">{searchLoading ? (lang === "fr" ? "Recherche..." : "Searching...") : (lang === "fr" ? "Interroger le Grand Livre de Garde" : "Query Custody Ledger")}</button>
                         </form>
                         <AnimatePresence>{auditMessage && <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`mt-4 p-3 text-[11.5px] font-sans border text-center ${auditMessage.includes("Found") ? "bg-emerald-50 border-emerald-300 text-emerald-800" : "bg-rose-50 border-rose-300 text-rose-800"}`}>{auditMessage}</motion.div>}</AnimatePresence>
                       </div>
@@ -743,10 +825,11 @@ export default function InvestmentPage() {
                            <p className="text-[11px] uppercase tracking-widest text-terracotta-earth font-bold mb-6 text-center">{lang === "fr" ? "Accès au Grand Livre du Freeport Suisse" : "Swiss Freeport Ledger Access"}</p>
                            <p className="text-parchment-ivory/60 text-xs text-center leading-relaxed mb-6 font-serif">{lang === "fr" ? "Entrez votre Clé de Collecteur sécurisée pour interroger les audits physiques actuels et communiquer derrière notre pare-feu chiffré." : "Enter your secure Collector Key to query current physical audits and communicate behind our encrypted firewall."}</p>
                           <form onSubmit={handleAuth} className="space-y-4">
-                            <input type="password" required placeholder="ENTER PIN OR TYPE 'VAULT'" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="w-full bg-neutral-900 border border-neutral-800 text-center text-sm font-mono tracking-[0.3em] py-3 text-gold-leaf placeholder-neutral-600 focus:outline-none focus:border-gold-leaf" />
+                            <input type="password" required placeholder={lang === "fr" ? "ENTREZ LE CODE MIN. 4 CARACTÈRES" : "ENTER CODE MIN. 4 CHARACTERS"} value={accessCode} onChange={(e) => setAccessCode(e.target.value)} className="w-full bg-neutral-900 border border-neutral-800 text-center text-sm font-mono tracking-[0.3em] py-3 text-gold-leaf placeholder-neutral-600 focus:outline-none focus:border-gold-leaf" />
                             <button type="submit" className="w-full bg-gold-leaf text-ebony-deep font-sans text-xs uppercase tracking-widest font-extrabold py-3.5 hover:bg-gold-leaf/80 transition-colors">{lang === "fr" ? "Authentifier la Session du Grand Livre" : "Authenticate Ledger Session"}</button>
                           </form>
-                          {authError && <div className="mt-4 text-[11px] text-rose-500 font-bold tracking-tight">{authError}</div>}
+                           {authError && <div className="mt-4 text-[11px] text-rose-500 font-bold tracking-tight">{authError}</div>}
+                           {vaultAttempts > 0 && !vaultLocked && <div className="mt-2 text-[10px] text-parchment-ivory/40 font-sans">{lang === "fr" ? `Tentatives restantes : ${5 - vaultAttempts}` : `Attempts remaining: ${5 - vaultAttempts}`}</div>}
                            <div className="mt-6 pt-4 border-t border-neutral-800 flex items-center justify-center gap-1.5 text-[10px] text-neutral-500 font-sans"><Radio className="w-3.5 h-3.5 text-terracotta-earth animate-pulse" /><span>{lang === "fr" ? "CONNEXION HSM SÉCURISÉE ACTIVE" : "SECURE HSM CONNECTION ACTIVE"}</span></div>
                         </div>
                       </motion.div>

@@ -34,7 +34,28 @@ function SupportPageContent() {
   const [viewHistory, setViewHistory] = useState<SupportTab[]>([SupportTab.Tickets]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [selectedChatThreadId, setSelectedChatThreadId] = useState<string | null>(null);
   const [theme, setTheme] = useState<string>("light");
+
+  // Sync activeTab with URL search params (e.g., from notification clicks)
+  useEffect(() => {
+    const tab = searchParams.get("tab") as SupportTab | null;
+    if (tab && Object.values(SupportTab).includes(tab as SupportTab)) {
+      if (tab !== activeTab) {
+        setActiveTab(tab);
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const threadFromUrl = searchParams.get("thread");
+    if (threadFromUrl) {
+      setSelectedChatThreadId(threadFromUrl);
+      if (activeTab !== SupportTab.Chat) {
+        handleSetActiveTab(SupportTab.Chat);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
@@ -42,12 +63,12 @@ function SupportPageContent() {
 
   useChatSSE({
     "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
+      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
       setChatThreads(prev => prev.map(t => {
         if (t.id !== `thr-${threadId}`) return t;
         const alreadyExists = t.messages.some(m => m.id === message.id);
         if (alreadyExists) return t;
-        const isFromOther = message.senderId !== user?.id;
+        const isFromOther = String(message.senderId) !== user?.id;
         return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
       }));
     },
@@ -155,6 +176,8 @@ function SupportPageContent() {
                     threads={chatThreads}
                     onSendMessage={handleSendMessage}
                     onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))}
+                    selectedThreadId={selectedChatThreadId}
+                    onSelectThread={setSelectedChatThreadId}
                   />
                 )}
                 {activeTab === SupportTab.Settings && (

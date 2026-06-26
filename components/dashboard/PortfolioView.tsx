@@ -312,6 +312,7 @@ export default function PortfolioView({
                 </div>
                 <form onSubmit={handleFormSubmit} className="space-y-6">
                   <p className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 border-b border-ebony-deep/5 pb-2">Or Enter Custom Acquisition Parameters</p>
+                  <p className="font-sans text-[10px] text-on-surface-variant/60">{lang === "fr" ? "Les acquisitions ajoutées persistant pendant cette session uniquement." : "Added acquisitions persist for this session only."}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex flex-col">
                       <label className="font-sans text-[10px] uppercase font-bold tracking-widest text-zinc-400 mb-1.5 flex items-center gap-1">{lang === "fr" ? "Titre de l'Artefact" : "Artifact Title"} <span className="text-red-500">*</span></label>

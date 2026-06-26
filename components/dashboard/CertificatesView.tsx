@@ -64,7 +64,7 @@ export default function CertificatesView() {
     return {
       id: `cert-${i}`,
       artwork: art,
-      certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${art.id.substring(0, 6).toUpperCase()}-${numSuffix}`,
+      certificateNumber: `ADUNA-COA-${String(2023 + Math.floor(i / 2))}-${String(art.id).substring(0, 6).toUpperCase()}-${numSuffix}`,
       issueDate: CERTIFICATE_ISSUE_DATES[i] || "2024-06-01",
       expiryDate: CERTIFICATE_ISSUE_DATES[i]
         ? `${Number(CERTIFICATE_ISSUE_DATES[i].substring(0, 4)) + 5}${CERTIFICATE_ISSUE_DATES[i].substring(4)}`

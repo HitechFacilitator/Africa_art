@@ -19,7 +19,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
-import { adminApi } from "@/lib/api";
+import { adminApi, usersApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 
 interface SettingsViewProps {
@@ -37,6 +37,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
   const [currency, setCurrency] = useState(profile.currency);
   const [selectedRegions, setSelectedRegions] = useState<string[]>(profile.regionsOfInterest);
   const [savingStatus, setSavingStatus] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -52,6 +53,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
   const [twoFAConfirmPassword, setTwoFAConfirmPassword] = useState("");
   const [show2FAConfirm, setShow2FAConfirm] = useState(false);
   const [twoFAError, setTwoFAError] = useState("");
+  const [twoFANote, setTwoFANote] = useState<string | null>(null);
 
   const availableRegions = [
     'West Africa (Edo, Yoruba, Akan)',
@@ -69,14 +71,24 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
     }
   };
 
-  const handleSaveChanges = (e: React.FormEvent) => {
+  const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingStatus(true);
-    setTimeout(() => {
+    setSaveSuccess(false);
+    try {
+      if (user?.id) {
+        await usersApi.updateProfile(user.id, { name: collectorName, currency, regionsOfInterest: selectedRegions } as any);
+      }
       setProfile({ ...profile, name: collectorName, currency: currency, regionsOfInterest: selectedRegions });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error("Profile save failed:", err);
+      // Still update locally as fallback
+      setProfile({ ...profile, name: collectorName, currency: currency, regionsOfInterest: selectedRegions });
+    } finally {
       setSavingStatus(false);
-      alert(lang === "fr" ? 'Paramètres du collectionneur synchronisés avec les serveurs sécurisés Aduna avec succès.' : 'Collector settings synchronized with Aduna secure mainframes successfully.');
-    }, 600);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -89,8 +101,8 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
       setPwError(lang === "fr" ? "Les mots de passe ne correspondent pas" : "Passwords do not match");
       return;
     }
-    if (newPassword.length < 6) {
-      setPwError(lang === "fr" ? "Le mot de passe doit contenir au moins 6 caractères" : "Password must be at least 6 characters");
+    if (newPassword.length < 12) {
+      setPwError(lang === "fr" ? "Le mot de passe doit contenir au moins 12 caractères" : "Password must be at least 12 characters");
       return;
     }
     setPwSaving(true);
@@ -129,6 +141,8 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
       } else {
         await adminApi.enable2FA();
         setTwoFAEnabled(true);
+        setTwoFANote(lang === "fr" ? "2FA activé. La configuration TOTP sera disponible prochainement." : "2FA enabled. TOTP configuration will be available soon.");
+        setTimeout(() => setTwoFANote(null), 5000);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Operation failed";
@@ -207,6 +221,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
               </div>
             </div>
 
+            {saveSuccess && <div className="text-xs text-emerald-600 bg-emerald-50 p-3 border-l-2 border-emerald-600 mb-4">{lang === "fr" ? "Paramètres sauvegardés." : "Settings saved."}</div>}
             <button type="submit" disabled={savingStatus} className="bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-3.5 hover:opacity-90 active:scale-98 transition-all duration-300 disabled:opacity-50 cursor-pointer border-0">
               {savingStatus ? (lang === "fr" ? "Synchronisation..." : 'Synchronizing...') : (lang === "fr" ? "Certifier les Paramètres du Profil" : 'Certify Profile Parameters')}
             </button>
@@ -284,6 +299,7 @@ export default function SettingsView({ profile, setProfile, onClearCache, theme,
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${twoFAEnabled ? "left-6" : "left-1"}`} />
                 </button>
               </div>
+              {twoFANote && <p className="text-[10px] text-gold-leaf font-sans mt-2 bg-gold-leaf/5 p-2 border-l-2 border-gold-leaf">{twoFANote}</p>}
               {twoFAEnabled && show2FAConfirm && (
                 <div className="space-y-2 border-t border-ebony-deep/5 pt-3">
                   <p className="text-[10px] text-zinc-500">{lang === "fr" ? "Entrez votre mot de passe pour désactiver :" : "Enter your password to disable:"}</p>

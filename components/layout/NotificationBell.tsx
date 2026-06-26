@@ -106,8 +106,8 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
 
   useChatSSE({
     "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { senderName: string; text: string; timestamp: string; senderId: string } };
-      if (message.senderId === user?.id) return;
+      const { threadId, message } = data as { threadId: number; message: { senderName: string; text: string; timestamp: string; senderId: string | number } };
+      if (String(message.senderId) === user?.id) return;
       const threadKey = `thr-${threadId}`;
       if (readSetRef.current.has(threadKey)) return;
       setUnreadCount((prev) => prev + 1);
@@ -245,11 +245,11 @@ export default function NotificationBell({ basePath = "/dashboard", lightMode = 
     markAsRead(notif.threadKey);
     setOpen(false);
     const defaultTabs: Record<Notification["type"], string> = {
-      message: "chat",
-      ticket: "tickets",
-      consultation: "consultations",
-      por: "inquiries",
-      inquiry: "inquiries",
+      message: "Chat",
+      ticket: "Support",
+      consultation: "Consultations",
+      por: "Inquiries",
+      inquiry: "Inquiries",
     };
     const tabs = { ...defaultTabs, ...tabMap };
     const tab = tabs[notif.type];

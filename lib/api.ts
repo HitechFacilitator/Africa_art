@@ -2,6 +2,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v
 
 // ─── Token Management ──────────────────────────────────────────────
 
+/** Safely strip a prefix like "art-", "usr-", "por-" etc. from an ID string. */
+function stripId(id: string, prefix: string): string {
+  return id.startsWith(prefix) ? id.slice(prefix.length) : id;
+}
+
 const TOKEN_KEY = "aduna_token";
 
 export function getToken(): string | null {
@@ -58,15 +63,23 @@ async function apiRequest<T>(
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
+    let body: Record<string, unknown> = {};
+    try {
+      body = await res.json();
+    } catch {
+      // Non-JSON error response
+    }
+    if (res.status === 401) {
+      // Only clear token for auth endpoints to prevent premature session loss
+      if (path.startsWith("/auth/")) {
+        removeToken();
+      }
+      throw new Error(body.message as string || "Session expired");
+    }
     if (res.status === 429) {
       throw new Error("Rate limited — please wait a moment and try again");
     }
-    if (res.status === 401) {
-      // Token expired or invalid — don't throw, let auth handler deal with it
-      throw new Error(body.message || "Session expired");
-    }
-    throw new Error(body.message || `API error: ${res.status}`);
+    throw new Error((body.message as string) || `API error: ${res.status}`);
   }
 
   return res.json();
@@ -113,7 +126,7 @@ export const authApi = {
     return res.data;
   },
 
-  register: async (data: { email: string; password: string; name: string }) => {
+  register: async (data: { email: string; password: string; name: string; phone?: string; country?: string; invitationCode?: string; acceptTerms?: boolean; acceptGdpr?: boolean }) => {
     const res = await apiRequest<{ success: boolean; data: { user: UserSession; token: string } }>("/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
@@ -173,6 +186,14 @@ export const artworksApi = {
     if (params?.artworkStatus) searchParams.set("artworkStatus", params.artworkStatus);
     const qs = searchParams.toString();
     return apiRequest<PaginatedResponse<ArtworkData>>(`/artworks${qs ? `?${qs}` : ""}`);
+  },
+
+  search: (q: string, params?: { page?: number; limit?: number }) => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("q", q);
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    return apiRequest<PaginatedResponse<ArtworkData>>(`/artworks/search?${searchParams.toString()}`);
   },
 
   getById: (id: string) =>
@@ -236,7 +257,7 @@ export const dashboardApi = {
 
   addInquiryMessage: (inquiryId: string, data: { sender: string; text: string }) =>
     apiRequest<{ success: boolean; data: { sender: string; text: string; timestamp: string } }>(
-      `/dashboard/inquiries/${inquiryId.replace("inq-", "")}/messages`,
+      `/dashboard/inquiries/${stripId(inquiryId, "inq-")}/messages`,
       { method: "POST", body: JSON.stringify(data) }
     ),
 
@@ -368,25 +389,25 @@ export const consultationsApi = {
 
   confirm: (id: string) =>
     apiRequest<{ success: boolean; data: { id: string; status: string } }>(
-      `/consultations/${id.replace("cons-", "")}/confirm`,
+      `/consultations/${stripId(id, "cons-")}/confirm`,
       { method: "PATCH", body: JSON.stringify({}) }
     ),
 
   reject: (id: string, reason?: string) =>
     apiRequest<{ success: boolean; data: { id: string; status: string } }>(
-      `/consultations/${id.replace("cons-", "")}/reject`,
+      `/consultations/${stripId(id, "cons-")}/reject`,
       { method: "PATCH", body: JSON.stringify({ reason }) }
     ),
 
   complete: (id: string) =>
     apiRequest<{ success: boolean; data: { id: string; status: string } }>(
-      `/consultations/${id.replace("cons-", "")}/complete`,
+      `/consultations/${stripId(id, "cons-")}/complete`,
       { method: "PATCH" }
     ),
 
   cancel: (id: string) =>
     apiRequest<{ success: boolean; data: { id: string; status: string } }>(
-      `/consultations/${id.replace("cons-", "")}/cancel`,
+      `/consultations/${stripId(id, "cons-")}/cancel`,
       { method: "PATCH" }
     ),
 };
@@ -568,7 +589,7 @@ export const chatApi = {
       status: string;
       messages: Array<{
         id: string;
-        senderId: string;
+        senderId: string | number;
         senderName: string;
         senderRole: string;
         text: string;
@@ -577,24 +598,30 @@ export const chatApi = {
       }>;
     }> }>("/chat/threads"),
 
-  sendMessage: (threadId: string, data: { senderId?: string; senderName?: string; senderRole?: string; text: string }) =>
+  sendMessage: (threadId: string, data: { senderId?: string | number; senderName?: string; senderRole?: string; text: string }) =>
     apiRequest<{ success: boolean; data: {
       id: string;
-      senderId: string;
+      senderId: string | number;
       senderName: string;
       senderRole: string;
       text: string;
       timestamp: string;
       read: boolean;
-    } }>(`/chat/threads/${threadId.replace("thr-", "")}/messages`, {
+    } }>(`/chat/threads/${stripId(threadId, "thr-")}/messages`, {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
   markThreadRead: (threadId: string) =>
-    apiRequest<{ success: boolean }>(`/chat/threads/${threadId.replace("thr-", "")}/read`, {
+    apiRequest<{ success: boolean }>(`/chat/threads/${stripId(threadId, "thr-")}/read`, {
       method: "PATCH",
     }),
+
+  createThread: (data: { subject: string; clientName: string; clientRole?: string; advisorName?: string; initialMessage?: string }) =>
+    apiRequest<{ success: boolean; data: { id: string; subject: string } }>(
+      "/chat/threads",
+      { method: "POST", body: JSON.stringify(data) }
+    ),
 };
 
 // ─── Admin API ──────────────────────────────────────────────────────
@@ -642,19 +669,19 @@ export const adminApi = {
   },
 
   getArtworkById: (id: string) =>
-    apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/admin/artworks/${id.replace("ART-", "")}`),
+    apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/admin/artworks/${stripId(id, "ART-")}`),
 
   createArtwork: (data: Record<string, unknown>) =>
     apiRequest<{ success: boolean; data: { id: string; title: string } }>("/admin/artworks", { method: "POST", body: JSON.stringify(data) }),
 
   updateArtwork: (id: string, data: Record<string, unknown>) =>
-    apiRequest<{ success: boolean; data: { id: string; title: string } }>(`/admin/artworks/${id.replace("ART-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
+    apiRequest<{ success: boolean; data: { id: string; title: string } }>(`/admin/artworks/${stripId(id, "ART-")}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   deleteArtwork: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/artworks/${id.replace("ART-", "")}`, { method: "DELETE" }),
+    apiRequest<{ success: boolean }>(`/admin/artworks/${stripId(id, "ART-")}`, { method: "DELETE" }),
 
   updateArtworkStatus: (id: string, status: string) =>
-    apiRequest<{ success: boolean }>(`/admin/artworks/${id.replace("ART-", "")}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    apiRequest<{ success: boolean }>(`/admin/artworks/${stripId(id, "ART-")}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 
   getCollectors: (params?: { page?: number; limit?: number; search?: string }) => {
     const searchParams = new URLSearchParams();
@@ -707,7 +734,7 @@ export const adminApi = {
 
   addInquiryMessage: (inquiryId: string, data: { sender: string; text: string }) =>
     apiRequest<{ success: boolean; data: { sender: string; text: string; timestamp: string } }>(
-      `/inquiries/${inquiryId.replace("inq-", "")}/messages`,
+      `/dashboard/inquiries/${stripId(inquiryId, "inq-")}/messages`,
       { method: "POST", body: JSON.stringify(data) }
     ),
 
@@ -734,19 +761,19 @@ export const adminApi = {
     }> }>("/admin/escrow"),
 
   verifyAuditLog: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/audit-logs/${id.replace("log-", "")}/verify`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/audit-logs/${stripId(id, "log-")}/verify`, { method: "PATCH" }),
 
   verifyAllAuditLogs: () =>
     apiRequest<{ success: boolean }>("/admin/audit-logs/verify-all", { method: "POST" }),
 
   releaseEscrow: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/escrow/${id.replace("esc-", "")}/release`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/escrow/${stripId(id, "esc-")}/release`, { method: "PATCH" }),
 
   disputeEscrow: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/escrow/${id.replace("esc-", "")}/dispute`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/escrow/${stripId(id, "esc-")}/dispute`, { method: "PATCH" }),
 
   refundEscrow: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/escrow/${id.replace("esc-", "")}/refund`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/escrow/${stripId(id, "esc-")}/refund`, { method: "PATCH" }),
 
   updateSupportTicketStatus: (id: string, status: string) =>
     apiRequest<{ success: boolean }>(`/chat/tickets/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
@@ -785,19 +812,19 @@ export const adminApi = {
   },
 
   getUserById: (id: string) =>
-    apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/admin/users/${id.replace("usr-", "")}`),
+    apiRequest<{ success: boolean; data: Record<string, unknown> }>(`/admin/users/${stripId(id, "usr-")}`),
 
   createUser: (data: { name: string; email: string; password: string; role?: string; institution?: string; country?: string }) =>
     apiRequest<{ success: boolean; data: { id: string; name: string } }>("/admin/users", { method: "POST", body: JSON.stringify(data) }),
 
   updateUser: (id: string, data: { name?: string; email?: string; role?: string; institution?: string; country?: string; status?: string }) =>
-    apiRequest<{ success: boolean; data: { id: string } }>(`/admin/users/${id.replace("usr-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
+    apiRequest<{ success: boolean; data: { id: string } }>(`/admin/users/${stripId(id, "usr-")}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   updateUserStatus: (id: string, status: string) =>
-    apiRequest<{ success: boolean }>(`/admin/users/${id.replace("usr-", "")}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    apiRequest<{ success: boolean }>(`/admin/users/${stripId(id, "usr-")}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
 
   deleteUser: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/users/${id.replace("usr-", "")}`, { method: "DELETE" }),
+    apiRequest<{ success: boolean }>(`/admin/users/${stripId(id, "usr-")}`, { method: "DELETE" }),
 
   getCertificates: () =>
     apiRequest<{ success: boolean; data: Array<{
@@ -813,24 +840,55 @@ export const adminApi = {
       verifiedBy: string;
     }> }>("/admin/certificates"),
 
-  createCertificate: (data: { artworkTitle: string; artworkId?: string; ownerName?: string; ownerEmail?: string; expiryDate?: string; verifiedBy?: string }) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates`, { method: "POST", body: JSON.stringify(data) }),
+  createCertificate: (data: { artworkTitle: string; artworkId?: string; ownerName?: string; ownerEmail?: string; expiryDate?: string; verifiedBy?: string; file?: File }) => {
+    if (data.file) {
+      const formData = new FormData();
+      formData.append("file", data.file);
+      formData.append("artworkTitle", data.artworkTitle);
+      if (data.artworkId) formData.append("artworkId", data.artworkId);
+      if (data.ownerName) formData.append("ownerName", data.ownerName);
+      if (data.ownerEmail) formData.append("ownerEmail", data.ownerEmail);
+      if (data.expiryDate) formData.append("expiryDate", data.expiryDate);
+      if (data.verifiedBy) formData.append("verifiedBy", data.verifiedBy);
+      const token = getToken();
+      return fetch(`${API_BASE}/admin/certificates`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      }).then(async (res) => {
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || "Request failed");
+        return json;
+      });
+    }
+    return apiRequest<{ success: boolean }>(`/admin/certificates`, { method: "POST", body: JSON.stringify(data) });
+  },
 
   updateCertificate: (id: string, data: { artworkTitle?: string; ownerName?: string; ownerEmail?: string; expiryDate?: string; verifiedBy?: string }) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates/${id.replace("cert-", "")}`, { method: "PATCH", body: JSON.stringify(data) }),
+    apiRequest<{ success: boolean }>(`/admin/certificates/${stripId(id, "cert-")}`, { method: "PATCH", body: JSON.stringify(data) }),
 
   revokeCertificate: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates/${id.replace("cert-", "")}/revoke`, { method: "PATCH" }),
+    apiRequest<{ success: boolean }>(`/admin/certificates/${stripId(id, "cert-")}/revoke`, { method: "PATCH" }),
 
   deleteCertificate: (id: string) =>
-    apiRequest<{ success: boolean }>(`/admin/certificates/${id.replace("cert-", "")}`, { method: "DELETE" }),
+    apiRequest<{ success: boolean }>(`/admin/certificates/${stripId(id, "cert-")}`, { method: "DELETE" }),
 
   downloadCertificatePdf: async (id: string) => {
     const token = getToken();
-    const res = await fetch(`${API_BASE}/admin/certificates/${id.replace("cert-", "")}/pdf`, {
+    const res = await fetch(`${API_BASE}/admin/certificates/${stripId(id, "cert-")}/pdf`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     if (!res.ok) throw new Error("Failed to download PDF");
     return res.blob();
   },
+};
+
+// ─── Users API ─────────────────────────────────────────────────────
+
+export const usersApi = {
+  updateProfile: (id: string, data: { name?: string; country?: string; institution?: string }) =>
+    apiRequest<{ success: boolean; data: { id: string; name: string } }>(
+      `/users/${stripId(id, "usr-")}`,
+      { method: "PATCH", body: JSON.stringify(data) }
+    ),
 };

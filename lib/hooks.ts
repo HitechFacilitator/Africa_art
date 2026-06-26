@@ -18,8 +18,8 @@ export function useArtworks(options?: { page?: number; limit?: number; artworkSt
           setError(null);
         }
       })
-      .catch((err) => {
-        if (!cancelled) setError(err.message);
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "An unexpected error occurred");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -46,8 +46,8 @@ export function useArtwork(id: string | null) {
           setError(null);
         }
       })
-      .catch((err) => {
-        if (!cancelled) setError(err.message);
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "An unexpected error occurred");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

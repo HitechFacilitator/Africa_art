@@ -70,8 +70,8 @@ function RegistrationForm() {
 
   const passwordValid = PASSWORD_RULES.every((r) => r.test(password));
   const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
-  const canSubmitStep1 = code.trim().length > 0;
-  const canSubmitStep2 = firstName && lastName && email && phone && country;
+  const canSubmitStep1 = code.trim().length > 0 && /^(ADUNA-|COLLECTOR-|HERITAGE)/i.test(code.trim());
+  const canSubmitStep2 = firstName && lastName && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && phone && country;
   const canSubmitStep3 = passwordValid && passwordsMatch && acceptTerms && acceptGdpr;
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -83,6 +83,11 @@ function RegistrationForm() {
         email,
         password,
         name: `${firstName} ${lastName}`,
+        phone: `${phoneCode}${phone}`,
+        country,
+        invitationCode: code || undefined,
+        acceptTerms,
+        acceptGdpr,
       });
       setToken(res.token);
       setSubmitting(false);
@@ -219,17 +224,25 @@ function RegistrationForm() {
                     <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-5">
                       <div>
                         <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant block mb-1.5">{lang === "fr" ? "Code d'Invitation *" : "Invitation Code *"}</label>
-                        <input
-                          type="text"
-                          required
-                          value={code}
-                          onChange={(e) => setCode(e.target.value)}
-                          className="w-full border border-ebony-deep/15 p-3.5 text-sm focus:border-gold-leaf focus:outline-none font-mono"
-                          placeholder="e.g. ADUNA-INV-2024-XXXX"
-                        />
+                        <div className="relative">
+                          <input
+                            type="text"
+                            required
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            className="w-full border border-ebony-deep/15 p-3.5 pr-10 text-sm focus:border-gold-leaf focus:outline-none font-mono"
+                            placeholder="e.g. ADUNA-INV-2024-XXXX"
+                          />
+                          {code.trim().length > 0 && /^(ADUNA-|COLLECTOR-|HERITAGE)/i.test(code.trim()) && (
+                            <CheckCircle2 size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600" />
+                          )}
+                        </div>
                         <p className="text-[10px] text-on-surface-variant/60 mt-1.5">
-                          {lang === "fr" ? "Entrez le code personnalisé reçu dans votre email d'invitation." : "Enter the personalised code received in your invitation email."}
+                          {lang === "fr" ? "Formats acceptés : ADUNA-INV-*, COLLECTOR-*, HERITAGE*" : "Accepted formats: ADUNA-INV-*, COLLECTOR-*, HERITAGE*"}
                         </p>
+                        {code.trim().length > 0 && !/^(ADUNA-|COLLECTOR-|HERITAGE)/i.test(code.trim()) && (
+                          <p className="text-[10px] text-red-600 mt-1 flex items-center gap-1"><AlertCircle size={10} /> {lang === "fr" ? "Code d'invitation invalide" : "Invalid invitation code"}</p>
+                        )}
                       </div>
                     </motion.div>
                   )}

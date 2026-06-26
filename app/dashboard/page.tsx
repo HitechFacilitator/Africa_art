@@ -56,6 +56,26 @@ function DashboardPageContent() {
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const mobileTabsRef = useRef<HTMLDivElement>(null);
 
+  // Sync activeTab with URL search params (e.g., from notification clicks)
+  useEffect(() => {
+    const tab = searchParams.get("tab") as ActiveTab | null;
+    if (tab && Object.values(ActiveTab).includes(tab as ActiveTab)) {
+      if (tab !== activeTab) {
+        setActiveTab(tab);
+      }
+    }
+  }, [searchParams]);
+
+  // Handle thread selection from URL search params (e.g., from notification clicks)
+  const threadFromUrl = searchParams.get("thread");
+  const [selectedChatThreadId, setSelectedChatThreadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (threadFromUrl) {
+      setSelectedChatThreadId(threadFromUrl);
+    }
+  }, [threadFromUrl]);
+
   // Fetch dashboard data from API
   useEffect(() => {
     dashboardApi.getAcquisitions().then(res => { const d = res.data as Acquisition[]; setAcquisitions(d); setSelectedAcquisition(d[0] ?? null); }).catch(() => {});
@@ -135,12 +155,12 @@ function DashboardPageContent() {
   // Realtime SSE for new messages
   useChatSSE({
     "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
+      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
       setChatThreads(prev => prev.map(t => {
         if (t.id !== `thr-${threadId}`) return t;
         const alreadyExists = t.messages.some(m => m.id === message.id);
         if (alreadyExists) return t;
-        const isFromOther = message.senderId !== user?.id;
+        const isFromOther = String(message.senderId) !== user?.id;
         return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
       }));
     },
@@ -443,7 +463,7 @@ function DashboardPageContent() {
               <CertificatesView />
             )}
             {activeTab === ActiveTab.Chat && (
-              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} />
+              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} selectedThreadId={selectedChatThreadId} onSelectThread={setSelectedChatThreadId} />
             )}
             {activeTab === ActiveTab.Documentation && (
               <div className="space-y-6">

@@ -67,7 +67,7 @@ export default function PreviewPage() {
         const res = await artworksApi.getAll({ limit: 50 });
         const artworks: ArtworkData[] = res.data || [];
         const previews: PreviewArtwork[] = artworks.slice(0, 6).map((art, i) => ({
-          id: art.id || `preview-${i}`,
+          id: String(art.id || `preview-${i}`),
           title: art.title,
           origin: art.origin || art.region,
           region: art.region,

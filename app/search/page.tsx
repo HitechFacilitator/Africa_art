@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { Compass, ArrowRight, Search } from "lucide-react";
+import { Compass, ArrowRight, Search, Loader2 } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import { useArtworks } from "@/lib/hooks";
+import { artworksApi, ArtworkData } from "@/lib/api";
 import { useTranslate } from "@/lib/translations";
 import { useTranslatedArtworks } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
@@ -28,7 +28,28 @@ function SearchResults() {
   const query = searchParams.get("q") || "";
   const [localQuery, setLocalQuery] = useState(query);
   const { lang } = useTranslate();
-  const { artworks: apiArtworks } = useArtworks({ artworkStatus: "Live" });
+  const [searchResults, setSearchResults] = useState<Artwork[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    artworksApi.search(query.trim(), { limit: 50 })
+      .then((res) => {
+        if (!cancelled) setSearchResults((res.data || []) as unknown as Artwork[]);
+      })
+      .catch(() => {
+        if (!cancelled) setSearchResults([]);
+      })
+      .finally(() => {
+        if (!cancelled) setSearching(false);
+      });
+    return () => { cancelled = true; };
+  }, [query]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,22 +58,7 @@ function SearchResults() {
     }
   };
 
-  const allTranslated = useTranslatedArtworks(apiArtworks as unknown as Artwork[]);
-
-  const displayResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return allTranslated.filter(
-      (art) =>
-        art.title.toLowerCase().includes(q) ||
-        art.tribe.toLowerCase().includes(q) ||
-        art.origin.toLowerCase().includes(q) ||
-        art.region.toLowerCase().includes(q) ||
-        art.material.toLowerCase().includes(q) ||
-        art.period.toLowerCase().includes(q) ||
-        art.historicalStory.toLowerCase().includes(q)
-    );
-  }, [query, allTranslated]);
+  const displayResults = useTranslatedArtworks(searchResults);
 
   return (
     <>
@@ -70,7 +76,11 @@ function SearchResults() {
               {query ? `Results for "${query}"` : (lang === "fr" ? "Rechercher dans la collection" : "Search the Collection")}
             </h1>
             <p className="font-sans text-sm text-parchment-ivory/60">
-              {displayResults.length} artwork{displayResults.length !== 1 ? "s" : ""} {lang === "fr" ? "résultats trouvés" : "found matching your query."}
+              {searching ? (
+                <span className="flex items-center gap-2"><Loader2 size={14} className="animate-spin" /> {lang === "fr" ? "Recherche en cours..." : "Searching..."}</span>
+              ) : (
+                <>{displayResults.length} artwork{displayResults.length !== 1 ? "s" : ""} {lang === "fr" ? "résultats trouvés" : "found matching your query."}</>
+              )}
             </p>
             {/* Inline search bar */}
             <form onSubmit={handleSearchSubmit} className="mt-6 max-w-xl">
@@ -95,7 +105,12 @@ function SearchResults() {
 
         {/* Results */}
         <div className="max-w-[1440px] mx-auto px-6 md:px-16 xl:px-20 py-12 md:py-16">
-          {displayResults.length > 0 ? (
+          {searching ? (
+            <div className="py-24 text-center">
+              <Loader2 className="w-10 h-10 text-gold-leaf mx-auto mb-4 animate-spin" />
+              <p className="font-sans text-sm text-on-surface-variant">{lang === "fr" ? "Recherche dans la collection..." : "Searching the collection..."}</p>
+            </div>
+          ) : displayResults.length > 0 ? (
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               variants={stagger}

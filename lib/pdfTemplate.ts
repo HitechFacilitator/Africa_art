@@ -82,7 +82,7 @@ export function buildPdfShell(title: string, content: string): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>${title} — Aduna Gallery</title>
+  <title>${title.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c))} — Aduna Gallery</title>
   <style>${pdfStyles}</style>
 </head>
 <body>
@@ -93,7 +93,7 @@ export function buildPdfShell(title: string, content: string): string {
     <div class="corner tl"></div><div class="corner tr"></div>
     <div class="corner bl"></div><div class="corner br"></div>
     <img src="/logo.png" class="header-logo" alt="Aduna Gallery" />
-    ${content}
+    ${content /* Note: content is built from controlled template sources */}
   </div>
 </body>
 </html>`;

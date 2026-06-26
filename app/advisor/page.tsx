@@ -44,6 +44,16 @@ function AdvisorPageContent() {
   const [placements, setPlacements] = useState<AdvisorPlacement[]>([]);
   const [activities, setActivities] = useState<AdvisorActivity[]>([]);
 
+  // Sync activeView with URL search params (e.g., from notification clicks)
+  useEffect(() => {
+    const view = searchParams.get("tab") as AdvisorView | null;
+    if (view && Object.values(AdvisorView).includes(view as AdvisorView)) {
+      if (view !== activeView) {
+        setActiveView(view);
+      }
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     advisorApi.getConsultations().then(res => setConsultations(res.data as AdvisorConsultation[])).catch(() => {});
     advisorApi.getClients().then(res => setClients(res.data as AdvisorClient[])).catch(() => {});
@@ -54,12 +64,12 @@ function AdvisorPageContent() {
 
   useChatSSE({
     "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
+      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
       setChatThreads(prev => prev.map(t => {
         if (t.id !== `thr-${threadId}`) return t;
         const alreadyExists = t.messages.some(m => m.id === message.id);
         if (alreadyExists) return t;
-        const isFromOther = message.senderId !== user?.id;
+        const isFromOther = String(message.senderId) !== user?.id;
         return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
       }));
     },

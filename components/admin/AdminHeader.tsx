@@ -27,6 +27,7 @@ const TAB_LABELS: Record<AdminView, { en: string; fr: string; icon: string }> = 
   [AdminView.Settings]: { en: "Settings", fr: "Paramètres", icon: "⚙️" },
   [AdminView.SupportManagement]: { en: "Support", fr: "Support", icon: "💬" },
   [AdminView.POR]: { en: "Price Requests", fr: "Demandes de Prix", icon: "💰" },
+  [AdminView.Chat]: { en: "Messages", fr: "Messages", icon: "💬" },
 };
 
 export default function AdminHeader({ activeView, onMenuToggle, onBack, canGoBack }: AdminHeaderProps) {

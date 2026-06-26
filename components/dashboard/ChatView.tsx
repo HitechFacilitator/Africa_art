@@ -11,15 +11,28 @@ interface ChatViewProps {
   threads: ChatThread[];
   onSendMessage: (threadId: string, text: string) => void;
   onMarkRead: (threadId: string) => void;
+  selectedThreadId?: string | null;
+  onSelectThread?: (threadId: string | null) => void;
 }
 
-export default function ChatView({ threads, onSendMessage, onMarkRead }: ChatViewProps) {
+export default function ChatView({ threads, onSendMessage, onMarkRead, selectedThreadId, onSelectThread }: ChatViewProps) {
   const { lang } = useTranslate();
   const [selectedId, setSelectedId] = useState<string | null>(threads[0]?.id || null);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const selected = threads.find(t => t.id === selectedId);
+
+  useEffect(() => {
+    if (selectedThreadId && threads.some(t => t.id === selectedThreadId)) {
+      setSelectedId(selectedThreadId);
+    }
+  }, [selectedThreadId, threads]);
+
+  const handleSelectThread = (id: string | null) => {
+    setSelectedId(id);
+    onSelectThread?.(id);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,7 +75,7 @@ export default function ChatView({ threads, onSendMessage, onMarkRead }: ChatVie
               return (
                 <button
                   key={thread.id}
-                  onClick={() => setSelectedId(thread.id)}
+                  onClick={() => handleSelectThread(thread.id)}
                   className={`w-full text-left p-5 transition-colors flex gap-4 cursor-pointer relative ${isActive ? "bg-surface-container-low" : "hover:bg-surface-container-low/40"}`}
                 >
                   {isActive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-terracotta-earth" />}

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
+import { authApi } from "@/lib/api";
 import LoadingModal from "@/components/ui/LoadingModal";
 
 const MAX_ATTEMPTS = 3;
@@ -75,7 +76,7 @@ export default function LoginPage() {
       setErrorMsg(`${lang === "fr" ? "Compte temporairement verrouillé. Veuillez réessayer dans" : "Account temporarily locked. Try again in"} ${formatTimer(lockoutTimer)}.`);
       return;
     }
-    if (!email) { setErrorMsg(lang === "fr" ? "Veuillez entrer une adresse email valide." : "Please specify a valid email address."); return; }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErrorMsg(lang === "fr" ? "Veuillez entrer une adresse email valide." : "Please specify a valid email address."); return; }
     if (!passphrase || passphrase.length < 4) { setErrorMsg(lang === "fr" ? "Le mot de passe doit contenir au moins 4 caractères." : "The password must be at least 4 characters."); return; }
     setErrorMsg(null);
     setLoginLoading(true);
@@ -142,15 +143,20 @@ export default function LoginPage() {
     }
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
+    if (!email) { setErrorMsg(lang === "fr" ? "Email requis." : "Email required."); return; }
     setResending(true);
-    setTimeout(() => {
+    try {
+      await authApi.login(email, passphrase);
+    } catch {
+      // Ignore errors — OTP may have been sent even if previous call had issues
+    } finally {
       setResending(false);
       setOtpTimer(OTP_EXPIRY_SECONDS);
       setOtpExpired(false);
       setOtp(["", "", "", "", "", ""]);
       setErrorMsg(null);
-    }, 1500);
+    }
   };
 
   useEffect(() => { if (step === "mfa") otpRefs.current[0]?.focus(); }, [step]);
@@ -252,8 +258,8 @@ export default function LoginPage() {
                       {errorMsg && <div className="text-xs text-red-700 bg-red-100/60 p-3 border-l-2 border-red-700">{errorMsg}</div>}
                       <button type="button" onClick={handleConfirmAccess} disabled={otpExpired} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-[0.15em] py-4 hover:bg-gold-leaf hover:text-ebony-deep transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed">Confirm Access</button>
                       <div className="text-center">
-                        <button onClick={handleResendOtp} disabled={resending || (!otpExpired && otpTimer > 0)} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf transition-colors underline underline-offset-4 disabled:opacity-40 disabled:cursor-not-allowed">
-                          {resending ? "Sending new code..." : otpExpired ? "Resend Code" : "Use Backup SMS Authentication Code"}
+                        <button onClick={handleResendOtp} disabled={resending || otpTimer > 30} className="font-sans text-xs text-on-surface-variant hover:text-gold-leaf transition-colors underline underline-offset-4 disabled:opacity-40 disabled:cursor-not-allowed">
+                          {resending ? "Sending new code..." : otpTimer > 30 ? "Resend Code" : "Use Backup SMS Authentication Code"}
                         </button>
                       </div>
                     </div>

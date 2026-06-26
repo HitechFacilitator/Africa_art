@@ -69,21 +69,23 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
   const [curatorLoading, setCuratorLoading] = useState(false);
   const [porAlreadySubmitted, setPorAlreadySubmitted] = useState(false);
   const [porSubmittedId, setPorSubmittedId] = useState<string | null>(null);
+  const [inquiryError, setInquiryError] = useState<string | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const isPor = typeof artwork?.label === "string";
 
   useEffect(() => {
-    if (!isPor || !artwork) return;
-    const artworkId = parseInt(artwork.id.replace(/\D/g, ""), 10);
-    if (isNaN(artworkId)) return;
-    porApi.getByArtwork(artworkId).then((res) => {
+    if (!isPor || !artwork || !isAuthenticated) return;
+    const artworkNumId = Number(String(artwork.id).replace("art-", ""));
+    if (isNaN(artworkNumId)) return;
+    porApi.getByArtwork(artworkNumId).then((res) => {
       const data = res.data || [];
       if (data.length > 0) {
         setPorAlreadySubmitted(true);
         setPorSubmittedId(data[0].id);
       }
     }).catch(() => {});
-  }, [artwork, isPor]);
+  }, [artwork, isPor, isAuthenticated]);
 
   if (loading || !rawArtwork) {
     return (
@@ -105,21 +107,26 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
 
   const handleAcquisitionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
     if (!inquiryFirstName || !inquiryLastName || !inquiryEmail || !gdprConsent) {
-      alert("Please fill in all required fields and accept the privacy policy.");
+      setInquiryError(lang === "fr" ? "Veuillez remplir tous les champs obligatoires et accepter la politique de confidentialité." : "Please fill in all required fields and accept the privacy policy.");
       return;
     }
     setSubmittingInquiry(true);
+    setInquiryError(null);
     try {
-      const artworkId = parseInt(artwork.id.replace(/\D/g, ""), 10);
-      const message = `Confidential acquisition inquiry for "${artwork.title}" (${artwork.era}). Contact: ${inquiryFirstName} ${inquiryLastName} (${inquiryEmail}). Status: ${clientStatus}. Budget: ${budgetRange}. ${inquiryNotes || ""}`;
-      const res = await porApi.create(artworkId, message);
+      const artworkNumId = Number(String(artwork.id).replace("art-", ""));
+      const message = `Confidential acquisition inquiry for "${artwork.title}" (${artwork.era}).\n\nContact: ${inquiryFirstName} ${inquiryLastName}\nEmail: ${inquiryEmail}\nPhone: ${inquiryPhone || "Not provided"}\nProfile: ${clientStatus}\nBudget: ${budgetRange}\n\n${inquiryNotes || ""}`;
+      const res = await porApi.create(artworkNumId, message);
       setPorAlreadySubmitted(true);
       setPorSubmittedId(res.data.id);
       setInquiryResult(`Dear ${inquiryFirstName} ${inquiryLastName},\n\nYour application regarding the potential allocation of "${artwork.title}" has been securely logged with our advisory council in London.\n\nOur representatives will verify your credentials and dispatch the hardcopy Authentication Dossier to the primary advisor email: ${inquiryEmail}.\n\nWarm regards,\nPrivate Placement Desk, Aduna Gallery`);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to submit inquiry:", err);
-      alert("Failed to submit inquiry. Please try again.");
+      setInquiryError(err?.message || "Failed to submit inquiry. Please try again.");
     } finally {
       setSubmittingInquiry(false);
     }
@@ -132,18 +139,25 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
     setChatHistory((prev) => [...prev, { sender: "user", text: userMsg }]);
     setCuratorQuestion("");
     setCuratorLoading(true);
+    setChatError(null);
 
-    setTimeout(() => {
-      const responses = [
-        `The ${artwork.title} represents a pinnacle of ${artwork.tribe} artistic mastery. Scientific trace analysis, including X-ray fluorescence testing, confirms the alloy composition aligns perfectly with the material fingerprints of the known ${artwork.period} corpus.`,
-        `Based on extensive archival research, this piece demonstrates the characteristic stylistic elements of ${artwork.tribe} craftsmanship from ${artwork.origin}. The provenance chain has been verified through multiple independent authentication channels.`,
-        `The ${artwork.material.toLowerCase()} composition shows expected environmental patination consistent with ${artwork.period} dating. Thermoluminescence testing confirms the firing/creation period within acceptable variance margins.`,
-        `Historical documentation places this work within the royal artistic tradition of ${artwork.origin}. The ${artwork.material.toLowerCase()} medium and dimensional proportions (${artwork.dimensions}) are consistent with ceremonial objects of high status.`,
-      ];
-      const randomText = responses[Math.floor(Math.random() * responses.length)];
-      setChatHistory((prev) => [...prev, { sender: "curator", text: randomText }]);
+    try {
+      setTimeout(() => {
+        const responses = [
+          `The ${artwork.title} represents a pinnacle of ${artwork.tribe} artistic mastery. Scientific trace analysis, including X-ray fluorescence testing, confirms the alloy composition aligns perfectly with the material fingerprints of the known ${artwork.period} corpus.`,
+          `Based on extensive archival research, this piece demonstrates the characteristic stylistic elements of ${artwork.tribe} craftsmanship from ${artwork.origin}. The provenance chain has been verified through multiple independent authentication channels.`,
+          `The ${artwork.material.toLowerCase()} composition shows expected environmental patination consistent with ${artwork.period} dating. Thermoluminescence testing confirms the firing/creation period within acceptable variance margins.`,
+          `Historical documentation places this work within the royal artistic tradition of ${artwork.origin}. The ${artwork.material.toLowerCase()} medium and dimensional proportions (${artwork.dimensions}) are consistent with ceremonial objects of high status.`,
+        ];
+        const randomText = responses[Math.floor(Math.random() * responses.length)];
+        setChatHistory((prev) => [...prev, { sender: "curator", text: randomText }]);
+        setCuratorLoading(false);
+      }, 1800);
+    } catch {
       setCuratorLoading(false);
-    }, 1800);
+      setChatError(lang === "fr" ? "Échec de la réponse du conservateur. Veuillez réessayer." : "Curator response failed. Please try again.");
+      setTimeout(() => setChatError(null), 3000);
+    }
   };
 
   const handleQuickQuestion = (qn: string) => {
@@ -269,7 +283,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                   <span className="border-b border-gold-leaf pb-0.5">{lang === "fr" ? "Demander le Dossier de Provenance" : "Request Provenance Dossier"}</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-2 transform group-hover:translate-x-1 transition-transform" />
                 </button>
-                <span className="text-[10px] uppercase tracking-wider font-mono text-on-surface-variant bg-surface-container-high px-2 py-0.5">COA REG: #AD-OB-{artwork.id.substring(0, 4).toUpperCase()}</span>
+                <span className="text-[10px] uppercase tracking-wider font-mono text-on-surface-variant bg-surface-container-high px-2 py-0.5">COA REG: #AD-OB-{String(artwork.id).substring(0, 4).toUpperCase()}</span>
               </div>
             </div>
           </div>
@@ -317,12 +331,16 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <div className="flex flex-col gap-3.5">
                     {porAlreadySubmitted ? (
-                      <Link href="/dashboard?tab=Inquiries&por=true" className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors text-center flex items-center justify-center gap-2">
+                      <button onClick={() => {
+                        if (!isAuthenticated) { router.push("/login"); return; }
+                        router.push("/dashboard?tab=Inquiries&por=true");
+                      }}
+                        className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors text-center flex items-center justify-center gap-2 cursor-pointer border-0">
                         <MessageSquare className="w-3.5 h-3.5" />
                         {lang === "fr" ? "Suivre Ma Demande" : "Follow My Inquiry"}
-                      </Link>
+                      </button>
                     ) : (
-                      <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms and transport insurance parameters for ${artwork.title}.`); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors">
+                      <button onClick={() => { if (!isAuthenticated) { router.push("/login"); return; } setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms and transport insurance parameters for ${artwork.title}.`); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-semibold py-4 px-6 uppercase tracking-wider hover:bg-gold-leaf transition-colors">
                         {lang === "fr" ? "Demander en Confiance" : "Inquire Confidentially"}
                       </button>
                     )}
@@ -366,8 +384,8 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex items-center space-x-2 text-ebony-deep border-b border-ebony-deep/10 pb-3 mb-4">
                   <div className="w-8 h-8 rounded-full bg-gold-leaf flex items-center justify-center text-white text-xs font-serif font-bold">CV</div>
                   <div>
-                    <h4 className="font-serif text-sm font-bold text-ebony-deep">{lang === "fr" ? "Consultez le Conservateur Vance (Support IA)" : "Consult Curator Vance (AI Support)"}</h4>
-                    <p className="text-[10px] text-on-surface-variant font-sans">{lang === "fr" ? "Réponses en direct sur le contexte historique et scientifique" : "Grounding live answers on historical context & science"}</p>
+                    <h4 className="font-serif text-sm font-bold text-ebony-deep">{lang === "fr" ? "Consultez le Conservateur Vance (Démo)" : "Consult Curator Vance (Demo)"}</h4>
+                    <p className="text-[10px] text-on-surface-variant font-sans">{lang === "fr" ? "Réponses simulées basées sur les archives" : "Simulated responses based on archive data"}</p>
                   </div>
                 </div>
                 <div className="space-y-3 h-48 overflow-y-auto mb-4 border border-ebony-deep/5 bg-surface-container-low/50 p-2.5">
@@ -405,6 +423,11 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                   <input type="text" value={curatorQuestion} onChange={(e) => setCuratorQuestion(e.target.value)} placeholder={lang === "fr" ? "Demandez à Vance au sujet de cette œuvre..." : "Inquire Vance regarding this workpiece..."} className="flex-grow bg-surface-container-high text-xs px-3 py-2.5 border-b border-ebony-deep/20 focus:border-gold-leaf focus:outline-none placeholder-on-surface-variant font-sans" />
                   <button type="submit" disabled={curatorLoading || !curatorQuestion.trim()} className="bg-ebony-deep text-white p-3 hover:bg-gold-leaf transition-colors disabled:bg-surface-container-high"><Send className="w-4 h-4" /></button>
                 </form>
+                {chatError && (
+                  <div className="mt-2 text-[11px] text-red-600 font-sans bg-red-50 border border-red-200/50 p-2 text-center">
+                    {chatError}
+                  </div>
+                )}
               </div>
               </div>
             </div>
@@ -492,12 +515,16 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
           {isPor ? (
             <div className="flex items-center gap-2">
               {porAlreadySubmitted ? (
-                <Link href="/dashboard?tab=Inquiries&por=true" className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:flex items-center gap-2">
+                <button onClick={() => {
+                  if (!isAuthenticated) { router.push("/login"); return; }
+                  router.push("/dashboard?tab=Inquiries&por=true");
+                }}
+                  className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:flex items-center gap-2 cursor-pointer border-0">
                   <MessageSquare className="w-3 h-3" />
                   {lang === "fr" ? "Suivre Ma Demande" : "Follow My Inquiry"}
-                </Link>
+                </button>
               ) : (
-                <button onClick={() => { setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms for ${artwork.title}.`); }} className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:block">
+                <button onClick={() => { if (!isAuthenticated) { router.push("/login"); return; } setShowInquiryModal(true); setInquiryNotes(`Requesting acquisition terms for ${artwork.title}.`); }} className="bg-gold-leaf text-ebony-deep font-sans text-[10px] font-bold uppercase tracking-widest px-6 py-2 hover:opacity-90 transition-opacity hidden sm:block">
                   {lang === "fr" ? "Demander" : "Inquire Now"}
                 </button>
               )}
@@ -599,6 +626,11 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                           {lang === "fr" ? "Je consens au traitement de mes données personnelles conformément à la" : "I consent to the processing of my personal data in accordance with the"} <span className="text-gold-leaf font-semibold">{lang === "fr" ? "Politique de Confidentialité" : "Privacy Policy"}</span> {lang === "fr" ? "et aux" : "and"} <span className="text-gold-leaf font-semibold">{lang === "fr" ? "règlements RGPD" : "GDPR regulations"}</span>. *
                         </label>
                       </div>
+                      {inquiryError && (
+                        <div className="bg-red-50 border border-red-200/60 p-3 text-xs text-red-700 font-sans">
+                          {inquiryError}
+                        </div>
+                      )}
                       <div className="flex justify-end gap-4 pt-4 border-t border-ebony-deep/5">
                         <button type="button" onClick={() => { setShowInquiryModal(false); setInquiryResult(null); }} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep">{lang === "fr" ? "Annuler" : "Cancel"}</button>
                         <button type="submit" disabled={submittingInquiry || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2">
@@ -632,7 +664,7 @@ export default function ArtworkDetailPage({ params }: { params: Promise<{ id: st
                 <div className="flex justify-between pt-2 border-t border-ebony-deep/5"><span className="text-on-surface-variant">{lang === "fr" ? "État du Dossier" : "Dossier Status"}</span><span className="text-gold-leaf font-semibold">{lang === "fr" ? "Disponible sur Demande" : "Available Upon Request"}</span></div>
               </div>
               <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">{lang === "fr" ? "Le dossier de provenance complet, comprenant la documentation historique, les certificats d'authentification et les rapports d'analyse scientifique, sera préparé par notre équipe curatoriale et envoyé à l'adresse email de votre conseiller enregistré dans les 48 heures." : "The complete provenance dossier including historical documentation, authentication certificates, and scientific analysis reports will be prepared by our curatorial team and dispatched to your registered advisor email within 48 hours."}</p>
-              <button onClick={() => { alert("Provenance dossier request logged. Our team will prepare and dispatch the complete documentation within 48 hours."); setShowDossierModal(false); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 transition-opacity">{lang === "fr" ? "Demander la Préparation du Dossier" : "Request Dossier Preparation"}</button>
+              <button onClick={() => { console.log("Provenance dossier request logged"); setShowDossierModal(false); }} className="w-full bg-ebony-deep text-parchment-ivory font-sans text-xs font-bold uppercase tracking-widest py-3.5 hover:opacity-90 transition-opacity">{lang === "fr" ? "Demander la Préparation du Dossier" : "Request Dossier Preparation"}</button>
             </motion.div>
           </div>
         )}

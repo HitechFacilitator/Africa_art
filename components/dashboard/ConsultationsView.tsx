@@ -29,6 +29,8 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
   const [date, setDate] = useState('2026-06-18');
   const [slot, setSlot] = useState('14:30 - 15:30 GMT');
   const [customNotes, setCustomNotes] = useState('');
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [videoFeedback, setVideoFeedback] = useState<string | null>(null);
 
   const experts = [
     { id: 'Diop', name: 'Dr. Amara Diop', title: 'Director of West African Antiquities', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150&h=150' },
@@ -61,19 +63,10 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
         notes: res.data.notes,
       };
       onAddConsultation(newConsultation);
-    } catch {
-      const newConsultation: Consultation = {
-        id: `cons_${Date.now()}`,
-        expertName: chosenExpert.name,
-        expertTitle: chosenExpert.title,
-        expertAvatar: chosenExpert.avatar,
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-        timeSlot: slot,
-        topic: topic,
-        status: 'Pending',
-        notes: customNotes || (lang === "fr" ? 'Vérification des images d\'artefacts physiques chargées.' : 'Vetting of physical artifact images loaded.')
-      };
-      onAddConsultation(newConsultation);
+    } catch (err) {
+      setBookingError(lang === "fr" ? "Échec de la réservation. Veuillez réessayer." : "Failed to book consultation. Please try again.");
+      console.error("Booking error:", err);
+      return; // Don't close modal or clear form on error
     }
     setShowBookingModal(false);
     setTopic('');
@@ -91,6 +84,16 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
           <Plus className="w-4 h-4" /> {lang === "fr" ? "Demander un Appel de Conseil" : "Request Advisory Call"}
         </button>
       </header>
+
+      {bookingError && (
+        <div className="text-xs text-red-600 bg-red-50 p-3 border-l-2 border-red-600 mb-4">{bookingError}</div>
+      )}
+
+      {videoFeedback && (
+        <div className="text-xs text-emerald-700 bg-emerald-50 p-3 border-l-2 border-emerald-600 mb-4">
+          {lang === "fr" ? `Synchronisation du canal vidéo premium sécurisé. Jeton de salle émis pour ${videoFeedback}.` : `Synchronizing secure premium video feed channel. Room token issued for ${videoFeedback}.`}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 flex flex-col gap-6">
@@ -141,7 +144,7 @@ export default function ConsultationsView({ consultations, onAddConsultation }: 
                     <p className="font-sans text-[11px] text-zinc-400 flex items-center gap-1.5 justify-start md:justify-end"><Clock className="w-3.5 h-3.5" /> {item.timeSlot}</p>
                   </div>
                   {item.status === 'Confirmed' ? (
-                    <button onClick={() => alert(lang === "fr" ? `Synchronisation du canal vidéo premium sécurisé. Jeton de salle émis pour ${item.expertName}.` : `Synchronizing secure premium video feed channel. Room token issued for ${item.expertName}.`)} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer">
+                    <button onClick={() => { setVideoFeedback(item.expertName); setTimeout(() => setVideoFeedback(null), 3000); }} className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-bold uppercase tracking-widest px-4 py-2 hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer">
                       <Video className="w-3.5 h-3.5" /> {lang === "fr" ? "Lancer le Conseil Vidéo" : "Launch Video Advisory"}
                     </button>
                   ) : item.status === 'Rejected' ? (

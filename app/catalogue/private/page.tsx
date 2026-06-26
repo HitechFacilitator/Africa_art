@@ -79,7 +79,7 @@ export default function PrivateCataloguePage() {
     temperature: ["18.2°C", "17.8°C", "18.5°C", "19.1°C"][i],
     humidity: ["48%", "51%", "47%", "52%"][i],
     lastInspection: ["2026-05-14", "2026-04-28", "2026-05-20", "2026-03-15"][i],
-    insuranceValue: art.investment?.estimatedValue || "€1.2M",
+    insuranceValue: art.investment?.estimatedValue ? `€${art.investment.estimatedValue.toLocaleString()}` : "€1.2M",
     acquisitionDate: ["2023-06-15", "2024-01-22", "2023-11-08", "2025-02-10"][i],
     condition: ["Pristine", "Excellent", "Excellent", "Pristine"][i] as VaultHolding["condition"],
     certStatus: ["Valid", "Valid", "Renewal Due", "Valid"][i] as VaultHolding["certStatus"],

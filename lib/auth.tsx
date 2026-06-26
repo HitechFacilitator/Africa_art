@@ -223,8 +223,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       return;
     }
-    // Set a timeout so the page isn't blocked if backend is down
-    const timeout = setTimeout(() => setLoading(false), 3000);
     authApi.getMe()
       .then((res) => {
         setUser({ ...res.data, role: res.data.role as Role });
@@ -233,7 +231,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         removeToken();
       })
       .finally(() => {
-        clearTimeout(timeout);
         setLoading(false);
       });
   }, []);
@@ -247,8 +244,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       // If no OTP required, set user directly and return user info for redirect
       setToken(res.token);
-      setUser(res.user as UserSession);
-      return { success: true, requiresOTP: false, user: res.user as UserSession };
+      const validatedUser = { ...res.user, role: (res.user.role || "collector") as Role };
+      setUser(validatedUser);
+      return { success: true, requiresOTP: false, user: validatedUser };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
       return { success: false, error: message };
@@ -262,7 +260,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await authApi.verifyOtp(pendingEmail, code);
       setToken(res.token);
-      const u = res.user as UserSession;
+      const u = { ...res.user, role: (res.user.role || "collector") as Role };
       setUser(u);
       localStorage.removeItem(PENDING_EMAIL_KEY);
       return { success: true, user: u };

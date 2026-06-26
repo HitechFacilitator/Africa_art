@@ -9,6 +9,7 @@ export enum AdminView {
   Settings = "settings",
   SupportManagement = "support_mgmt",
   POR = "por",
+  Chat = "chat",
 }
 
 export interface AdminArtwork {

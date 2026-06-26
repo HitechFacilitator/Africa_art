@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { X, Sparkles, FolderKanban, Plus, Check, Eye } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
+import { adminApi } from "@/lib/api";
 
 interface NewCertificate {
   title: string;
@@ -49,10 +50,13 @@ export default function RegisterCertificateDrawer({ onClose, onRegister }: Regis
   const [useCustomUrl, setUseCustomUrl] = useState(false);
   const [customUrl, setCustomUrl] = useState("");
   const [validationError, setValidationError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
+    setSubmitError(null);
 
     if (!title.trim() || !period.trim() || !region.trim() || !certifyingBody.trim()) {
       setValidationError(lang === "fr" ? "Tous les champs principaux du certificat doivent être remplis." : "All core certificate fields must be completed.");
@@ -60,17 +64,35 @@ export default function RegisterCertificateDrawer({ onClose, onRegister }: Regis
     }
 
     const finalImage = useCustomUrl ? customUrl.trim() : imageUrl;
-
-    onRegister({
-      title: title.trim(),
-      period: period.trim(),
-      region: region.trim(),
-      certifyingBody: certifyingBody.trim(),
-      valuationEstimate: valuation.trim() || "Private Advisory Placement",
-      medium: medium.trim() || "Organic handworked material",
-      dimensions: dimensions.trim() || "Proportions archived",
-      imageUrl: finalImage,
-    });
+    setSubmitting(true);
+    try {
+      await adminApi.createCertificate({
+        artworkTitle: title.trim(),
+        ownerName: certifyingBody.trim(),
+        verifiedBy: region.trim(),
+        expiryDate: undefined,
+        artworkId: undefined,
+        // Extended metadata (sent for forward compatibility)
+        period: period || undefined,
+        region: region || undefined,
+        valuation: valuation || undefined,
+        medium: medium || undefined,
+        dimensions: dimensions || undefined,
+      } as any);
+      onRegister({
+        title: title.trim(),
+        period: period.trim(),
+        region: region.trim(),
+        certifyingBody: certifyingBody.trim(),
+        valuationEstimate: valuation.trim() || "Private Advisory Placement",
+        medium: medium.trim() || "Organic handworked material",
+        dimensions: dimensions.trim() || "Proportions archived",
+        imageUrl: finalImage,
+      });
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to register certificate");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -99,6 +121,10 @@ export default function RegisterCertificateDrawer({ onClose, onRegister }: Regis
 
             {validationError && (
               <div className="bg-red-50 border border-red-200 text-red-800 text-xs p-3">{validationError}</div>
+            )}
+
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 text-red-800 text-xs p-3">{submitError}</div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -285,10 +311,13 @@ export default function RegisterCertificateDrawer({ onClose, onRegister }: Regis
 
           <button
             type="submit"
-            className="w-full bg-ebony-deep text-parchment-ivory py-3.5 text-xs tracking-widest font-semibold uppercase hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 shadow-lg flex items-center justify-center gap-2 cursor-pointer border-0"
+            disabled={submitting}
+            className="w-full bg-ebony-deep text-parchment-ivory py-3.5 text-xs tracking-widest font-semibold uppercase hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 shadow-lg flex items-center justify-center gap-2 cursor-pointer border-0 disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4 text-gold-leaf" />
-            {lang === "fr" ? "Certifier et Ajouter au Coffre-fort" : "Certify & Add to Vault Portfolio"}
+            {submitting 
+              ? (lang === "fr" ? "Enregistrement en cours..." : "Registering...") 
+              : (lang === "fr" ? "Certifier et Ajouter au Coffre-fort" : "Certify & Add to Vault Portfolio")}
           </button>
         </div>
       </form>

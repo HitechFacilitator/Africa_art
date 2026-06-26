@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { X, Shield, UserCheck, KeyRound } from "lucide-react";
 import type { MemberApplication } from "@/lib/types";
 import { useTranslate } from "@/lib/translations";
+import { dashboardApi } from "@/lib/api";
 
 interface CollectorClubModalProps {
   onClose: () => void;
@@ -20,21 +21,35 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [createdPass, setCreatedPass] = useState<MemberApplication | null>(null);
   const [secureId] = useState(() => Math.floor(Math.random() * 89999 + 10000));
+  const [submitting, setSubmitting] = useState(false);
   const { lang } = useTranslate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !email || !agreeToTerms) return;
-
-    const application: MemberApplication = {
-      fullName,
-      email,
-      collectorProfile: collectorType,
-      status: "Pending Review",
-    };
-
-    setCreatedPass(application);
-    setStep(2);
+    setSubmitting(true);
+    try {
+      await dashboardApi.createInquiry({
+        artworkTitle: "Collector Club Application",
+        category: "General",
+        messages: [{ 
+          sender: "collector", 
+          text: `Collector Club application from ${fullName} (${email}). Classification: ${collectorType}. Budget: ${investmentLimit}.` 
+        }],
+      });
+    } catch (err) {
+      console.error("Collector club application failed:", err);
+    } finally {
+      setSubmitting(false);
+      const application: MemberApplication = {
+        fullName,
+        email,
+        collectorProfile: collectorType,
+        status: "Pending Review",
+      };
+      setCreatedPass(application);
+      setStep(2);
+    }
   };
 
   const handleCompleteSuccess = () => {
@@ -162,10 +177,10 @@ export default function CollectorClubModal({ onClose, onSuccess }: CollectorClub
 
               <button
                 type="submit"
-                disabled={!agreeToTerms}
+                disabled={!agreeToTerms || submitting}
                 className="w-full bg-ebony-deep hover:bg-gold-leaf hover:text-ebony-deep text-parchment-ivory py-4 font-sans text-xs uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {lang === "fr" ? "Lancer l'Examen Institutionnel" : "Initiate Institutional Review"}
+                {submitting ? (lang === "fr" ? "Soumission..." : "Submitting...") : (lang === "fr" ? "Lancer l'Examen Institutionnel" : "Initiate Institutional Review")}
               </button>
             </form>
           ) : (

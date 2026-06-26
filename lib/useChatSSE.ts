@@ -18,17 +18,35 @@ function createSSE(
       try {
         const data = JSON.parse(e.data);
         handlers[event]?.(data);
-      } catch { /* ignore parse errors */ }
+      } catch {
+        if (process.env.NODE_ENV === "development") {
+          console.warn("SSE parse error for event:", event);
+        }
+      }
     }) as EventListener);
   });
+
+  let retryCount = 0;
+  const MAX_RETRIES = 10;
+  const BASE_DELAY = 3000;
+
+  es.onopen = () => { retryCount = 0; };
 
   es.onerror = () => {
     es.close();
     if (shouldReconnect && !shouldReconnect()) return;
+    if (retryCount >= MAX_RETRIES) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("SSE max retries reached, stopping reconnection");
+      }
+      return;
+    }
+    const delay = Math.min(BASE_DELAY * Math.pow(1.5, retryCount), 30000);
+    retryCount++;
     setTimeout(() => {
       if (shouldReconnect && !shouldReconnect()) return;
       onReconnect?.();
-    }, 3000);
+    }, delay);
   };
 
   return es;

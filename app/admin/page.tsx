@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useTranslate } from "@/lib/translations";
 import { AdminView, AdminArtwork, AdminCollector, AdminUser, AdminCertificate, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
-import { adminApi } from "@/lib/api";
-import type { SupportTicket } from "@/lib/chatTypes";
+import { adminApi, chatApi } from "@/lib/api";
+import type { SupportTicket, ChatThread } from "@/lib/chatTypes";
 import type { Inquiry } from "@/lib/dashboardTypes";
 import { AnimatePresence, motion } from "motion/react";
 import { useChatSSE } from "@/lib/useChatSSE";
 import { useSSE } from "@/lib/useChatSSE";
+import { useAuth } from "@/lib/auth";
 
 import AuthGuard from "@/components/AuthGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -27,11 +28,13 @@ const SettingsView = dynamic(() => import("@/components/admin/SettingsView"), { 
 const SupportManagementView = dynamic(() => import("@/components/admin/SupportManagementView"), { ssr: false });
 const ArtworkWizard = dynamic(() => import("@/components/admin/ArtworkWizard"), { ssr: false });
 const PORView = dynamic(() => import("@/components/admin/PORView"), { ssr: false });
+const ChatView = dynamic(() => import("@/components/dashboard/ChatView"), { ssr: false });
 
 function AdminPageContent() {
   const { lang } = useTranslate();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const viewFromUrl = searchParams.get("tab") as AdminView | null;
   const [activeView, setActiveView] = useState<AdminView>(
     viewFromUrl && Object.values(AdminView).includes(viewFromUrl as AdminView)
@@ -50,6 +53,8 @@ function AdminPageContent() {
   const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [chatThreads, setChatThreads] = useState<ChatThread[]>([]);
+  const [selectedChatThreadId, setSelectedChatThreadId] = useState<string | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [editingArtworkId, setEditingArtworkId] = useState<string | null>(null);
 
@@ -63,16 +68,36 @@ function AdminPageContent() {
     adminApi.getAuditLogs().then(res => setAuditLogs(res.data as AuditLogEntry[])).catch(() => {});
     adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
     adminApi.getInquiries().then(res => setInquiries(res.data as Inquiry[])).catch(() => {});
+    chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
   }, []);
 
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
 
+  useEffect(() => {
+    const threadFromUrl = searchParams.get("thread");
+    if (threadFromUrl) {
+      setSelectedChatThreadId(threadFromUrl);
+      if (activeView !== AdminView.Chat) {
+        navigateView(AdminView.Chat);
+      }
+    }
+  }, [searchParams]);
+
   // Real-time SSE: chat messages and ticket updates
   useChatSSE({
-    "new-message": () => {
-      // A new chat message arrived — refetch tickets (may affect support view)
+    "new-message": (data: unknown) => {
+      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
+      // Update chat threads with new message
+      setChatThreads(prev => prev.map(t => {
+        if (t.id !== `thr-${threadId}`) return t;
+        const alreadyExists = t.messages.some(m => m.id === message.id);
+        if (alreadyExists) return t;
+        const isFromOther = String(message.senderId) !== user?.id;
+        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatThread["messages"][0]["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
+      }));
+      // Also refresh tickets
       adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
     },
     "ticket-update": (data: unknown) => {
@@ -334,9 +359,41 @@ function AdminPageContent() {
     }
   };
 
+  const handleSendMessage = useCallback(async (threadId: string, text: string) => {
+    const tempMsg = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || "admin",
+      senderName: user?.name || "Admin",
+      senderRole: (user?.role || "admin") as "admin",
+      text,
+      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+      read: true,
+    };
+    setChatThreads(prev => prev.map(t => {
+      if (t.id !== threadId) return t;
+      return { ...t, messages: [...t.messages, tempMsg], lastMessage: text, lastMessageTime: tempMsg.timestamp };
+    }));
+    try {
+      const res = await chatApi.sendMessage(threadId, {
+        senderId: user?.id,
+        senderName: user?.name,
+        senderRole: user?.role || "admin",
+        text,
+      });
+      const serverMsg = res.data;
+      setChatThreads(prev => prev.map(t => {
+        if (t.id !== threadId) return t;
+        return { ...t, messages: t.messages.map(m => m.id === tempMsg.id ? { ...m, id: serverMsg.id } : m) };
+      }));
+    } catch (err) {
+      console.error("Failed to send message:", err);
+    }
+  }, [user]);
+
   const adminUnreadCounts = useMemo(() => ({
     [AdminView.SupportManagement]: supportTickets.filter(t => t.status === "Open" || t.status === "In Progress").length,
-  }), [supportTickets]);
+    [AdminView.Chat]: chatThreads.reduce((sum, t) => sum + (t.unreadCount || 0), 0),
+  }), [supportTickets, chatThreads]);
 
   const handleMenuToggle = useCallback(() => setSidebarOpen(prev => !prev), []);
 
@@ -423,6 +480,15 @@ function AdminPageContent() {
                   />
                 )}
                 {activeView === AdminView.POR && <PORView />}
+                {activeView === AdminView.Chat && (
+                  <ChatView
+                    threads={chatThreads}
+                    onSendMessage={handleSendMessage}
+                    onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))}
+                    selectedThreadId={selectedChatThreadId}
+                    onSelectThread={setSelectedChatThreadId}
+                  />
+                )}
               </motion.div>
             </AnimatePresence>
           </main>

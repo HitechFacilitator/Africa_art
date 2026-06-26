@@ -84,6 +84,7 @@ export default function InquiriesView({
   const [selectedPorId, setSelectedPorId] = useState<string | null>(null);
   const [porMessage, setPorMessage] = useState("");
   const [sendingPorMessage, setSendingPorMessage] = useState(false);
+  const [sendMessageError, setSendMessageError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoadingPOR(true);
@@ -114,11 +115,18 @@ export default function InquiriesView({
   const categories = ["All", ...Array.from(new Set(inquiries.map(i => i.category || "General")))];
   const filteredInquiries = categoryFilter === "All" ? inquiries : inquiries.filter(i => (i.category || "General") === categoryFilter);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!typedMessage.trim() || !activeId) return;
-    onAddMessage(activeId, typedMessage.trim());
-    setTypedMessage("");
+    try {
+      setSendMessageError(null);
+      await onAddMessage(activeId, typedMessage.trim());
+      setTypedMessage("");
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      setSendMessageError(lang === "fr" ? "Échec de l'envoi du message. Veuillez réessayer." : "Failed to send message. Please try again.");
+      setTimeout(() => setSendMessageError(null), 3000);
+    }
   };
 
   const handleSendPorMessage = async (e: React.FormEvent) => {
@@ -284,6 +292,9 @@ export default function InquiriesView({
                       })}
                     </div>
 
+                    {sendMessageError && (
+                      <div className="text-xs text-red-600 bg-red-50 p-3 border-l-2 border-red-600 mb-4">{sendMessageError}</div>
+                    )}
                     <form onSubmit={handleSendMessage} className="p-4 border-t border-ebony-deep/5 bg-white flex items-stretch gap-3">
                       <input type="text" required value={typedMessage} onChange={(e) => setTypedMessage(e.target.value)} placeholder={lang === "fr" ? "Écrire un message..." : "Type a message..."} className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none" />
                       <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0"><Send className="w-4.5 h-4.5" /></button>

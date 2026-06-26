@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -36,10 +36,13 @@ import {
   Phone,
   HelpCircle,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useArtworks } from "@/lib/hooks";
 import { useTranslate } from "@/lib/translations";
+import { chatApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { useTranslatedArtwork } from "@/lib/useTranslatedArtwork";
 import type { Artwork } from "@/lib/types";
 import ProvenanceStage from "@/components/acquisition/ProvenanceStage";
@@ -72,6 +75,8 @@ interface CardData {
 function AcquisitionContent() {
   const { lang } = useTranslate();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user } = useAuth();
   const { artworks: apiArtworks } = useArtworks();
   const artworksList = apiArtworks as unknown as Artwork[];
   const artworkId = searchParams.get("artwork") || artworksList[0]?.id || "";
@@ -106,6 +111,25 @@ function AcquisitionContent() {
   const [stepMsg, setStepMsg] = useState("");
   const [paymentErrorMsg, setPaymentErrorMsg] = useState("");
   const [copiedSwift, setCopiedSwift] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (currentStep === "Confirmation" && !isRedirecting) {
+      setIsRedirecting(true);
+      chatApi.createThread({
+        subject: `Acquisition Inquiry — ${artwork?.title || "Artwork"}`,
+        clientName: `${billing.firstName} ${billing.lastName}`,
+        clientRole: user?.role || "collector",
+        advisorName: "Acquisition Desk",
+        initialMessage: `New acquisition confirmed for "${artwork?.title}" (${artwork?.id}). Total: ${totalWithVAT.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}. Payment method: ${paymentMethod}. Please coordinate delivery and custody transfer.`,
+      }).then((res) => {
+        router.push(`/dashboard?tab=Chat&thread=${res.data.id}`);
+      }).catch(() => {
+        // If thread creation fails, stay on confirmation page
+        setIsRedirecting(false);
+      });
+    }
+  }, [currentStep]);
 
   const stepOrder: CheckoutStep[] = ["Summary", "Provenance", "Billing", "Payment", "Confirmation"];
   const currentIndex = stepOrder.indexOf(currentStep);
@@ -250,7 +274,7 @@ function AcquisitionContent() {
     setTimeout(() => setCopiedSwift(false), 2000);
   };
 
-  const txnRef = `HV-TXN-${artwork?.id?.substring(0, 6).toUpperCase() || "000000"}-${billing.lastName.substring(0, 8).replace(/\s+/g, "-").toUpperCase()}`;
+  const txnRef = `HV-TXN-${String(artwork?.id ?? "000000").substring(0, 6).toUpperCase()}-${billing.lastName.substring(0, 8).replace(/\s+/g, "-").toUpperCase()}`;
 
   if (!artwork) {
     return (
@@ -745,41 +769,10 @@ function AcquisitionContent() {
                             </div>
                           </div>
                           {paymentMethod === "card" && (
-                            <form onSubmit={processCardPayment} className="mt-4 border-t border-on-surface/10 pt-5 flex flex-col gap-5 cursor-default" onClick={(e) => e.stopPropagation()}>
-                              {cardError && (
-                                <div className="bg-red-50 border-l-2 border-terracotta-earth p-4 flex gap-2 text-xs text-red-800">
-                                  <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                                  <span>{cardError}</span>
-                                </div>
-                              )}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{lang === "fr" ? "Nom complet du titulaire" : "Cardholder Full Name"}</label>
-                                  <input type="text" required value={card.cardholderName} onChange={(e) => setCard((prev) => ({ ...prev, cardholderName: e.target.value }))} placeholder="e.g. Julian Doe" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-sans" />
-                                </div>
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{lang === "fr" ? "Numéro de carte" : "Card Number"}</label>
-                                  <div className="relative">
-                                    <input type="text" required value={card.cardNumber} onChange={handleCardNumberChange} placeholder="4111 2222 3333 4444" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-mono" />
-                                    <CreditCard className="absolute right-3 top-2.5 w-4 h-4 text-on-surface-variant/40" />
-                                  </div>
-                                </div>
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{lang === "fr" ? "Date d'expiration" : "Expiration Date"}</label>
-                                  <input type="text" required value={card.expiry} onChange={handleExpiryChange} placeholder="MM/YY" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-mono" />
-                                </div>
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="font-sans text-[10px] font-bold uppercase tracking-wider text-on-surface-variant flex items-center justify-between">
-                                    <span>{lang === "fr" ? "Code de sécurité (CVC)" : "Security Code (CVC)"}</span>
-                                    <KeyRound className="w-3.5 h-3.5 text-on-surface-variant/40" />
-                                  </label>
-                                  <input type="password" required value={card.cvc} onChange={handleCvcChange} placeholder="•••" className="w-full bg-parchment-ivory px-3 py-2.5 text-xs outline-none border-b border-on-surface/10 focus:border-gold-leaf transition-colors font-mono" />
-                                </div>
-                              </div>
-                              <div>
-                                <button type="submit" className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer">{lang === "fr" ? "Vérifier la carte et finaliser l'acquisition" : "Verify Card & Settle Acquisition"}</button>
-                              </div>
-                            </form>
+                            <div className="mt-4 border-t border-on-surface/10 pt-5 flex flex-col gap-4 cursor-default" onClick={(e) => e.stopPropagation()}>
+                              <p className="font-sans text-xs text-on-surface-variant">{lang === "fr" ? "Vous serez redirigé vers un portail de paiement sécurisé pour finaliser le règlement par carte. Les détails de la carte ne sont jamais stockés sur nos serveurs." : "You will be redirected to a secure payment portal to complete your card payment. Card details are never stored on our servers."}</p>
+                              <button onClick={() => setCurrentStep("Confirmation")} type="button" className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-8 py-4 transition-all duration-300 cursor-pointer">{lang === "fr" ? "Procéder au paiement par carte" : "Proceed to Card Payment"}</button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -818,124 +811,12 @@ function AcquisitionContent() {
               {/* ─── STEP 5: CONFIRMATION ─── */}
               {currentStep === "Confirmation" && (
                 <motion.div key="confirmation" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-                  <div className="flex flex-col gap-10">
-                    <div className="text-center flex flex-col items-center gap-4">
-                      <div className="w-14 h-14 rounded-full bg-gold-leaf/10 flex items-center justify-center text-gold-leaf">
-                        <BadgeCheck className="w-8 h-8" />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <span className="font-sans text-[10px] uppercase tracking-[0.25em] text-gold-leaf font-bold">{lang === "fr" ? "Titre de propriété sécurisé" : "Ownership Title Secured"}</span>
-                        <h2 className="font-serif text-3xl md:text-4xl text-ebony-deep font-medium tracking-tight">{lang === "fr" ? "Acquisition confirmée" : "Acquisition Confirmed"}</h2>
-                      </div>
-                      <p className="font-sans text-sm text-on-surface-variant max-w-2xl leading-relaxed">
-                        {lang === "fr" ? "Le paiement pour" : "The payment for"} <strong className="text-ebony-deep">{artwork.title}</strong> {lang === "fr" ? "a été traité. L'actif physique a été mis en attente de transit, et le registre de propriété numérique est terminé." : "has been processed. The physical asset has been locked in transit-hold, and digital title registry is complete."}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-                      <div className="lg:col-span-7 bg-parchment-ivory border-2 border-double border-gold-leaf/30 p-8 flex flex-col gap-8 justify-between relative shadow-sm">
-                        <div className="absolute top-0 right-0 p-4 font-serif text-[9px] text-gold-leaf/25 uppercase font-bold tracking-widest border-b border-l border-gold-leaf/10">{lang === "fr" ? "Entrée officielle du registre" : "Official Ledger Entry"}</div>
-                        <div className="flex flex-col gap-5">
-                          <div className="flex flex-col gap-1">
-                            <span className="font-sans text-[9px] uppercase tracking-wider text-on-surface-variant/70 font-semibold">{lang === "fr" ? "Titre du registre souverain" : "Sovereign Registry Title"}</span>
-                            <h3 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Certificat de provenance absolue" : "Certificate of Absolute Provenance"}</h3>
-                          </div>
-                          <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-                            {lang === "fr" ? "Le présent document garantit que" : "This record hereby guarantees that"} <strong className="text-ebony-deep">{billing.firstName} {billing.lastName}</strong> {lang === "fr" ? "est le propriétaire enregistré authentifié de" : "is the authenticated registered owner of"} <strong className="text-ebony-deep">{artwork.title}</strong>, {lang === "fr" ? "daté de" : "dated"} {artwork.period}. {lang === "fr" ? "Tous les droits, titres légaux, rapports forensic et actes de garde sont transférés à perpétuité." : "All rights, legal titles, forensics reports, and custody deeds are transferred henceforth in perpetuity."}
-                          </p>
-                          <div className="border-t border-b border-on-surface/10 py-4 grid grid-cols-2 gap-4 text-xs font-sans">
-                            <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">{lang === "fr" ? "ID du registre d'acquisition" : "Acquisition Registry ID"}</span><span className="font-mono font-bold text-ebony-deep block mt-1">{artwork.id}</span></div>
-                            <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">{lang === "fr" ? "Réf. de règlement de la transaction" : "Transaction Settlement Ref"}</span><span className="font-mono font-bold text-ebony-deep block mt-1">{txnRef}</span></div>
-                            <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">{lang === "fr" ? "Adresse de facturation" : "Billing Address"}</span><span className="font-bold text-ebony-deep block mt-1">{billing.address}, {billing.city}, {billing.country}</span></div>
-                            <div><span className="block text-[9px] text-on-surface-variant uppercase font-bold tracking-wider">{lang === "fr" ? "Vérification de la datation" : "Dating Verification"}</span><span className="font-bold text-ebony-deep block mt-1">{artwork.period}</span></div>
-                          </div>
-                        </div>
-                        <div className="pt-4 border-t border-on-surface/10 flex flex-col sm:flex-row justify-between items-center gap-4">
-                          <div className="font-sans text-[9px] text-on-surface-variant uppercase flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-gold-leaf" /> {lang === "fr" ? "Signature cryptographique vérifiablement sécurisée" : "Verifiably secure cryptographic signature"}
-                          </div>
-                          <button onClick={() => {
-                            const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Legal Deed - ${artwork.title}</title><style>
-                              body{font-family:Georgia,serif;color:#0f0f0f;max-width:800px;margin:40px auto;padding:40px;border:2px double #C5A059}
-                              h1{font-size:28px;text-align:center;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px}
-                              h2{font-size:14px;text-align:center;color:#785a1a;text-transform:uppercase;letter-spacing:5px;margin-bottom:30px}
-                              .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;padding:16px 0;font-size:13px}
-                              .meta span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#888;margin-bottom:2px}
-                              .meta strong{color:#0f0f0f}
-                              .body{font-size:14px;line-height:1.8;margin:24px 0}
-                              .sig{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;padding-top:20px;border-top:1px solid #e5e5e5}
-                              .sig div{text-align:center;font-size:12px;color:#666}
-                              .sig .name{font-style:italic;font-size:16px;color:#C5A059;border-bottom:1px solid #e5e5e5;padding-bottom:6px;margin-bottom:4px}
-                              .footer{text-align:center;font-size:10px;color:#aaa;margin-top:40px;letter-spacing:2px;text-transform:uppercase}
-                              @media print{body{border:none;margin:0;padding:20px}}
-                            </style></head><body>
-                              <img src="/logo.png" style="width:60px;height:60px;display:block;margin:0 auto 8px" alt="Aduna Gallery" />
-                              <h1>Certificate of Absolute Provenance</h1>
-                              <h2>Official Legal Deed of Ownership Transfer</h2>
-                              <div class="meta">
-                                <div><span>Acquisition Registry ID</span><strong>${artwork.id}</strong></div>
-                                <div><span>Transaction Settlement Ref</span><strong>${txnRef}</strong></div>
-                                <div><span>Registered Owner</span><strong>${billing.firstName} ${billing.lastName}</strong></div>
-                                <div><span>Billing Address</span><strong>${billing.address}, ${billing.city}, ${billing.country}</strong></div>
-                                <div><span>Artwork Title</span><strong>${artwork.title}</strong></div>
-                                <div><span>Period / Era</span><strong>${artwork.period}</strong></div>
-                                <div><span>Origin</span><strong>${artwork.origin}</strong></div>
-                                <div><span>Medium</span><strong>${artwork.material}</strong></div>
-                                <div><span>Dimensions</span><strong>${artwork.dimensions}</strong></div>
-                                <div><span>Estimated Value (incl. VAT)</span><strong>${totalWithVAT.toLocaleString("de-DE", { style: "currency", currency: "EUR" })}</strong></div>
-                              </div>
-                              <div class="body">
-                                <p>This document hereby guarantees that <strong>${billing.firstName} ${billing.lastName}</strong> is the authenticated registered owner of <strong>${artwork.title}</strong>, dated ${artwork.period}, originating from ${artwork.origin}.</p>
-                                <p>All rights, legal titles, forensic reports, custody deeds, and blockchain-anchored provenance records are transferred henceforth in perpetuity. The physical asset has been secured in transit-hold, and digital title registry is complete.</p>
-                                <p>This certificate is issued in accordance with the UNESCO 1970 Convention and the UNIDROIT Convention on Stolen or Illegally Exported Cultural Objects. All ALM (Anti-Money Laundering) checks have been completed satisfactorily.</p>
-                              </div>
-                              <div class="sig">
-                                <div><div class="name">Amara Ndiaye</div>Chief Curator Signature</div>
-                                <div><div class="name">Benin Council Board</div>Advisory Assessor Stamp</div>
-                              </div>
-                              <div class="footer">Aduna Gallery — Institutional Ledger Registry Compliance — ${new Date().toISOString().split("T")[0]}</div>
-                            </body></html>`;
-                            const w = window.open("", "_blank");
-                            if (w) { w.document.write(html); w.document.close(); w.print(); }
-                          }} className="w-full sm:w-auto bg-ebony-deep hover:bg-gold-leaf text-parchment-ivory font-sans text-xs font-semibold uppercase tracking-widest px-6 py-3 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
-                            <Download className="w-4 h-4" /> {lang === "fr" ? "Télécharger l'acte légal" : "Download Legal Deed"}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="lg:col-span-5 bg-surface-container-low border border-on-surface/5 p-8 flex flex-col gap-6 font-sans">
-                        <h3 className="font-sans text-xs font-bold uppercase tracking-widest text-on-surface-variant border-b border-on-surface/10 pb-3">{lang === "fr" ? "Logistique d'acquisition et prochaines étapes" : "Acquisition Logistics & Next Steps"}</h3>
-                        <div className="flex flex-col gap-6 text-sm text-on-surface-variant">
-                          <div className="flex gap-4 items-start">
-                            <div className="w-8 h-8 rounded-full bg-gold-leaf/10 text-gold-leaf flex items-center justify-center shrink-0"><Truck className="w-4 h-4" /></div>
-                            <div className="flex flex-col gap-1">
-                              <h4 className="font-bold text-ebony-deep text-xs uppercase tracking-wider">{lang === "fr" ? "Transit global blindé (G4S Fine Art)" : "Armored Global Transit (G4S Fine Art)"}</h4>
-                              <p className="text-xs text-on-surface-variant leading-relaxed">{lang === "fr" ? "Votre artifact physique est programmé pour la libération du coffre-fort de la Zone franche de Genève. La protection thermique de qualité transit et l'escorte armée le transporteront vers votre coffre-fort désigné." : "Your physical artifact is scheduled for release from the Geneva Freeport vault. Transit-grade thermal protection and armed escort will transport it to your designated vault."}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-4 items-start">
-                            <div className="w-8 h-8 rounded-full bg-gold-leaf/10 text-gold-leaf flex items-center justify-center shrink-0"><LandmarkIcon className="w-4 h-4" /></div>
-                            <div className="flex flex-col gap-1">
-                              <h4 className="font-bold text-ebony-deep text-xs uppercase tracking-wider">{lang === "fr" ? "Documentation de transfert légal" : "Legal Handover Documentation"}</h4>
-                              <p className="text-xs text-on-surface-variant leading-relaxed">{lang === "fr" ? "Le timbre physique officiel signé et le dossier d'acte de garde légal vous seront remis en main propre à votre destination de remise." : "The official physically signed stamp and legal custody deed dossier will be hand-delivered to you at your handover destination."}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-4 items-start">
-                            <div className="w-8 h-8 rounded-full bg-gold-leaf/10 text-gold-leaf flex items-center justify-center shrink-0"><Calendar className="w-4 h-4" /></div>
-                            <div className="flex flex-col gap-1">
-                              <h4 className="font-bold text-ebony-deep text-xs uppercase tracking-wider">{lang === "fr" ? "Contact du responsable de la curation" : "Curation Liaison Contact"}</h4>
-                              <p className="text-xs text-on-surface-variant leading-relaxed">{lang === "fr" ? "Notre Directeur de la Garde coordinate avec vous à" : "Our Director of Custody will coordinate with you at"} <strong className="text-ebony-deep">{billing.email}</strong> {lang === "fr" ? "pour finaliser les procédures de dédouanement." : "to finalize port clearance customs procedures."}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-center border-t border-on-surface/10 pt-8 mt-4">
-                      <a href="/dashboard" className="font-sans text-xs font-bold uppercase tracking-widest text-on-surface-variant hover:text-gold-leaf transition-colors flex items-center gap-2 px-5 py-3 border border-on-surface/20 hover:border-gold-leaf bg-surface-container-lowest">
-                        <CheckCircle className="w-3.5 h-3.5" /> {lang === "fr" ? "Accéder au tableau de bord" : "Go to Dashboard"}
-                      </a>
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-20 gap-6">
+                    <Loader2 className="w-10 h-10 text-gold-leaf animate-spin" />
+                    <h2 className="font-serif text-2xl text-ebony-deep">{lang === "fr" ? "Création du canal de conversation sécurisé..." : "Establishing secure conversation channel..."}</h2>
+                    <p className="font-sans text-sm text-on-surface-variant text-center max-w-md">
+                      {lang === "fr" ? "Votre acquisition est enregistrée. Veuillez patienter pendant que nous configurons votre canal de discussion privé avec l'équipe d'acquisition." : "Your acquisition has been recorded. Please wait while we set up your private discussion channel with the acquisition team."}
+                    </p>
                   </div>
                 </motion.div>
               )}

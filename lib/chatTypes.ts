@@ -1,8 +1,8 @@
 export interface ChatMessage {
   id: string;
-  senderId: string;
+  senderId: string | number;
   senderName: string;
-  senderRole: "collector" | "visitor" | "advisor" | "admin" | "support";
+  senderRole: "collector" | "visitor" | "advisor" | "admin" | "support" | "prestige";
   text: string;
   timestamp: string;
   read: boolean;
@@ -11,7 +11,7 @@ export interface ChatMessage {
 export interface ChatThread {
   id: string;
   clientName: string;
-  clientRole: "collector" | "visitor";
+  clientRole: "collector" | "visitor" | "prestige" | "advisor";
   advisorName: string;
   clientUserId: number | null;
   advisorUserId: number | null;

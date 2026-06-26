@@ -152,12 +152,18 @@ export default function BookingPage() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
+      const enrichedNotes = [
+        notes,
+        artworkInterest ? `Artwork of Interest: ${displayArtworks.find(a => String(a.id) === artworkInterest)?.title || artworkInterest}` : "",
+        `Booking Ref: ${bookingRef}`,
+      ].filter(Boolean).join("\n") || undefined;
+
       await consultationsApi.create({
         type: consultationMode === "video" ? "VIDEO" : consultationMode === "phone" ? "PHONE" : "IN_PERSON",
         date: selectedDate,
         timeSlot: selectedTime,
         topic: selectedTopic,
-        notes: notes || undefined,
+        notes: enrichedNotes,
         expertName: selectedSpecialist?.name,
         expertTitle: selectedSpecialist?.title,
         expertAvatar: selectedSpecialist?.avatar,
@@ -560,7 +566,7 @@ export default function BookingPage() {
                       {artworkInterest && (
                         <div className="flex justify-between text-xs">
                           <span className="text-on-surface-variant">{lang === "fr" ? "Œuvre" : "Artwork"}</span>
-                          <span className="text-ebony-deep font-semibold text-right">{displayArtworks.find(a => a.id === artworkInterest)?.title}</span>
+                          <span className="text-ebony-deep font-semibold text-right">{displayArtworks.find(a => String(a.id) === artworkInterest)?.title}</span>
                         </div>
                       )}
                     </div>

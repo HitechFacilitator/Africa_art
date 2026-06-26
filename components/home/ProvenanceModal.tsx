@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { X, ShieldCheck, TrendingUp, MapPin, Clock, Coins } from "lucide-react";
 import type { Artwork } from "@/lib/types";
 import { useTranslate } from "@/lib/translations";
+import { dashboardApi } from "@/lib/api";
 
 interface ProvenanceModalProps {
   artwork: Artwork;
@@ -19,7 +20,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
   const [isTyping, setIsTyping] = useState(false);
   const { lang } = useTranslate();
 
-  const handleInquirySubmit = (e: React.FormEvent) => {
+  const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inquiryText.trim()) return;
 
@@ -33,7 +34,17 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
     setInquiryText("");
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      await dashboardApi.createInquiry({
+        artworkTitle: artwork.title,
+        artworkYear: artwork.era,
+        imageUrl: artwork.imageUrl,
+        category: "Provenance",
+        messages: [{ sender: "collector", text: userMsg.text }],
+      });
+    } catch (err) {
+      console.error("Provenance modal inquiry failed:", err);
+    } finally {
       setIsTyping(false);
       const curatorMsg = {
         sender: "Aduna Chief Curator",
@@ -41,7 +52,7 @@ export default function ProvenanceModal({ artwork, onClose, onApplyForClub }: Pr
         date: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setInquiryList((prev) => [...prev, curatorMsg]);
-    }, 2000);
+    }
   };
 
   return (

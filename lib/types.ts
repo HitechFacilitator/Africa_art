@@ -32,7 +32,7 @@ export interface Artwork {
   historicalStory: string;
   investmentThesis: string;
   investment?: {
-    estimatedValue: string;
+    estimatedValue: number;
     historicalCagr: number;
     yieldIndex: number;
   };

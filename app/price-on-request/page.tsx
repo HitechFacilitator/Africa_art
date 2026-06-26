@@ -15,6 +15,7 @@ import {
   FileText,
   Sparkles,
   MessageSquare,
+  AlertCircle,
 } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 import Navbar from "@/components/layout/Navbar";
@@ -41,7 +42,8 @@ export default function PriceOnRequestPage() {
   const [submitted, setSubmitted] = useState(false);
   const [filterMaterial, setFilterMaterial] = useState("All");
   const [filterRegion, setFilterRegion] = useState("All");
-  const [submittedArtworkIds, setSubmittedArtworkIds] = useState<Set<number>>(new Set());
+  const [submittedArtworkIds, setSubmittedArtworkIds] = useState<Set<string>>(new Set());
+  const [formError, setFormError] = useState<string | null>(null);
 
   const { artworks: apiArtworks } = useArtworks();
   const porArtworks = (apiArtworks as unknown as Artwork[]).filter((a) => a.label === "Price on Request");
@@ -50,8 +52,8 @@ export default function PriceOnRequestPage() {
   useEffect(() => {
     porApi.getMy().then((res) => {
       const data = res.data || [];
-      const ids = new Set<number>();
-      data.forEach((req: { artworkId: number }) => ids.add(req.artworkId));
+      const ids = new Set<string>();
+      data.forEach((req: { artworkId: number }) => ids.add(`art-${req.artworkId}`));
       setSubmittedArtworkIds(ids);
     }).catch(() => {});
   }, []);
@@ -76,14 +78,16 @@ export default function PriceOnRequestPage() {
     if (!inquiryFirstName || !inquiryLastName || !inquiryEmail || !gdprConsent) return;
     if (!selectedArtwork) return;
     setSubmitting(true);
+    setFormError(null);
     try {
-      const artworkId = parseInt(selectedArtwork.id.replace(/\D/g, ""), 10);
-      await porApi.create(artworkId, `${inquiryNotes}\n\nProfile: ${clientProfile}\nBudget: ${budgetRange}\nPhone: ${inquiryPhone}`);
-      setSubmittedArtworkIds((prev) => new Set(prev).add(artworkId));
+      const artworkNumId = Number(String(selectedArtwork.id).replace("art-", ""));
+      const message = `Price request for "${selectedArtwork.title}".\n\nName: ${inquiryFirstName} ${inquiryLastName}\nEmail: ${inquiryEmail}\nPhone: ${inquiryPhone || "Not provided"}\nProfile: ${clientProfile}\nBudget: ${budgetRange}\n\n${inquiryNotes || ""}`;
+      await porApi.create(artworkNumId, message);
+      setSubmittedArtworkIds((prev) => new Set(prev).add(selectedArtwork.id));
       setSubmitted(true);
     } catch (err: any) {
       const msg = err?.message || "Failed to submit inquiry";
-      alert(msg);
+      setFormError(msg);
     } finally {
       setSubmitting(false);
     }
@@ -101,6 +105,7 @@ export default function PriceOnRequestPage() {
     setBudgetRange("€1M – €5M");
     setInquiryNotes("");
     setGdprConsent(false);
+    setFormError(null);
   };
 
   return (
@@ -217,7 +222,7 @@ export default function PriceOnRequestPage() {
                     <Lock size={9} className="text-gold-leaf" />
                     <span className="text-[9px] text-gold-leaf font-bold uppercase tracking-widest">POR</span>
                   </div>
-                  {submittedArtworkIds.has(parseInt(artwork.id.replace(/\D/g, ""), 10)) && (
+                  {submittedArtworkIds.has(artwork.id) && (
                     <div className="absolute top-3 right-3 bg-emerald-600/90 backdrop-blur-sm px-2.5 py-1 flex items-center gap-1.5">
                       <CheckCircle size={9} className="text-white" />
                       <span className="text-[9px] text-white font-bold uppercase tracking-widest">{lang === "fr" ? "Demandé" : "Inquired"}</span>
@@ -242,7 +247,7 @@ export default function PriceOnRequestPage() {
                     <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">{lang === "fr" ? "Indice de Rareté" : "Scarcity Index"}</p>
                     <p className="font-serif text-sm text-ebony-deep font-semibold">{artwork.scarcityIndex}/100</p>
                   </div>
-                  {submittedArtworkIds.has(parseInt(artwork.id.replace(/\D/g, ""), 10)) ? (
+                  {submittedArtworkIds.has(artwork.id) ? (
                     <Link href="/dashboard" className="bg-ebony-deep text-parchment-ivory px-4 py-2.5 text-[10px] uppercase tracking-widest font-bold hover:bg-gold-leaf hover:text-ebony-deep transition-colors cursor-pointer border-0 flex items-center gap-1.5">
                       <MessageSquare size={10} /> {lang === "fr" ? "Suivre" : "Track in Dashboard"}
                     </Link>
@@ -362,6 +367,12 @@ export default function PriceOnRequestPage() {
                         {lang === "fr" ? "Je consens au traitement de mes données personnelles conformément à la Politique de Confidentialité et aux réglementations RGPD. Je comprends que mes données seront utilisées pour répondre à cette demande. *" : "I consent to the processing of my personal data in accordance with the Privacy Policy and GDPR regulations. I understand my data will be used to respond to this inquiry. *"}
                       </label>
                     </div>
+                    {formError && (
+                      <div className="bg-red-50 border border-red-200/60 p-3 text-xs text-red-700 font-sans flex items-start gap-2">
+                        <AlertCircle size={14} className="text-red-600 shrink-0 mt-0.5" />
+                        <span>{formError}</span>
+                      </div>
+                    )}
                     <div className="flex justify-end gap-3 pt-4 border-t border-ebony-deep/5">
                       <button type="button" onClick={resetModal} className="border border-ebony-deep/20 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-ebony-deep cursor-pointer bg-transparent">{lang === "fr" ? "Annuler" : "Cancel"}</button>
                       <button type="submit" disabled={submitting || !gdprConsent} className="bg-ebony-deep text-parchment-ivory px-8 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer border-0 flex items-center gap-2">

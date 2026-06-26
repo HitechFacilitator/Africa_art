@@ -129,6 +129,10 @@ export default function ArtworkWizard({ artworkId, onClose, onComplete }: Artwor
   };
 
   const handleSave = async () => {
+    if (!form.title) return;
+    // Validate numeric fields
+    if (form.price && isNaN(Number(form.price))) return;
+    if (form.estimatedValue && isNaN(Number(form.estimatedValue))) return;
     setSaving(true);
     try {
       if (isEdit && artworkId) {

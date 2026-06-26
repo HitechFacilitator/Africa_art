@@ -55,6 +55,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCert, setEditingCert] = useState<AdminCertificate | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [artworks, setArtworks] = useState<ArtworkOption[]>([]);
 
@@ -102,8 +103,10 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
         ownerEmail: form.ownerEmail,
         expiryDate: form.expiryDate || undefined,
         verifiedBy: form.verifiedBy || "Aduna Gallery",
+        file: pdfFile || undefined,
       });
       setForm(emptyForm);
+      setPdfFile(null);
       setShowCreateModal(false);
       onCreate(undefined as unknown as AdminCertificate);
     } catch (err) {
@@ -160,6 +163,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
     setShowCreateModal(false);
     setEditingCert(null);
     setForm(emptyForm);
+    setPdfFile(null);
   };
 
   const isModalOpen = showCreateModal || editingCert !== null;
@@ -364,6 +368,7 @@ export default function CertificatesView({ certificates, onCreate, onUpdate, onR
                   <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) setForm({ ...form, pdfFileName: file.name });
+                    if (file) setPdfFile(file);
                   }} />
                   {form.pdfFileName && (
                     <button type="button" onClick={() => setForm({ ...form, pdfFileName: "" })} className="text-on-surface-variant/50 hover:text-red-600 transition-colors cursor-pointer border-0 bg-transparent">

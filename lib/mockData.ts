@@ -4,7 +4,7 @@ const BLUR = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxu
 
 export const ARTWORKS: Artwork[] = [
   {
-    id: "fang-guardian",
+    id: "art-1",
     title: "Ceremonial Fang Reliquary Guardian",
     region: "Central Africa",
     tribe: "Fang",
@@ -29,13 +29,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "This reliquary guardian figure (Eyema Byeri) is a rare sculptural masterpiece of the Fang peoples of Gabon. Positioned atop bark bboxes containing the bones of distinguished ancestors, the guardian stands as a protective sentinel bridging the physical and spiritual realms.",
     investmentThesis: "Fang reliquary guardian figures of this size, rich deep patina, and exceptional lineage represent the peak of investment-grade African art.",
     investment: {
-      estimatedValue: "€2.4M",
+      estimatedValue: 2400000,
       historicalCagr: 9.2,
       yieldIndex: 97,
     },
   },
   {
-    id: "ife-terracotta",
+    id: "art-2",
     title: "Ife Terracotta Head",
     region: "West Africa",
     tribe: "Yoruba",
@@ -61,13 +61,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "The Kingdom of Ife stood as an artistic and spiritual epicentre of West Africa from the 11th to the 15th century. This terracotta head showcases the breathtaking naturalism that astonished European art historians when first uncovered.",
     investmentThesis: "Terracotta artifacts from medieval Ife are virtually unobtainable. This specimen offers a vanishingly rare gateway for a museum or institutional portfolio seeking absolute historical significance.",
     investment: {
-      estimatedValue: "€4.8M",
+      estimatedValue: 4800000,
       historicalCagr: 11.1,
       yieldIndex: 99,
     },
   },
   {
-    id: "benin-plaque",
+    id: "art-3",
     title: "Benin Bronze Relief Plaque",
     region: "West Africa",
     tribe: "Benin",
@@ -92,13 +92,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "This cast-bronze plaque depicts a high-ranking chief or warrior in full ceremonial attire, decorated with intensive beadwork and a crown, holding a staff of office.",
     investmentThesis: "Classically cast Benin Bronzes represent the blue-chip core of global antiquities.",
     investment: {
-      estimatedValue: "€3.6M",
+      estimatedValue: 3600000,
       historicalCagr: 12.4,
       yieldIndex: 98,
     },
   },
   {
-    id: "ade-crown",
+    id: "art-4",
     title: "Yoruba Ade Crown",
     region: "West Africa",
     tribe: "Yoruba",
@@ -123,13 +123,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "This beaded crown represents the pinnacle of Yoruba royal regalia, adorned with intricate glass beadwork and symbolic motifs.",
     investmentThesis: "Yoruba Ade Crowns with intact beadwork are among the most sought-after pieces in African art collecting.",
     investment: {
-      estimatedValue: "€1.8M",
+      estimatedValue: 1800000,
       historicalCagr: 10.2,
       yieldIndex: 95,
     },
   },
   {
-    id: "nok-terracotta",
+    id: "art-5",
     title: "Nok Terracotta Seated Figure",
     region: "West Africa",
     tribe: "Nok",
@@ -155,13 +155,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "The Nok culture produced some of the earliest known figurative sculptures in West Africa. This seated figure displays the characteristic large elliptical eyes and elaborate coiffure that define the Nok aesthetic tradition.",
     investmentThesis: "Nok terracottas are the oldest sculptures in sub-Saharan Africa and command increasing premiums at auction as museum demand grows.",
     investment: {
-      estimatedValue: "€850K",
+      estimatedValue: 850000,
       historicalCagr: 8.7,
       yieldIndex: 94,
     },
   },
   {
-    id: "akan-gold-weight",
+    id: "art-6",
     title: "Akan Gold Leaf ceremonial Weight",
     region: "West Africa",
     tribe: "Akan",
@@ -186,13 +186,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "Gold weights (abrammuo) were used by the Akan people to measure gold dust, the basis of their monetary system. Each weight carries symbolic meaning related to proverbs, history, or social values.",
     investmentThesis: "Akan gold weights combine precious metal value with deep cultural significance. Complete sets with provenance are increasingly rare.",
     investment: {
-      estimatedValue: "€150K",
+      estimatedValue: 150000,
       historicalCagr: 6.3,
       yieldIndex: 82,
     },
   },
   {
-    id: "kuba-ndop",
+    id: "art-7",
     title: "Kuba Ndop Royal Portrait Board",
     region: "Central Africa",
     tribe: "Kuba",
@@ -217,13 +217,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "Ndop boards depict the idealized image of Kuba kings, each bearing distinctive royal insignia. They served as mnemonic devices for oral histories of kingship and were never intended as portraits of individuals.",
     investmentThesis: "Kuba Ndop boards are masterpieces of Central African art. Their combination of geometric abstraction and royal symbolism makes them highly prized by collectors.",
     investment: {
-      estimatedValue: "€510K",
+      estimatedValue: 510000,
       historicalCagr: 7.8,
       yieldIndex: 88,
     },
   },
   {
-    id: "dogon-tellem",
+    id: "art-8",
     title: "Dogon Tellem Ancestor Figure",
     region: "West Africa",
     tribe: "Dogon",
@@ -248,13 +248,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "Tellem figures were placed in cliff granaries to honor ancestors of the Dogon people. Their elongated forms and weathered patina reflect centuries of ritual use in the dramatic Bandiagara landscape.",
     investmentThesis: "Pre-1960 Tellem figures with documented field collection provenance are exceptionally rare and represent the pinnacle of Dogon art collecting.",
     investment: {
-      estimatedValue: "€380K",
+      estimatedValue: 380000,
       historicalCagr: 8.1,
       yieldIndex: 90,
     },
   },
   {
-    id: "luba-shield",
+    id: "art-9",
     title: "Luba Royal Ceremonial Shield",
     region: "Central Africa",
     tribe: "Luba",
@@ -279,13 +279,13 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "Luba shields served both practical and spiritual purposes, with painted and woven designs invoking protective spirits. The royal shield was a symbol of the king's authority and divine right to rule.",
     investmentThesis: "Luba royal objects with intact raffia and pigment are highly sought after. The combination of textile and woodwork makes them unique in African art.",
     investment: {
-      estimatedValue: "€275K",
+      estimatedValue: 275000,
       historicalCagr: 7.2,
       yieldIndex: 85,
     },
   },
   {
-    id: "chokwe-pendant",
+    id: "art-10",
     title: "Chokwe Ciooko Divination Pendant",
     region: "Central Africa",
     tribe: "Chokwe",
@@ -310,7 +310,7 @@ export const ARTWORKS: Artwork[] = [
     historicalStory: "Ciooko pendants were worn by Chokwe diviners (tundao) as emblems of spiritual authority. Each pendant depicts a mythological figure or scene from Chokwe oral tradition, serving as a focus for divination rituals.",
     investmentThesis: "Chokwe divination objects combine extraordinary sculptural quality with deep spiritual significance. Copper-inlaid examples are especially prized.",
     investment: {
-      estimatedValue: "€195K",
+      estimatedValue: 195000,
       historicalCagr: 6.9,
       yieldIndex: 86,
     },
