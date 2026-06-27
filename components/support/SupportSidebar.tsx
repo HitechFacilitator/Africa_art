@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { SupportTab } from "@/lib/supportTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
@@ -23,6 +24,12 @@ interface SupportSidebarProps {
 export default function SupportSidebar({ activeTab, setActiveTab, open, setOpen, unreadCounts }: SupportSidebarProps) {
   const { lang } = useTranslate();
   const { logout } = useAuth();
+
+  useEffect(() => {
+    const handler = () => setOpen(!open);
+    window.addEventListener("toggle-sidebar", handler);
+    return () => window.removeEventListener("toggle-sidebar", handler);
+  }, [open, setOpen]);
 
   const navItems = [
     { id: SupportTab.Tickets, label: lang === "fr" ? "Gestion des Tickets" : "Ticket Management", icon: Ticket },

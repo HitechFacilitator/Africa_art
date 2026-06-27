@@ -14,7 +14,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { useChatSSE } from "@/lib/useChatSSE";
 
 import SupportSidebar from "@/components/support/SupportSidebar";
-import SupportHeader from "@/components/support/SupportHeader";
+import Navbar from "@/components/layout/Navbar";
 
 const SupportView = dynamic(() => import("@/components/dashboard/SupportView"), { ssr: false });
 const ChatView = dynamic(() => import("@/components/dashboard/ChatView"), { ssr: false });
@@ -152,12 +152,7 @@ function SupportPageContent() {
         />
 
         <div className="flex-1 min-h-screen flex flex-col">
-          <SupportHeader
-            activeTab={activeTab}
-            onMenuToggle={handleMenuToggle}
-            onBack={handleBack}
-            canGoBack={canGoBack}
-          />
+          <Navbar />
 
           <main className={`flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full transition-all duration-300 ${sidebarOpen ? "blur-sm pointer-events-none" : ""}`}>
             <AnimatePresence mode="wait">

@@ -13,7 +13,7 @@ import { useAuth } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
 import { useChatSSE } from "@/lib/useChatSSE";
 import AdvisorSidebar from "@/components/advisor/AdvisorSidebar";
-import AdvisorHeader from "@/components/advisor/AdvisorHeader";
+import Navbar from "@/components/layout/Navbar";
 
 const OverviewView = dynamic(() => import("@/components/advisor/OverviewView"), { ssr: false });
 const ConsultationsManageView = dynamic(() => import("@/components/advisor/ConsultationsManageView"), { ssr: false });
@@ -136,7 +136,7 @@ function AdvisorPageContent() {
         <AdvisorSidebar activeView={activeView} setActiveView={handleSetActiveView} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={advisorUnreadCounts} />
 
         <div className="flex-1 min-h-screen flex flex-col">
-          <AdvisorHeader activeView={activeView} onMenuToggle={handleMenuToggle} onBack={handleBack} canGoBack={canGoBack} />
+          <Navbar />
 
           <main className={`flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full transition-all duration-300 ${sidebarOpen ? "blur-sm pointer-events-none" : ""}`}>
             <AnimatePresence mode="wait">

@@ -15,7 +15,7 @@ import { useAuth } from "@/lib/auth";
 
 import AuthGuard from "@/components/AuthGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
+import Navbar from "@/components/layout/Navbar";
 
 const ArtworksView = dynamic(() => import("@/components/admin/ArtworksView"), { ssr: false });
 const UsersView = dynamic(() => import("@/components/admin/UsersView"), { ssr: false });
@@ -403,7 +403,7 @@ function AdminPageContent() {
         <AdminSidebar activeView={activeView} setActiveView={navigateView} open={sidebarOpen} setOpen={setSidebarOpen} unreadCounts={adminUnreadCounts} />
 
         <div className="flex-1 min-h-screen flex flex-col">
-          <AdminHeader activeView={activeView} onMenuToggle={handleMenuToggle} onBack={handleBack} canGoBack={canGoBack} />
+          <Navbar />
 
           <main className="flex-1 px-4 sm:px-8 lg:px-12 py-8 lg:py-12 max-w-[1440px] mx-auto w-full">
             <AnimatePresence mode="wait">

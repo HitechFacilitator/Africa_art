@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
-import { Search, Menu, X, Lock, ShieldCheck, ChevronDown } from "lucide-react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Search, Menu, X, Lock, ShieldCheck, ChevronDown, LogOut } from "lucide-react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -16,17 +16,85 @@ const EXPLORER_LINKS = [
   { href: "/investment", labelKey: "Advisory" },
 ];
 
-export default function Navbar() {
+const ROLE_DASHBOARD_LINKS: Record<string, Array<{ href: string; label: string; icon?: string }>> = {
+  admin: [
+    { href: "/admin", label: "Overview", icon: "📊" },
+    { href: "/admin?tab=artworks", label: "Artworks", icon: "🎨" },
+    { href: "/admin?tab=users", label: "Users", icon: "👤" },
+    { href: "/admin?tab=collectors", label: "Collectors", icon: "👥" },
+    { href: "/admin?tab=certificates", label: "Certificates", icon: "📜" },
+    { href: "/admin?tab=escrow", label: "Escrow", icon: "🔒" },
+    { href: "/admin?tab=por", label: "Price Requests", icon: "💰" },
+    { href: "/admin?tab=chat", label: "Messages", icon: "💬" },
+    { href: "/admin?tab=support_mgmt", label: "Support", icon: "🛟" },
+    { href: "/admin?tab=audit", label: "Audit Log", icon: "📋" },
+    { href: "/admin?tab=compliance", label: "Compliance", icon: "✅" },
+    { href: "/admin?tab=settings", label: "Settings", icon: "⚙️" },
+  ],
+  advisor: [
+    { href: "/advisor", label: "Overview", icon: "📊" },
+    { href: "/advisor?tab=consultations", label: "Consultations", icon: "🤝" },
+    { href: "/advisor?tab=clients", label: "Clients", icon: "👥" },
+    { href: "/advisor?tab=placements", label: "Placements", icon: "📦" },
+    { href: "/advisor?tab=activity", label: "Activity", icon: "📈" },
+    { href: "/advisor?tab=chat", label: "Messages", icon: "💬" },
+    { href: "/advisor?tab=settings", label: "Settings", icon: "⚙️" },
+  ],
+  support: [
+    { href: "/support", label: "Overview", icon: "📊" },
+    { href: "/support?tab=tickets", label: "Tickets", icon: "🎫" },
+    { href: "/support?tab=chat", label: "Messages", icon: "💬" },
+    { href: "/support?tab=settings", label: "Settings", icon: "⚙️" },
+  ],
+  collector: [
+    { href: "/dashboard", label: "Overview", icon: "📊" },
+    { href: "/dashboard?tab=Portfolio", label: "My Acquisitions", icon: "🏛️" },
+    { href: "/dashboard?tab=Certificates", label: "Certificates", icon: "📜" },
+    { href: "/dashboard?tab=Inquiries", label: "Inquiries", icon: "🔍" },
+    { href: "/dashboard?tab=Consultations", label: "Consultations", icon: "🤝" },
+    { href: "/dashboard?tab=AlertsAuctions", label: "Alerts & Auctions", icon: "🔔" },
+    { href: "/dashboard?tab=Investment", label: "Investment", icon: "📈" },
+    { href: "/dashboard?tab=Logistics", label: "Logistics", icon: "🚚" },
+    { href: "/dashboard?tab=Security", label: "Security", icon: "🛡️" },
+    { href: "/dashboard?tab=Chat", label: "Messages", icon: "💬" },
+    { href: "/dashboard?tab=Documentation", label: "Documentation", icon: "📁" },
+    { href: "/dashboard?tab=Settings", label: "Settings", icon: "⚙️" },
+  ],
+  prestige: [
+    { href: "/dashboard", label: "Overview", icon: "📊" },
+    { href: "/dashboard?tab=Portfolio", label: "My Acquisitions", icon: "🏛️" },
+    { href: "/dashboard?tab=Certificates", label: "Certificates", icon: "📜" },
+    { href: "/dashboard?tab=Inquiries", label: "Inquiries", icon: "🔍" },
+    { href: "/dashboard?tab=Consultations", label: "Consultations", icon: "🤝" },
+    { href: "/dashboard?tab=PrivateCatalogues", label: "Private Catalogues", icon: "🔒" },
+    { href: "/dashboard?tab=AlertsAuctions", label: "Alerts & Auctions", icon: "🔔" },
+    { href: "/dashboard?tab=Investment", label: "Investment", icon: "📈" },
+    { href: "/dashboard?tab=Previews", label: "Exclusive Previews", icon: "👁️" },
+    { href: "/dashboard?tab=Logistics", label: "Logistics", icon: "🚚" },
+    { href: "/dashboard?tab=Security", label: "Security", icon: "🛡️" },
+    { href: "/dashboard?tab=Chat", label: "Messages", icon: "💬" },
+    { href: "/dashboard?tab=Documentation", label: "Documentation", icon: "📁" },
+    { href: "/dashboard?tab=Settings", label: "Settings", icon: "⚙️" },
+  ],
+  visitor: [
+    { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  ],
+};
+
+function NavbarInner() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { lang, setLang, t } = useTranslate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [explorerOpen, setExplorerOpen] = useState(false);
   const explorerRef = useRef<HTMLDivElement>(null);
+  const [dashboardOpen, setDashboardOpen] = useState(false);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -39,12 +107,23 @@ export default function Navbar() {
     setMobileOpen(false);
     setSearchOpen(false);
     setExplorerOpen(false);
+    setDashboardOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (explorerRef.current && !explorerRef.current.contains(e.target as Node)) {
         setExplorerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dashboardRef.current && !dashboardRef.current.contains(e.target as Node)) {
+        setDashboardOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -89,6 +168,17 @@ export default function Navbar() {
             <Image src="/logo.png" alt="Aduna Gallery" width={36} height={36} className="h-9 w-auto" priority />
             <span className="font-serif text-lg font-medium tracking-tight text-ebony-deep hidden sm:inline">ADUNA Gallery</span>
           </Link>
+
+          {/* Sidebar toggle for dashboard pages */}
+          {isAuthenticated && (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("toggle-sidebar"))}
+              className="hidden md:flex items-center justify-center w-9 h-9 text-on-surface-variant/60 hover:text-gold-leaf transition-colors cursor-pointer border-0 bg-transparent shrink-0"
+              aria-label="Toggle sidebar"
+            >
+              <Menu size={18} />
+            </button>
+          )}
 
           {/* Desktop Nav — Home + Explorer */}
           <div className="hidden md:flex items-center space-x-8" role="menubar">
@@ -205,14 +295,73 @@ export default function Navbar() {
 
             {/* Collector Login / Dashboard */}
             {isAuthenticated ? (
-              <Link
-                href={user?.role === "admin" ? "/admin" : "/dashboard"}
-                id="nav-login-btn"
-                aria-label="Go to dashboard"
-                className="bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-4 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap"
-              >
-                {t("Dashboard")}
-              </Link>
+              <div ref={dashboardRef} className="relative">
+                <button
+                  onClick={() => setDashboardOpen(!dashboardOpen)}
+                  className={`flex items-center gap-2 bg-ebony-deep text-parchment-ivory font-sans text-[10px] font-semibold uppercase tracking-[0.08em] px-4 py-2 hover:bg-gold-leaf hover:text-ebony-deep transition-all duration-300 whitespace-nowrap cursor-pointer border-0 ${
+                    dashboardOpen ? "bg-gold-leaf text-ebony-deep" : ""
+                  }`}
+                >
+                  {t("Dashboard")}
+                  <ChevronDown size={12} className={`transition-transform duration-200 ${dashboardOpen ? "rotate-180" : ""}`} />
+                </button>
+                {dashboardOpen && (
+                  <div className="absolute top-full right-0 pt-3 z-50">
+                    <div className="bg-background/95 backdrop-blur-xl border border-on-surface/[0.06] shadow-xl min-w-[220px] py-2">
+                      {/* User info header */}
+                      <div className="px-4 py-4 border-b border-on-surface/8 bg-surface-container-low/50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-gold-leaf/15 flex items-center justify-center border border-gold-leaf/25 shrink-0">
+                            <span className="font-serif text-xs font-bold text-gold-leaf">{user?.avatar || user?.name?.charAt(0) || "U"}</span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-sans text-[11px] font-bold text-ebony-deep truncate">{user?.name || "User"}</p>
+                            <p className="font-sans text-[9px] text-on-surface-variant uppercase tracking-widest">{user?.role || "collector"}</p>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Dashboard links */}
+                      <div className="py-1">
+                        {(ROLE_DASHBOARD_LINKS[user?.role || "collector"] || ROLE_DASHBOARD_LINKS.collector).map((link) => {
+                          const linkPath = link.href.split("?")[0];
+                          const linkParams = link.href.split("?")[1] || "";
+                          const currentPath = pathname;
+                          const currentParams = searchParams.toString();
+                          const isActiveLink = linkPath === currentPath && (
+                            (!linkParams && !currentParams) || 
+                            currentParams.includes(linkParams)
+                          );
+                          return (
+                            <Link
+                              key={link.href}
+                              href={link.href}
+                              onClick={() => setDashboardOpen(false)}
+                              className={`flex items-center gap-3 px-4 py-2.5 font-sans text-[11px] font-medium tracking-wide transition-all duration-150 ${
+                                isActiveLink
+                                  ? "text-gold-leaf bg-gold-leaf/8 border-l-2 border-gold-leaf"
+                                  : "text-on-surface-variant/70 hover:text-ebony-deep hover:bg-surface-container-low border-l-2 border-transparent"
+                              }`}
+                            >
+                              <span className="text-sm w-5 text-center">{link.icon || "•"}</span>
+                              <span>{t(link.label)}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                      {/* Logout */}
+                      <div className="border-t border-on-surface/10 mt-1">
+                        <button
+                          onClick={() => { setDashboardOpen(false); logout(); }}
+                          className="w-full text-left px-5 py-3 font-sans text-[11px] font-medium uppercase tracking-[0.08em] text-on-surface-variant/80 hover:text-terracotta-earth hover:bg-surface-container-low transition-all duration-150 flex items-center gap-2 cursor-pointer border-0 bg-transparent"
+                        >
+                          <LogOut size={12} />
+                          {t("Logout")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <Link
                 href="/login"
@@ -263,6 +412,15 @@ export default function Navbar() {
                 <span>FR</span>
               </button>
             </div>
+            {isAuthenticated && (
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("toggle-sidebar"))}
+                className="md:hidden p-2 text-on-surface-variant hover:text-gold-leaf transition-colors"
+                aria-label="Toggle sidebar"
+              >
+                <Menu size={19} />
+              </button>
+            )}
             <button
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
@@ -341,13 +499,36 @@ export default function Navbar() {
                 </div>
               </div>
 
-              <Link
-                href="/dashboard"
-                className="py-4 font-serif text-xl border-b border-on-surface/6 flex items-center gap-2 text-on-surface-variant hover:text-gold-leaf transition-colors duration-200"
-              >
-                <Lock size={16} />
-                {t("Collector Portal")}
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  {(ROLE_DASHBOARD_LINKS[user?.role || "collector"] || ROLE_DASHBOARD_LINKS.collector).slice(0, 3).map((link) => (
+                    <Link
+                      key={link.href + link.label}
+                      href={link.href}
+                      className={`py-3 font-serif text-lg border-b border-on-surface/6 flex items-center gap-2 transition-colors duration-200 ${
+                        pathname === link.href ? "text-gold-leaf" : "text-on-surface-variant hover:text-gold-leaf"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={() => { setMobileOpen(false); logout(); }}
+                    className="py-3 font-serif text-lg border-b border-on-surface/6 flex items-center gap-2 text-on-surface-variant hover:text-terracotta-earth transition-colors duration-200 cursor-pointer border-0 bg-transparent text-left w-full"
+                  >
+                    <LogOut size={16} />
+                    {t("Logout")}
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="py-4 font-serif text-xl border-b border-on-surface/6 flex items-center gap-2 text-on-surface-variant hover:text-gold-leaf transition-colors duration-200"
+                >
+                  <Lock size={16} />
+                  {t("Login")}
+                </Link>
+              )}
             </div>
 
             <div className="px-8 pb-10 space-y-4">
@@ -450,5 +631,13 @@ export default function Navbar() {
         </div>
       )}
     </>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={null}>
+      <NavbarInner />
+    </Suspense>
   );
 }

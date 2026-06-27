@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { ActiveTab, CollectorProfile } from "@/lib/dashboardTypes";
 import Image from "next/image";
 import {
@@ -50,6 +51,13 @@ export default function Sidebar({
 }: SidebarProps) {
   const { lang, setLang } = useTranslate();
   const { canAccessTab, user } = useAuth();
+
+  useEffect(() => {
+    const handler = () => setOpen(!open);
+    window.addEventListener("toggle-sidebar", handler);
+    return () => window.removeEventListener("toggle-sidebar", handler);
+  }, [open, setOpen]);
+
   const allNavItems = [
     { id: ActiveTab.Dashboard, label: lang === "fr" ? "Tableau de Bord" : "Dashboard", icon: LayoutDashboard },
     { id: ActiveTab.Portfolio, label: lang === "fr" ? "Mes Acquisitions" : "My Acquisitions", icon: Landmark },

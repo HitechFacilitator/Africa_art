@@ -37,8 +37,8 @@ export default function AdminSidebar({ activeView, setActiveView, open, setOpen,
 
   useEffect(() => {
     const handler = () => setOpen(!open);
-    window.addEventListener("toggle-admin-sidebar", handler);
-    return () => window.removeEventListener("toggle-admin-sidebar", handler);
+    window.addEventListener("toggle-sidebar", handler);
+    return () => window.removeEventListener("toggle-sidebar", handler);
   }, [open, setOpen]);
 
   const toggleLang = () => setLang(lang === "fr" ? "en" : "fr");

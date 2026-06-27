@@ -17,7 +17,7 @@ import { useChatSSE, useSSE } from "@/lib/useChatSSE";
 import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
-import CollectorHeader from "@/components/dashboard/CollectorHeader";
+import Navbar from "@/components/layout/Navbar";
 
 const DashboardView = dynamic(() => import("@/components/dashboard/DashboardView"), { ssr: false });
 const PortfolioView = dynamic(() => import("@/components/dashboard/PortfolioView"), { ssr: false });
@@ -397,7 +397,7 @@ function DashboardPageContent() {
     <div className="bg-surface text-ebony-deep min-h-screen font-sans flex flex-col transition-all duration-300 overflow-x-hidden">
       <Sidebar activeTab={activeTab} setActiveTab={navigateTab} profile={profile} isOpenMobile={isOpenMobile} setIsOpenMobile={setIsOpenMobile} open={sidebarOpen} setOpen={setSidebarOpen} onLogout={handleLogout} unreadCounts={sidebarUnreadCounts} />
 
-      <CollectorHeader activeTab={activeTab} onBack={goBack} canGoBack={canGoBack} onMenuToggle={handleMenuToggle} />
+      <Navbar />
 
       {/* Mobile Horizontal Tabs */}
       <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-surface border-b border-ebony-deep/5">

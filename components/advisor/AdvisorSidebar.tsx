@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect } from "react";
 import { AdvisorView } from "@/lib/advisorTypes";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
@@ -28,6 +29,12 @@ interface AdvisorSidebarProps {
 export default function AdvisorSidebar({ activeView, setActiveView, open, setOpen, unreadCounts }: AdvisorSidebarProps) {
   const { lang } = useTranslate();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const handler = () => setOpen(!open);
+    window.addEventListener("toggle-sidebar", handler);
+    return () => window.removeEventListener("toggle-sidebar", handler);
+  }, [open, setOpen]);
 
   const navItems = [
     { id: AdvisorView.Overview, label: lang === "fr" ? "Vue d'Ensemble" : "Overview", icon: BarChart3 },
