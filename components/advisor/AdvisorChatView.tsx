@@ -1,25 +1,88 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { ChatThread } from "@/lib/chatTypes";
 import { chatApi } from "@/lib/api";
-import { Send, MessageSquare, User, Clock, Search, Archive, Eye } from "lucide-react";
+import { Send, MessageSquare, User, Clock, Search, Archive, Eye, Paperclip, FileText, Phone, Video, Mic, MicOff } from "lucide-react";
+import ChatCallView from "@/components/ChatCallView";
+
+function FileAttachment({ text }: { text: string }) {
+  const BACKEND = "http://localhost:5000";
+  
+  // Parse file message format: [TYPE:filename] URL
+  const match = text.match(/^\[(IMAGE|VIDEO|AUDIO|FILE):([^\]]+)\]\s+(.*)$/);
+  if (!match) return null;
+  
+  const [, type, filename, rawUrl] = match;
+  // Backend URLs start with /api/v1/ — prepend backend origin
+  const fileUrl = rawUrl.startsWith("/") ? `${BACKEND}${rawUrl}` : rawUrl;
+  
+  const isImage = type === "IMAGE";
+  const isVideo = type === "VIDEO";
+  const isAudio = type === "AUDIO";
+  
+  if (isImage && fileUrl) {
+    return (
+      <div className="mt-1">
+        <img src={fileUrl} alt={filename} className="max-w-[240px] max-h-[180px] rounded-lg object-cover cursor-pointer hover:opacity-90" onClick={() => window.open(fileUrl, "_blank")} />
+        <div className="text-[10px] text-ebony-deep/50 mt-1">{filename}</div>
+      </div>
+    );
+  }
+  
+  if (isVideo && fileUrl) {
+    return (
+      <div className="mt-1">
+        <video src={fileUrl} controls className="max-w-[240px] max-h-[180px] rounded-lg" />
+        <div className="text-[10px] text-ebony-deep/50 mt-1">{filename}</div>
+      </div>
+    );
+  }
+  
+  if (isAudio && fileUrl) {
+    return (
+      <div className="mt-1">
+        <audio src={fileUrl} controls className="w-full max-w-[240px]" />
+        <div className="text-[10px] text-ebony-deep/50 mt-1">{filename}</div>
+      </div>
+    );
+  }
+  
+  // Generic file download
+  return (
+    <a href={fileUrl} download={filename} className="mt-1 flex items-center gap-2 bg-ebony-deep/5 rounded-lg px-3 py-2 hover:bg-ebony-deep/10 transition-colors">
+      <FileText className="w-4 h-4 text-gold-leaf flex-shrink-0" />
+      <div className="min-w-0">
+        <div className="text-xs text-ebony-deep/80 truncate">{filename}</div>
+        <div className="text-[10px] text-ebony-deep/40">Click to download</div>
+      </div>
+    </a>
+  );
+}
 
 interface AdvisorChatViewProps {
   threads: ChatThread[];
   onSendMessage: (threadId: string, text: string) => void;
   onMarkRead: (threadId: string) => void;
+  onSendFile?: (threadId: string, file: File) => void;
+  agoraAppId?: string;
 }
 
-export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: AdvisorChatViewProps) {
+export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, onSendFile, agoraAppId }: AdvisorChatViewProps) {
   const { lang } = useTranslate();
   const [selectedId, setSelectedId] = useState<string | null>(threads[0]?.id || null);
   const [newMessage, setNewMessage] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"All" | "active" | "archived">("All");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [callActive, setCallActive] = useState(false);
+  const [callGroupId, setCallGroupId] = useState("");
+  const [callIsVideo, setCallIsVideo] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
 
   const filtered = threads.filter(t => {
     if (filter !== "All" && t.status !== filter) return false;
@@ -50,6 +113,43 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: 
     onSendMessage(selectedId, newMessage.trim());
     setNewMessage("");
   };
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      const chunks: Blob[] = [];
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+        const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        if (selectedId && onSendFile) {
+          onSendFile(selectedId, audioFile);
+        }
+        setAudioChunks([]);
+      };
+      
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setAudioChunks(chunks);
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+    }
+  }, [selectedId, onSendFile]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    setIsRecording(false);
+    setMediaRecorder(null);
+  }, [mediaRecorder]);
 
   return (
     <div>
@@ -127,16 +227,36 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: 
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-[9px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 ${selected.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>{selected.status === "active" ? (lang === "fr" ? "Actif" : "Active") : (lang === "fr" ? "Archivé" : "Archived")}</span>
+                  {selected && agoraAppId && (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setCallGroupId(`agora-${selectedId}`); setCallIsVideo(false); setCallActive(true); }}
+                        className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center hover:bg-emerald-500/20 transition-colors cursor-pointer" title="Voice Call">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                      </button>
+                      <button onClick={() => { setCallGroupId(`agora-${selectedId}`); setCallIsVideo(true); setCallActive(true); }}
+                        className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center hover:bg-blue-500/20 transition-colors cursor-pointer" title="Video Call">
+                        <Video className="w-3.5 h-3.5 text-blue-600" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="flex-1 p-6 overflow-y-auto bg-surface-container-lowest/40 flex flex-col gap-4">
                 {selected.messages.map((msg) => {
                   const isClient = msg.senderRole === "collector" || msg.senderRole === "visitor";
+                  const isFileMsg = msg.text?.startsWith("[FILE:") || msg.text?.startsWith("[IMAGE:") || msg.text?.startsWith("[AUDIO:") || msg.text?.startsWith("[VIDEO:");
+
                   return (
                     <div key={msg.id} className={`flex flex-col max-w-[80%] ${isClient ? "self-start items-start" : "self-end items-end"}`}>
                       <p className="font-sans text-[9px] uppercase tracking-wider font-bold text-zinc-400 mb-1">{msg.senderName} <span className="text-zinc-300">• {msg.senderRole}</span></p>
-                      <div className={`p-4 font-sans text-xs leading-relaxed ${isClient ? "bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep" : "bg-ebony-deep text-parchment-ivory"}`}>{msg.text}</div>
+                      <div className={`p-4 font-sans text-xs leading-relaxed ${isClient ? "bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep" : "bg-ebony-deep text-parchment-ivory"}`}>
+                        {isFileMsg ? (
+                          <FileAttachment text={msg.text} />
+                        ) : (
+                          <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
+                        )}
+                      </div>
                       <span className="font-mono text-[9px] text-zinc-400 mt-1">{msg.timestamp}</span>
                     </div>
                   );
@@ -144,9 +264,33 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: 
                 <div ref={messagesEndRef} />
               </div>
 
-              <form onSubmit={handleSend} className="p-4 border-t border-ebony-deep/5 bg-white flex items-stretch gap-3">
-                <input type="text" required value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder={lang === "fr" ? "Tapez votre réponse..." : "Type your reply..."} className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none" />
-                <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0"><Send className="w-4 h-4" /></button>
+              <form onSubmit={handleSend} className="p-4 border-t border-ebony-deep/5 bg-white">
+                <div className="flex items-stretch gap-3">
+                  {onSendFile && (
+                    <label className="bg-parchment-ivory border border-ebony-deep/10 hover:border-gold-leaf px-3 py-3 cursor-pointer flex items-center justify-center shrink-0 transition-colors">
+                      <Paperclip className="w-4 h-4 text-on-surface-variant" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*,audio/*,video/*,.pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && selectedId && onSendFile) {
+                            onSendFile(selectedId, file);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                  <button onClick={isRecording ? stopRecording : startRecording}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${isRecording ? "bg-red-500 text-white animate-pulse" : "text-parchment-ivory/40 hover:text-parchment-ivory/70"}`}
+                    title={isRecording ? "Stop recording" : "Record voice message"}>
+                    {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </button>
+                  <input type="text" required value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder={lang === "fr" ? "Tapez votre réponse..." : "Type your reply..."} className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none" />
+                  <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0"><Send className="w-4 h-4" /></button>
+                </div>
               </form>
             </>
           ) : (
@@ -157,6 +301,10 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead }: 
           )}
         </div>
       </div>
+
+      {callActive && agoraAppId && (
+        <ChatCallView appId={agoraAppId} groupId={callGroupId} isVideo={callIsVideo} onClose={() => setCallActive(false)} />
+      )}
     </div>
   );
 }

@@ -5,13 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { AdvisorView, AdvisorConsultation, AdvisorClient, AdvisorPlacement, AdvisorActivity } from "@/lib/advisorTypes";
 import { advisorApi, chatApi } from "@/lib/api";
-import type { ChatThread } from "@/lib/chatTypes";
-import type { ChatMessage } from "@/lib/chatTypes";
+import type { ChatThread, ChatMessage } from "@/lib/chatTypes";
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
-import { useChatSSE } from "@/lib/useChatSSE";
+import { useAgoraChat, agoraMsgToChatMsg } from "@/lib/useAgoraChat";
 import AdvisorSidebar from "@/components/advisor/AdvisorSidebar";
 import Navbar from "@/components/layout/Navbar";
 
@@ -62,18 +61,39 @@ function AdvisorPageContent() {
     chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
   }, []);
 
-  useChatSSE({
-    "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
-      setChatThreads(prev => prev.map(t => {
-        if (t.id !== `thr-${threadId}`) return t;
-        const alreadyExists = t.messages.some(m => m.id === message.id);
-        if (alreadyExists) return t;
-        const isFromOther = String(message.senderId) !== user?.id;
-        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
-      }));
-    },
-  });
+  // Agora Chat: real-time messaging via SDK
+  const { isConnected: agoraConnected, agoraMessages, sendMessage: agoraSendMessage, sendFile: agoraSendFile, joinGroup: agoraJoinGroup, agoraAppId } = useAgoraChat(user?.id, user?.name);
+
+  // Agora Chat: sync incoming messages into chatThreads
+  useEffect(() => {
+    if (!agoraMessages || agoraMessages.size === 0) return;
+    setChatThreads((prev) => {
+      let changed = false;
+      const next = prev.map((t) => {
+        const agoraGroupId = `agora-${t.id}`;
+        const incoming = agoraMessages.get(agoraGroupId);
+        if (!incoming || incoming.length === 0) return t;
+
+        const existingIds = new Set(t.messages.map((m) => m.id));
+        const newMsgs = incoming
+          .filter((m) => !existingIds.has(m.id))
+          .map((m) => agoraMsgToChatMsg(m, user?.id, user?.role));
+        if (newMsgs.length === 0) return t;
+
+        changed = true;
+        const lastMsg = newMsgs[newMsgs.length - 1];
+        const isFromOther = String(lastMsg.senderId) !== user?.id;
+        return {
+          ...t,
+          messages: [...t.messages, ...newMsgs],
+          lastMessage: lastMsg.text,
+          lastMessageTime: lastMsg.timestamp,
+          unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [agoraMessages, user?.id]);
 
   const canGoBack = viewHistory.length > 1;
 
@@ -107,20 +127,64 @@ function AdvisorPageContent() {
       if (t.id !== threadId) return t;
       return { ...t, messages: [...t.messages, tempMsg], lastMessage: text, lastMessageTime: tempMsg.timestamp };
     }));
+
+    // PRIMARY: Save to DB via backend API
     try {
-      const res = await chatApi.sendMessage(threadId, {
+      await chatApi.sendMessage(threadId, {
         senderId: user?.id,
         senderName: user?.name,
-        senderRole: user?.role || "advisor",
+        senderRole: user?.role,
         text,
       });
-      const serverMsg = res.data;
-      setChatThreads(prev => prev.map(t => {
-        if (t.id !== threadId) return t;
-        return { ...t, messages: t.messages.map(m => m.id === tempMsg.id ? { ...m, id: serverMsg.id } : m) };
-      }));
     } catch (err) {
-      console.error("Failed to send message:", err);
+      console.error("API sendMessage failed:", err);
+    }
+
+    // OPTIONAL: Also send via Agora for real-time delivery
+    try {
+      const agoraGroupId = `agora-${threadId}`;
+      await agoraSendMessage(agoraGroupId, text);
+    } catch (err) {
+      console.warn("Agora sendMessage failed (non-critical):", err);
+    }
+  }, [user, agoraSendMessage]);
+
+  const handleSendFile = useCallback(async (threadId: string, file: File) => {
+    const tempMsg = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || "advisor",
+      senderName: user?.name || "Dr. Fatima Benali",
+      senderRole: (user?.role || "advisor") as ChatMessage["senderRole"],
+      text: `[FILE] ${file.name}`,
+      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+      read: true,
+    };
+    setChatThreads(prev => prev.map(t => {
+      if (t.id !== threadId) return t;
+      return { ...t, messages: [...t.messages, tempMsg], lastMessage: `[File] ${file.name}`, lastMessageTime: tempMsg.timestamp };
+    }));
+    try {
+      // 1. Upload file to backend
+      const uploadRes = await chatApi.uploadChatFile(file);
+      const fileUrl = uploadRes.data.url;
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      const isAudio = file.type.startsWith("audio/");
+      const fileText = isImage ? `[IMAGE:${file.name}] ${fileUrl}` : isVideo ? `[VIDEO:${file.name}] ${fileUrl}` : isAudio ? `[AUDIO:${file.name}] ${fileUrl}` : `[FILE:${file.name}] ${fileUrl}`;
+
+      // 2. Save message with file URL to DB
+      await chatApi.sendMessage(threadId, {
+        senderId: user?.id,
+        senderName: user?.name,
+        senderRole: user?.role,
+        text: fileText,
+      });
+
+      // Refresh threads
+      const res = await chatApi.getThreads();
+      setChatThreads(res.data as ChatThread[]);
+    } catch (err) {
+      console.error("Failed to send file:", err);
     }
   }, [user]);
 
@@ -172,7 +236,7 @@ function AdvisorPageContent() {
                   <AdvisorSettingsView />
                 )}
                 {activeView === AdvisorView.Chat && (
-                  <AdvisorChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} />
+                  <AdvisorChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} onSendFile={handleSendFile} agoraAppId={agoraAppId} />
                 )}
               </motion.div>
             </AnimatePresence>

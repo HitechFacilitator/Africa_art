@@ -622,6 +622,38 @@ export const chatApi = {
       "/chat/threads",
       { method: "POST", body: JSON.stringify(data) }
     ),
+
+  uploadChatFile: async (file: File) => {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE}/chat/upload`, {
+      method: "POST",
+      headers: token ? { "Authorization": `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (!res.ok) {
+      throw new Error(`File upload failed: ${res.status}`);
+    }
+
+    return res.json();
+  },
+
+  // ─── Agora Chat API ─────────────────────────────────────────────
+
+  getAgoraToken: () =>
+    apiRequest<{ success: boolean; data: { token: string; userId: string; appKey: string; appId: string } }>("/chat/agora-token"),
+
+  registerAgoraUser: () =>
+    apiRequest<{ success: boolean }>("/chat/agora-register", { method: "POST" }),
+
+  createAgoraGroup: (data: { groupId: string; groupName: string; participantIds: number[] }) =>
+    apiRequest<{ success: boolean }>("/chat/agora-group", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // ─── Admin API ──────────────────────────────────────────────────────

@@ -1,11 +1,66 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
-import { ChatThread, ChatMessage } from "@/lib/chatTypes";
+import { ChatThread } from "@/lib/chatTypes";
 import { chatApi } from "@/lib/api";
-import { Send, MessageSquare, User, Clock, ArrowLeft } from "lucide-react";
+import { Send, MessageSquare, User, Clock, ArrowLeft, Plus, Paperclip, FileText, Phone, Video, Mic, MicOff } from "lucide-react";
+import ChatCallView from "../ChatCallView";
+
+function FileAttachment({ text }: { text: string }) {
+  const BACKEND = "http://localhost:5000";
+  
+  // Parse file message format: [TYPE:filename] URL
+  const match = text.match(/^\[(IMAGE|VIDEO|AUDIO|FILE):([^\]]+)\]\s+(.*)$/);
+  if (!match) return null;
+  
+  const [, type, filename, rawUrl] = match;
+  // Backend URLs start with /api/v1/ — prepend backend origin
+  const fileUrl = rawUrl.startsWith("/") ? `${BACKEND}${rawUrl}` : rawUrl;
+  
+  const isImage = type === "IMAGE";
+  const isVideo = type === "VIDEO";
+  const isAudio = type === "AUDIO";
+  
+  if (isImage && fileUrl) {
+    return (
+      <div className="mt-1">
+        <img src={fileUrl} alt={filename} className="max-w-[240px] max-h-[180px] rounded-lg object-cover cursor-pointer hover:opacity-90" onClick={() => window.open(fileUrl, "_blank")} />
+        <div className="text-[10px] text-parchment-ivory/50 mt-1">{filename}</div>
+      </div>
+    );
+  }
+  
+  if (isVideo && fileUrl) {
+    return (
+      <div className="mt-1">
+        <video src={fileUrl} controls className="max-w-[240px] max-h-[180px] rounded-lg" />
+        <div className="text-[10px] text-parchment-ivory/50 mt-1">{filename}</div>
+      </div>
+    );
+  }
+  
+  if (isAudio && fileUrl) {
+    return (
+      <div className="mt-1">
+        <audio src={fileUrl} controls className="w-full max-w-[240px]" />
+        <div className="text-[10px] text-parchment-ivory/50 mt-1">{filename}</div>
+      </div>
+    );
+  }
+  
+  // Generic file download
+  return (
+    <a href={fileUrl} download={filename} className="mt-1 flex items-center gap-2 bg-parchment-ivory/5 rounded-lg px-3 py-2 hover:bg-parchment-ivory/10 transition-colors">
+      <FileText className="w-4 h-4 text-gold-leaf flex-shrink-0" />
+      <div className="min-w-0">
+        <div className="text-xs text-parchment-ivory/80 truncate">{filename}</div>
+        <div className="text-[10px] text-parchment-ivory/40">Click to download</div>
+      </div>
+    </a>
+  );
+}
 
 interface ChatViewProps {
   threads: ChatThread[];
@@ -13,13 +68,25 @@ interface ChatViewProps {
   onMarkRead: (threadId: string) => void;
   selectedThreadId?: string | null;
   onSelectThread?: (threadId: string | null) => void;
+  onCreateThread?: (subject: string) => void;
+  onSendFile?: (threadId: string, file: File) => void;
+  agoraAppId?: string;
+  canCreateThread?: boolean;
 }
 
-export default function ChatView({ threads, onSendMessage, onMarkRead, selectedThreadId, onSelectThread }: ChatViewProps) {
+export default function ChatView({ threads, onSendMessage, onMarkRead, selectedThreadId, onSelectThread, onCreateThread, onSendFile, agoraAppId, canCreateThread }: ChatViewProps) {
   const { lang } = useTranslate();
   const [selectedId, setSelectedId] = useState<string | null>(threads[0]?.id || null);
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showNewThread, setShowNewThread] = useState(false);
+  const [newThreadSubject, setNewThreadSubject] = useState("");
+  const [callActive, setCallActive] = useState(false);
+  const [callGroupId, setCallGroupId] = useState("");
+  const [callIsVideo, setCallIsVideo] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
 
   const selected = threads.find(t => t.id === selectedId);
 
@@ -56,6 +123,43 @@ export default function ChatView({ threads, onSendMessage, onMarkRead, selectedT
     setNewMessage("");
   };
 
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      const chunks: Blob[] = [];
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+        const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        if (selectedId && onSendFile) {
+          onSendFile(selectedId, audioFile);
+        }
+        setAudioChunks([]);
+      };
+      
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+      setAudioChunks(chunks);
+    } catch (err) {
+      console.error("Microphone access denied:", err);
+    }
+  }, [selectedId, onSendFile]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    setIsRecording(false);
+    setMediaRecorder(null);
+  }, [mediaRecorder]);
+
   return (
     <div className="animate-fade-in">
       <header className="mb-8 pb-6 border-b border-ebony-deep/10">
@@ -66,8 +170,13 @@ export default function ChatView({ threads, onSendMessage, onMarkRead, selectedT
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch lg:h-[calc(100vh-270px)] min-h-[400px]">
         {/* Thread list */}
         <div className="lg:col-span-4 bg-parchment-ivory border border-ebony-deep/5 flex flex-col overflow-y-auto">
-          <div className="p-4 bg-ebony-deep text-gold-leaf font-sans text-[10px] uppercase font-bold tracking-widest border-b border-gold-leaf/25">
-            {lang === "fr" ? "Conversations Actives" : "Active Conversations"} ({threads.length})
+          <div className="p-4 bg-ebony-deep text-gold-leaf font-sans text-[10px] uppercase font-bold tracking-widest border-b border-gold-leaf/25 flex items-center justify-between">
+            <span>{lang === "fr" ? "Conversations Actives" : "Active Conversations"} ({threads.length})</span>
+            {canCreateThread && onCreateThread && (
+              <button onClick={() => setShowNewThread(true)} className="text-gold-leaf hover:text-parchment-ivory transition-colors cursor-pointer" title={lang === "fr" ? "Nouvelle Conversation" : "New Conversation"}>
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
           </div>
           <div className="divide-y divide-ebony-deep/5 select-none">
             {threads.map((thread) => {
@@ -114,17 +223,39 @@ export default function ChatView({ threads, onSendMessage, onMarkRead, selectedT
                     <p className="font-sans text-[10px] text-on-surface-variant">{selected.subject}</p>
                   </div>
                 </div>
-                <span className={`text-[9px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 ${selected.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>{selected.status === "active" ? (lang === "fr" ? "Actif" : "Active") : (lang === "fr" ? "Archivé" : "Archived")}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[9px] font-sans font-bold uppercase tracking-wider px-2 py-0.5 ${selected.status === "active" ? "bg-emerald-50 text-emerald-800" : "bg-zinc-100 text-zinc-500"}`}>{selected.status === "active" ? (lang === "fr" ? "Actif" : "Active") : (lang === "fr" ? "Archivé" : "Archived")}</span>
+                  {selected && agoraAppId && (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setCallGroupId(`agora-${selectedId}`); setCallIsVideo(false); setCallActive(true); }}
+                        className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center hover:bg-emerald-500/20 transition-colors cursor-pointer" title="Voice Call">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                      </button>
+                      <button onClick={() => { setCallGroupId(`agora-${selectedId}`); setCallIsVideo(true); setCallActive(true); }}
+                        className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center hover:bg-blue-500/20 transition-colors cursor-pointer" title="Video Call">
+                        <Video className="w-3.5 h-3.5 text-blue-600" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Messages */}
               <div className="flex-1 p-6 overflow-y-auto bg-surface-container-lowest/40 flex flex-col gap-4">
                 {selected.messages.map((msg) => {
                   const isCollector = msg.senderRole === "collector" || msg.senderRole === "visitor";
+                  const isFileMsg = msg.text?.startsWith("[FILE:") || msg.text?.startsWith("[IMAGE:") || msg.text?.startsWith("[AUDIO:") || msg.text?.startsWith("[VIDEO:");
+
                   return (
                     <div key={msg.id} className={`flex flex-col max-w-[80%] ${isCollector ? "self-end items-end" : "self-start items-start"}`}>
                       <p className="font-sans text-[9px] uppercase tracking-wider font-bold text-zinc-400 mb-1">{msg.senderName}</p>
-                      <div className={`p-4 font-sans text-xs leading-relaxed ${isCollector ? "bg-ebony-deep text-parchment-ivory" : "bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep"}`}>{msg.text}</div>
+                      <div className={`p-4 font-sans text-xs leading-relaxed ${isCollector ? "bg-ebony-deep text-parchment-ivory" : "bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep"}`}>
+                        {isFileMsg ? (
+                          <FileAttachment text={msg.text} />
+                        ) : (
+                          <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
+                        )}
+                      </div>
                       <span className="font-mono text-[9px] text-zinc-400 mt-1">{msg.timestamp}</span>
                     </div>
                   );
@@ -133,18 +264,42 @@ export default function ChatView({ threads, onSendMessage, onMarkRead, selectedT
               </div>
 
               {/* Message input */}
-              <form onSubmit={handleSend} className="p-4 border-t border-ebony-deep/5 bg-white flex items-stretch gap-3">
-                <input
-                  type="text"
-                  required
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder={lang === "fr" ? "Tapez votre message..." : "Type your message..."}
-                  className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none"
-                />
-                <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0">
-                  <Send className="w-4 h-4" />
-                </button>
+              <form onSubmit={handleSend} className="p-4 border-t border-ebony-deep/5 bg-white">
+                <div className="flex items-stretch gap-3">
+                  {onSendFile && (
+                    <label className="bg-parchment-ivory border border-ebony-deep/10 hover:border-gold-leaf px-3 py-3 cursor-pointer flex items-center justify-center shrink-0 transition-colors">
+                      <Paperclip className="w-4 h-4 text-on-surface-variant" />
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept="image/*,audio/*,video/*,.pdf,.doc,.docx"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file && selectedId && onSendFile) {
+                            onSendFile(selectedId, file);
+                          }
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                  <button onClick={isRecording ? stopRecording : startRecording}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${isRecording ? "bg-red-500 text-white animate-pulse" : "text-parchment-ivory/40 hover:text-parchment-ivory/70"}`}
+                    title={isRecording ? "Stop recording" : "Record voice message"}>
+                    {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </button>
+                  <input
+                    type="text"
+                    required
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder={lang === "fr" ? "Tapez votre message..." : "Type your message..."}
+                    className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none"
+                  />
+                  <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0">
+                    <Send className="w-4 h-4" />
+                  </button>
+                </div>
               </form>
             </>
           ) : (
@@ -156,6 +311,45 @@ export default function ChatView({ threads, onSendMessage, onMarkRead, selectedT
           )}
         </div>
       </div>
+
+      {/* New Thread Modal */}
+      {showNewThread && (
+        <div className="fixed inset-0 bg-ebony-deep/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-parchment-ivory border border-gold-leaf max-w-md w-full p-6">
+            <h3 className="font-serif text-lg text-ebony-deep mb-4">{lang === "fr" ? "Nouvelle Conversation" : "New Conversation"}</h3>
+            <input
+              type="text"
+              value={newThreadSubject}
+              onChange={(e) => setNewThreadSubject(e.target.value)}
+              placeholder={lang === "fr" ? "Sujet de la conversation..." : "Conversation subject..."}
+              className="w-full bg-white border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans mb-4 text-ebony-deep focus:outline-none"
+              autoFocus
+            />
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setShowNewThread(false); setNewThreadSubject(""); }} className="px-4 py-2 text-xs font-sans text-on-surface-variant hover:text-ebony-deep cursor-pointer">
+                {lang === "fr" ? "Annuler" : "Cancel"}
+              </button>
+              <button
+                onClick={() => {
+                  if (newThreadSubject.trim()) {
+                    onCreateThread?.(newThreadSubject.trim());
+                    setShowNewThread(false);
+                    setNewThreadSubject("");
+                  }
+                }}
+                disabled={!newThreadSubject.trim()}
+                className="bg-ebony-deep text-parchment-ivory px-4 py-2 text-xs font-sans font-bold uppercase tracking-wider hover:opacity-90 cursor-pointer disabled:opacity-40"
+              >
+                {lang === "fr" ? "Créer" : "Create"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {callActive && agoraAppId && (
+        <ChatCallView appId={agoraAppId} groupId={callGroupId} isVideo={callIsVideo} onClose={() => setCallActive(false)} />
+      )}
     </div>
   );
 }

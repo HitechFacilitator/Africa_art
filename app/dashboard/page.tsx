@@ -6,14 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ActiveTab, Acquisition, Inquiry, Consultation, LogisticsShipment, SecurityRecord, CollectorProfile } from "@/lib/dashboardTypes";
 import { dashboardApi, consultationsApi, chatApi } from "@/lib/api";
-import type { ChatThread } from "@/lib/chatTypes";
-import type { ChatMessage } from "@/lib/chatTypes";
+import type { ChatThread, ChatMessage } from "@/lib/chatTypes";
 import { FileText, X, Download, Award, BookLock, Bell, TrendingUp, Eye, Clock, ArrowRight, ExternalLink, ChevronLeft, ChevronRight, Gavel, Flame, ShieldCheck, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslate } from "@/lib/translations";
 import { useAuth } from "@/lib/auth";
 import AuthGuard from "@/components/AuthGuard";
-import { useChatSSE, useSSE } from "@/lib/useChatSSE";
+import { useSSE, useChatSSE } from "@/lib/useChatSSE";
+import { useAgoraChat, agoraMsgToChatMsg } from "@/lib/useAgoraChat";
 import { useTranslatedAcquisitions, useTranslatedInquiries, useTranslatedConsultations } from "@/lib/useTranslatedDashboard";
 
 import Sidebar from "@/components/dashboard/Sidebar";
@@ -152,19 +152,48 @@ function DashboardPageContent() {
     }).catch(() => {});
   }, []);
 
-  // Realtime SSE for new messages
+  // Realtime SSE for new messages — backup receiver alongside Agora
   useChatSSE({
-    "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
-      setChatThreads(prev => prev.map(t => {
-        if (t.id !== `thr-${threadId}`) return t;
-        const alreadyExists = t.messages.some(m => m.id === message.id);
-        if (alreadyExists) return t;
-        const isFromOther = String(message.senderId) !== user?.id;
-        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatMessage["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
-      }));
+    "new-message": () => {
+      // Re-fetch threads when a new message is saved via API (backup for Agora)
+      chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
     },
   });
+
+  // Agora Chat: real-time messaging via SDK
+  const { isConnected: agoraConnected, agoraMessages, sendMessage: agoraSendMessage, sendFile: agoraSendFile, joinGroup: agoraJoinGroup, agoraAppId } = useAgoraChat(user?.id, user?.name);
+
+  // Agora Chat: sync incoming messages into chatThreads
+  useEffect(() => {
+    if (!agoraMessages || agoraMessages.size === 0) return;
+    setChatThreads((prev) => {
+      let changed = false;
+      const next = prev.map((t) => {
+        // Map thread ID "thr-5" → Agora group ID "agora-thr-5"
+        const agoraGroupId = `agora-${t.id}`;
+        const incoming = agoraMessages.get(agoraGroupId);
+        if (!incoming || incoming.length === 0) return t;
+
+        const existingIds = new Set(t.messages.map((m) => m.id));
+        const newMsgs = incoming
+          .filter((m) => !existingIds.has(m.id))
+          .map((m) => agoraMsgToChatMsg(m, user?.id, user?.role));
+        if (newMsgs.length === 0) return t;
+
+        changed = true;
+        const lastMsg = newMsgs[newMsgs.length - 1];
+        const isFromOther = String(lastMsg.senderId) !== user?.id;
+        return {
+          ...t,
+          messages: [...t.messages, ...newMsgs],
+          lastMessage: lastMsg.text,
+          lastMessageTime: lastMsg.timestamp,
+          unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [agoraMessages, user?.id]);
 
   // Realtime SSE for consultations (status changes)
   useSSE("/api/v1/events", {
@@ -211,22 +240,80 @@ function DashboardPageContent() {
       if (t.id !== threadId) return t;
       return { ...t, messages: [...t.messages, tempMsg], lastMessage: text, lastMessageTime: tempMsg.timestamp };
     }));
+
+    // PRIMARY: Save to DB via backend API
     try {
-      const res = await chatApi.sendMessage(threadId, {
+      await chatApi.sendMessage(threadId, {
         senderId: user?.id,
         senderName: user?.name,
-        senderRole: user?.role || "collector",
+        senderRole: user?.role,
         text,
       });
-      const serverMsg = res.data;
-      setChatThreads(prev => prev.map(t => {
-        if (t.id !== threadId) return t;
-        return { ...t, messages: t.messages.map(m => m.id === tempMsg.id ? { ...m, id: serverMsg.id } : m) };
-      }));
     } catch (err) {
-      console.error("Failed to send message:", err);
+      console.error("API sendMessage failed:", err);
+    }
+
+    // OPTIONAL: Also send via Agora for real-time delivery
+    try {
+      const agoraGroupId = `agora-${threadId}`;
+      await agoraSendMessage(agoraGroupId, text);
+    } catch (err) {
+      console.warn("Agora sendMessage failed (non-critical):", err);
     }
   };
+
+  const handleSendFile = useCallback(async (threadId: string, file: File) => {
+    const tempMsg = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || "collector",
+      senderName: user?.name || "You",
+      senderRole: (user?.role || "collector") as ChatMessage["senderRole"],
+      text: `[FILE] ${file.name}`,
+      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+      read: true,
+    };
+    setChatThreads(prev => prev.map(t => {
+      if (t.id !== threadId) return t;
+      return { ...t, messages: [...t.messages, tempMsg], lastMessage: `[File] ${file.name}`, lastMessageTime: tempMsg.timestamp };
+    }));
+    try {
+      // 1. Upload file to backend
+      const uploadRes = await chatApi.uploadChatFile(file);
+      const fileUrl = uploadRes.data.url;
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      const isAudio = file.type.startsWith("audio/");
+      const fileText = isImage ? `[IMAGE:${file.name}] ${fileUrl}` : isVideo ? `[VIDEO:${file.name}] ${fileUrl}` : isAudio ? `[AUDIO:${file.name}] ${fileUrl}` : `[FILE:${file.name}] ${fileUrl}`;
+
+      // 2. Save message with file URL to DB
+      await chatApi.sendMessage(threadId, {
+        senderId: user?.id,
+        senderName: user?.name,
+        senderRole: user?.role,
+        text: fileText,
+      });
+
+      // Refresh threads
+      const res = await chatApi.getThreads();
+      setChatThreads(res.data as ChatThread[]);
+    } catch (err) {
+      console.error("Failed to send file:", err);
+    }
+  }, [user]);
+
+  const handleCreateThread = useCallback(async (subject: string) => {
+    try {
+      await chatApi.createThread({
+        subject,
+        clientName: user?.name || "User",
+        clientRole: user?.role || "collector",
+      });
+      // Refresh threads
+      chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
+    } catch (err) {
+      console.error("Failed to create thread:", err);
+    }
+  }, [user]);
 
   const handleClearCache = () => {
     dashboardApi.getAcquisitions().then(res => { const d = res.data as Acquisition[]; setAcquisitions(d); setSelectedAcquisition(d[0] ?? null); }).catch(() => {});
@@ -463,7 +550,7 @@ function DashboardPageContent() {
               <CertificatesView />
             )}
             {activeTab === ActiveTab.Chat && (
-              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} selectedThreadId={selectedChatThreadId} onSelectThread={setSelectedChatThreadId} />
+              <ChatView threads={chatThreads} onSendMessage={handleSendMessage} onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))} selectedThreadId={selectedChatThreadId} onSelectThread={setSelectedChatThreadId} onCreateThread={handleCreateThread} onSendFile={handleSendFile} agoraAppId={agoraAppId} canCreateThread={user?.role === "admin" || user?.role === "advisor"} />
             )}
             {activeTab === ActiveTab.Documentation && (
               <div className="space-y-6">

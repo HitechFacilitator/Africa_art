@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import AgoraCallingProvider from "@/components/AgoraRTCProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -44,7 +45,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-ebony-deep font-sans antialiased">
-        <Providers>{children}</Providers>
+        <Providers><AgoraCallingProvider>{children}</AgoraCallingProvider></Providers>
       </body>
     </html>
   );

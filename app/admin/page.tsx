@@ -6,11 +6,11 @@ import dynamic from "next/dynamic";
 import { useTranslate } from "@/lib/translations";
 import { AdminView, AdminArtwork, AdminCollector, AdminUser, AdminCertificate, EscrowTransaction, AuditLogEntry } from "@/lib/adminTypes";
 import { adminApi, chatApi } from "@/lib/api";
-import type { SupportTicket, ChatThread } from "@/lib/chatTypes";
+import type { SupportTicket, ChatThread, ChatMessage } from "@/lib/chatTypes";
 import type { Inquiry } from "@/lib/dashboardTypes";
 import { AnimatePresence, motion } from "motion/react";
-import { useChatSSE } from "@/lib/useChatSSE";
-import { useSSE } from "@/lib/useChatSSE";
+import { useChatSSE, useSSE } from "@/lib/useChatSSE";
+import { useAgoraChat, agoraMsgToChatMsg } from "@/lib/useAgoraChat";
 import { useAuth } from "@/lib/auth";
 
 import AuthGuard from "@/components/AuthGuard";
@@ -85,21 +85,8 @@ function AdminPageContent() {
     }
   }, [searchParams]);
 
-  // Real-time SSE: chat messages and ticket updates
+  // Ticket updates still via SSE (tickets are unchanged)
   useChatSSE({
-    "new-message": (data: unknown) => {
-      const { threadId, message } = data as { threadId: number; message: { id: string; senderId: string | number; senderName: string; senderRole: string; text: string; timestamp: string; read: boolean } };
-      // Update chat threads with new message
-      setChatThreads(prev => prev.map(t => {
-        if (t.id !== `thr-${threadId}`) return t;
-        const alreadyExists = t.messages.some(m => m.id === message.id);
-        if (alreadyExists) return t;
-        const isFromOther = String(message.senderId) !== user?.id;
-        return { ...t, messages: [...t.messages, { ...message, senderRole: message.senderRole as ChatThread["messages"][0]["senderRole"] }], lastMessage: message.text, lastMessageTime: message.timestamp, unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount };
-      }));
-      // Also refresh tickets
-      adminApi.getSupportTickets().then(res => setSupportTickets(res.data as SupportTicket[])).catch(() => {});
-    },
     "ticket-update": (data: unknown) => {
       const { ticketId, response } = data as { ticketId: number; response?: { author: string; text: string; timestamp: string } };
       setSupportTickets(prev => prev.map(t => {
@@ -113,7 +100,45 @@ function AdminPageContent() {
         return t;
       }));
     },
+    "new-message": () => {
+      // Re-fetch threads when a new message is saved via API (backup for Agora)
+      chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
+    },
   });
+
+  // Agora Chat: real-time messaging via SDK
+  const { isConnected: agoraConnected, agoraMessages, sendMessage: agoraSendMessage, sendFile: agoraSendFile, joinGroup: agoraJoinGroup, agoraAppId } = useAgoraChat(user?.id, user?.name);
+
+  // Agora Chat: sync incoming messages into chatThreads
+  useEffect(() => {
+    if (!agoraMessages || agoraMessages.size === 0) return;
+    setChatThreads((prev) => {
+      let changed = false;
+      const next = prev.map((t) => {
+        const agoraGroupId = `agora-${t.id}`;
+        const incoming = agoraMessages.get(agoraGroupId);
+        if (!incoming || incoming.length === 0) return t;
+
+        const existingIds = new Set(t.messages.map((m) => m.id));
+        const newMsgs = incoming
+          .filter((m) => !existingIds.has(m.id))
+          .map((m) => agoraMsgToChatMsg(m, user?.id, user?.role));
+        if (newMsgs.length === 0) return t;
+
+        changed = true;
+        const lastMsg = newMsgs[newMsgs.length - 1];
+        const isFromOther = String(lastMsg.senderId) !== user?.id;
+        return {
+          ...t,
+          messages: [...t.messages, ...newMsgs],
+          lastMessage: lastMsg.text,
+          lastMessageTime: lastMsg.timestamp,
+          unreadCount: isFromOther ? t.unreadCount + 1 : t.unreadCount,
+        };
+      });
+      return changed ? next : prev;
+    });
+  }, [agoraMessages, user?.id]);
 
   // Real-time SSE: inquiry updates, consultation updates
   useSSE("/api/v1/events", {
@@ -373,20 +398,78 @@ function AdminPageContent() {
       if (t.id !== threadId) return t;
       return { ...t, messages: [...t.messages, tempMsg], lastMessage: text, lastMessageTime: tempMsg.timestamp };
     }));
+
+    // PRIMARY: Save to DB via backend API
     try {
-      const res = await chatApi.sendMessage(threadId, {
+      await chatApi.sendMessage(threadId, {
         senderId: user?.id,
         senderName: user?.name,
-        senderRole: user?.role || "admin",
+        senderRole: user?.role,
         text,
       });
-      const serverMsg = res.data;
-      setChatThreads(prev => prev.map(t => {
-        if (t.id !== threadId) return t;
-        return { ...t, messages: t.messages.map(m => m.id === tempMsg.id ? { ...m, id: serverMsg.id } : m) };
-      }));
     } catch (err) {
-      console.error("Failed to send message:", err);
+      console.error("API sendMessage failed:", err);
+    }
+
+    // OPTIONAL: Also send via Agora for real-time delivery
+    try {
+      const agoraGroupId = `agora-${threadId}`;
+      await agoraSendMessage(agoraGroupId, text);
+    } catch (err) {
+      console.warn("Agora sendMessage failed (non-critical):", err);
+    }
+  }, [user, agoraSendMessage]);
+
+  const handleSendFile = useCallback(async (threadId: string, file: File) => {
+    const tempMsg = {
+      id: `msg-${Date.now()}`,
+      senderId: user?.id || "admin",
+      senderName: user?.name || "Admin",
+      senderRole: (user?.role || "admin") as ChatMessage["senderRole"],
+      text: `[FILE] ${file.name}`,
+      timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
+      read: true,
+    };
+    setChatThreads(prev => prev.map(t => {
+      if (t.id !== threadId) return t;
+      return { ...t, messages: [...t.messages, tempMsg], lastMessage: `[File] ${file.name}`, lastMessageTime: tempMsg.timestamp };
+    }));
+    try {
+      // 1. Upload file to backend
+      const uploadRes = await chatApi.uploadChatFile(file);
+      const fileUrl = uploadRes.data.url;
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      const isAudio = file.type.startsWith("audio/");
+      const fileText = isImage ? `[IMAGE:${file.name}] ${fileUrl}` : isVideo ? `[VIDEO:${file.name}] ${fileUrl}` : isAudio ? `[AUDIO:${file.name}] ${fileUrl}` : `[FILE:${file.name}] ${fileUrl}`;
+
+      // 2. Save message with file URL to DB
+      await chatApi.sendMessage(threadId, {
+        senderId: user?.id,
+        senderName: user?.name,
+        senderRole: user?.role,
+        text: fileText,
+      });
+
+      // Refresh threads
+      const res = await chatApi.getThreads();
+      setChatThreads(res.data as ChatThread[]);
+    } catch (err) {
+      console.error("Failed to send file:", err);
+    }
+  }, [user]);
+
+  const handleCreateThread = useCallback(async (subject: string) => {
+    try {
+      await chatApi.createThread({
+        subject,
+        clientName: user?.name || "User",
+        clientRole: user?.role || "collector",
+      });
+      // Refresh threads
+      chatApi.getThreads().then(res => setChatThreads(res.data as ChatThread[])).catch(() => {});
+    } catch (err) {
+      console.error("Failed to create thread:", err);
     }
   }, [user]);
 
@@ -487,6 +570,10 @@ function AdminPageContent() {
                     onMarkRead={(threadId) => setChatThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t))}
                     selectedThreadId={selectedChatThreadId}
                     onSelectThread={setSelectedChatThreadId}
+                    onCreateThread={handleCreateThread}
+                    onSendFile={handleSendFile}
+                    agoraAppId={agoraAppId}
+                    canCreateThread={user?.role === "admin" || user?.role === "advisor"}
                   />
                 )}
               </motion.div>
