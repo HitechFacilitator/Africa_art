@@ -22,6 +22,12 @@ export function removeToken(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+/** Build a full backend URL for a chat file path */
+export function fileUrl(path: string): string {
+  const BACKEND = "http://localhost:5000";
+  return path.startsWith("/") ? `${BACKEND}${path}` : path;
+}
+
 // ─── API Response Types ─────────────────────────────────────────────
 
 export interface ApiResponse<T> {
