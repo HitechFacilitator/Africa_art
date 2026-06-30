@@ -8,153 +8,185 @@ import { chatApi, fileUrl } from "@/lib/api";
 import { Send, MessageSquare, User, Clock, Search, Archive, Eye, Paperclip, FileText, Phone, Video, Mic, MicOff } from "lucide-react";
 import ChatCallView from "@/components/ChatCallView";
 
-function FileAttachment({ text }: { text: string }) {
-  // Parse file message format: [TYPE:filename] URL
+function FileAttachment({ text, dark = true }: { text: string; dark?: boolean }) {
   const match = text.match(/^\[(IMAGE|VIDEO|AUDIO|FILE):([^\]]+)\]\s+(.*)$/);
   if (!match) return null;
 
   const [, type, filename, rawUrl] = match;
   const url = fileUrl(rawUrl);
+  const isValidUrl = url.startsWith("http");
+
+  const cardBg = dark ? "bg-white/5" : "bg-ebony-deep/5";
+  const cardBorder = dark ? "border-white/10" : "border-ebony-deep/10";
+  const textMain = dark ? "text-parchment-ivory" : "text-ebony-deep";
+  const textSub = dark ? "text-parchment-ivory/50" : "text-ebony-deep/50";
+  const textMuted = dark ? "text-parchment-ivory/40" : "text-ebony-deep/40";
+  const iconBg = dark ? "bg-parchment-ivory/10" : "bg-ebony-deep/10";
 
   // ─── IMAGE ──────────────────────────────────────
-  if (type === "IMAGE") {
+  if (type === "IMAGE" && isValidUrl) {
     return (
-      <div className="mt-1">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-sm">🖼️</span>
-          <span className="text-xs font-sans font-medium text-ebony-deep/90 truncate">{filename}</span>
-        </div>
-        <div
-          className="relative group cursor-pointer rounded-lg overflow-hidden border border-ebony-deep/10"
-          onClick={() => url.startsWith("http") && window.open(url, "_blank")}
-        >
-          <img
-            src={url}
-            alt={filename}
-            className="max-w-[280px] max-h-[200px] w-full object-cover group-hover:opacity-90 transition-opacity"
-            onError={(e) => {
-              const img = e.target as HTMLImageElement;
-              img.style.display = "none";
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-ebony-deep/30">
-            <span className="bg-ebony-deep/60 text-white text-[10px] font-sans px-2 py-1 rounded-full">Click to zoom</span>
+      <div className="mt-1 space-y-1.5">
+        <div className={`flex items-center gap-2 cursor-pointer`} onClick={() => window.open(url, "_blank")}>
+          <div className="w-7 h-7 rounded bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-xs">🖼️</span>
           </div>
+          <span className={`text-[11px] font-medium ${textMain} truncate hover:underline`}>{filename}</span>
         </div>
+        <img
+          src={url}
+          alt={filename}
+          className={`max-w-[280px] max-h-[200px] rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity border ${cardBorder}`}
+          onClick={() => window.open(url, "_blank")}
+        />
       </div>
     );
   }
 
-  // ─── VIDEO ──────────────────────────────────────
-  if (type === "VIDEO") {
+  // ─── VIDEO — Click to play ──────────────────────
+  if (type === "VIDEO" && isValidUrl) {
     return (
-      <div className="mt-1">
-        <div className="flex items-center gap-2 mb-1.5">
-          <span className="text-sm">🎬</span>
-          <span className="text-xs font-sans font-medium text-ebony-deep/90 truncate">{filename}</span>
-        </div>
-        <div className="rounded-lg overflow-hidden border border-ebony-deep/10 bg-black">
-          <video
-            src={url}
-            controls
-            preload="metadata"
-            className="max-w-[300px] max-h-[220px] w-full"
-            onError={(e) => {
-              const target = e.target as HTMLVideoElement;
-              target.style.display = "none";
-              const parent = target.parentElement;
-              if (parent) {
-                const fallback = document.createElement("a");
-                fallback.href = url;
-                fallback.download = filename;
-                fallback.className = "flex items-center gap-3 p-3 text-ebony-deep/80 hover:text-ebony-deep transition-colors";
-                
-                const icon = document.createElement("span");
-                icon.textContent = "⬇️";
-                icon.className = "text-lg";
-                fallback.appendChild(icon);
-                
-                const textDiv = document.createElement("div");
-                const nameEl = document.createElement("div");
-                nameEl.className = "text-xs font-medium";
-                nameEl.textContent = filename;
-                const subEl = document.createElement("div");
-                subEl.className = "text-[10px] opacity-60";
-                subEl.textContent = "Click to download";
-                textDiv.appendChild(nameEl);
-                textDiv.appendChild(subEl);
-                fallback.appendChild(textDiv);
-                
-                parent.appendChild(fallback);
-              }
-            }}
-          />
-        </div>
-      </div>
+      <VideoAttachment url={url} cardBorder={cardBorder} />
     );
   }
 
-  // ─── AUDIO (voice messages) ─────────────────────
-  if (type === "AUDIO") {
+  // ─── AUDIO / VOICE MESSAGE — Click to play ─────
+  if (type === "AUDIO" && isValidUrl) {
     return (
-      <div className="mt-1">
-        <div className="rounded-xl bg-ebony-deep/5 border border-ebony-deep/10 p-3">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-gold-leaf/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-lg">🎙️</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-sans font-medium text-ebony-deep/90 truncate">{filename}</div>
-              <div className="text-[10px] text-ebony-deep/50">Voice message</div>
-            </div>
-          </div>
-          <audio
-            src={url}
-            controls
-            preload="metadata"
-            className="w-full h-10"
-            onError={(e) => {
-              const target = e.target as HTMLAudioElement;
-              target.style.display = "none";
-              const parent = target.parentElement;
-              if (parent) {
-                const fallback = document.createElement("a");
-                fallback.href = url;
-                fallback.download = filename;
-                fallback.className = "flex items-center gap-2 p-2 text-ebony-deep/70 hover:text-ebony-deep text-xs transition-colors";
-                fallback.textContent = `⬇️ Download ${filename}`;
-                parent.appendChild(fallback);
-              }
-            }}
-          />
-        </div>
-      </div>
+      <AudioPlayButton url={url} dark={dark} />
     );
   }
 
   // ─── GENERIC FILE ───────────────────────────────
   const ext = filename.split(".").pop()?.toLowerCase() || "";
-  const fileIcons: Record<string, string> = {
-    pdf: "📕", doc: "📘", docx: "📘", txt: "📝", zip: "📦",
-    json: "📋", csv: "📊", xls: "📊", xlsx: "📊",
+  const fileIcons: Record<string, { icon: string; color: string }> = {
+    pdf: { icon: "📕", color: "bg-red-500/20" },
+    doc: { icon: "📘", color: "bg-blue-500/20" },
+    docx: { icon: "📘", color: "bg-blue-500/20" },
+    txt: { icon: "📝", color: "bg-zinc-500/20" },
+    zip: { icon: "📦", color: "bg-yellow-500/20" },
+    mp3: { icon: "🎵", color: "bg-green-500/20" },
+    mp4: { icon: "🎬", color: "bg-purple-500/20" },
+    png: { icon: "🖼️", color: "bg-blue-500/20" },
+    jpg: { icon: "🖼️", color: "bg-blue-500/20" },
+    jpeg: { icon: "🖼️", color: "bg-blue-500/20" },
   };
-  const icon = fileIcons[ext] || "📄";
+  const { icon, color } = fileIcons[ext] || { icon: "📄", color: "bg-zinc-500/20" };
+  const isViewable = ["pdf", "png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext);
+  const linkProps = isViewable
+    ? { href: url, target: "_blank", rel: "noopener noreferrer" as const }
+    : { href: url, download: filename };
 
   return (
-    <a
-      href={url}
-      download={filename}
-      className="mt-1 flex items-center gap-3 bg-ebony-deep/5 rounded-xl border border-ebony-deep/10 px-3 py-3 hover:bg-ebony-deep/10 transition-colors group"
-    >
-      <div className="w-10 h-10 rounded-lg bg-gold-leaf/15 flex items-center justify-center flex-shrink-0">
-        <span className="text-lg">{icon}</span>
+    <a {...linkProps} className={`mt-1 flex items-center gap-3 ${cardBg} rounded-lg border ${cardBorder} px-3 py-2.5 hover:opacity-80 transition-opacity group cursor-pointer`}>
+      <div className={`w-9 h-9 rounded-lg ${color} flex items-center justify-center flex-shrink-0`}>
+        <span className="text-base">{icon}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-sans font-medium text-ebony-deep/90 truncate">{filename}</div>
-        <div className="text-[10px] text-ebony-deep/50">Click to download</div>
+        <div className={`text-[11px] font-medium ${textMain} truncate`}>{filename}</div>
+        <div className={`text-[10px] ${textSub}`}>{isViewable ? "Click to view" : "Click to download"}</div>
       </div>
-      <span className="text-ebony-deep/30 group-hover:text-ebony-deep/60 transition-colors text-sm">⬇️</span>
+      <span className={`${textMuted} group-hover:opacity-100 transition-opacity text-sm`}>⬇️</span>
     </a>
+  );
+}
+
+// ─── Video — Thumbnail preview, click to open in new tab ────
+function VideoAttachment({ url, cardBorder }: { url: string; cardBorder: string }) {
+  return (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        window.open(url, "_blank");
+      }}
+      className="mt-1 relative cursor-pointer group"
+    >
+      <video
+        src={url}
+        preload="metadata"
+        playsInline
+        muted
+        className={`max-w-[300px] max-h-[200px] rounded-lg bg-black border ${cardBorder}`}
+      />
+      {/* Play button overlay */}
+      <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg group-hover:bg-black/30 transition-colors pointer-events-none">
+        <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+          <span className="text-xl ml-0.5">▶</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Audio play/pause button component ────────────
+function AudioPlayButton({ url, dark }: { url: string; dark: boolean }) {
+  const [playing, setPlaying] = useState(false);
+  const [error, setError] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (playing) {
+      audio.pause();
+    } else {
+      setError(false);
+      audio.play().catch(() => setError(true));
+    }
+  };
+
+  // Keep state in sync with actual audio events
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onEnded = () => setPlaying(false);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    audio.addEventListener("ended", onEnded);
+    return () => {
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, []);
+
+  const pillBg = dark ? "bg-white/15" : "bg-ebony-deep/10";
+  const pillHover = dark ? "hover:bg-white/25" : "hover:bg-ebony-deep/20";
+
+  return (
+    <div className="mt-1">
+      {error ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex items-center gap-3 ${pillBg} ${pillHover} rounded-full px-4 py-2.5 transition-colors cursor-pointer`}
+        >
+          <span className="text-base">🎙️</span>
+          <span className={`text-xs ${dark ? "text-parchment-ivory/70" : "text-ebony-deep/70"}`}>Voice message — tap to download</span>
+        </a>
+      ) : (
+        <>
+          {/* sr-only: 1px × 1px with clip — browser CAN load media unlike display:none or w-0 h-0 */}
+          <audio
+            ref={audioRef}
+            src={url}
+            preload="metadata"
+            className="sr-only"
+          />
+          <button
+            type="button"
+            onClick={toggle}
+            className={`flex items-center gap-3 ${pillBg} ${pillHover} rounded-full px-4 py-2.5 transition-colors cursor-pointer`}
+          >
+            <span className="text-base">{playing ? "⏸️" : "▶️"}</span>
+            <span className={`text-xs ${dark ? "text-parchment-ivory/70" : "text-ebony-deep/70"}`}>Voice message</span>
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -363,7 +395,7 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, on
                       <p className="font-sans text-[9px] uppercase tracking-wider font-bold text-zinc-400 mb-1">{msg.senderName} <span className="text-zinc-300">• {msg.senderRole}</span></p>
                       <div className={`p-4 font-sans text-xs leading-relaxed ${isClient ? "bg-parchment-ivory border border-ebony-deep/10 text-ebony-deep" : "bg-ebony-deep text-parchment-ivory"}`}>
                         {isFileMsg ? (
-                          <FileAttachment text={msg.text} />
+                          <FileAttachment text={msg.text} dark={!isClient} />
                         ) : (
                           <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">{msg.text}</p>
                         )}
