@@ -35,7 +35,26 @@ function FileAttachment({ text }: { text: string }) {
   if (isVideo && fileUrl) {
     return (
       <div className="mt-1">
-        <video src={fileUrl} controls className="max-w-[240px] max-h-[180px] rounded-lg" />
+        <video 
+          src={fileUrl} 
+          controls 
+          preload="metadata"
+          className="max-w-[280px] max-h-[200px] rounded-lg bg-black"
+          onError={(e) => {
+            // Fallback to download link if video can't play
+            const target = e.target as HTMLVideoElement;
+            target.style.display = 'none';
+            const parent = target.parentElement;
+            if (parent) {
+              const link = document.createElement('a');
+              link.href = fileUrl;
+              link.download = filename;
+              link.className = 'flex items-center gap-2 bg-ebony-deep/5 rounded-lg px-3 py-2 hover:bg-ebony-deep/10 transition-colors';
+              link.innerHTML = `<svg class="w-4 h-4 text-gold-leaf" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg><div><div class="text-xs text-ebony-deep/80">${filename}</div><div class="text-[10px] text-ebony-deep/40">Click to download</div></div>`;
+              parent.appendChild(link);
+            }
+          }}
+        />
         <div className="text-[10px] text-ebony-deep/50 mt-1">{filename}</div>
       </div>
     );
@@ -44,8 +63,13 @@ function FileAttachment({ text }: { text: string }) {
   if (isAudio && fileUrl) {
     return (
       <div className="mt-1">
-        <audio src={fileUrl} controls className="w-full max-w-[240px]" />
-        <div className="text-[10px] text-ebony-deep/50 mt-1">{filename}</div>
+        <div className="flex items-center gap-2 bg-ebony-deep/5 rounded-lg px-3 py-2">
+          <Mic className="w-4 h-4 text-gold-leaf flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <audio src={fileUrl} controls preload="metadata" className="w-full max-w-[240px] h-8" />
+            <div className="text-[10px] text-ebony-deep/50 mt-1">{filename}</div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -83,6 +107,8 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, on
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const filtered = threads.filter(t => {
     if (filter !== "All" && t.status !== filter) return false;
@@ -126,6 +152,11 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, on
       
       recorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop());
+        if (recordingTimerRef.current) {
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+        }
+        setRecordingDuration(0);
         const audioBlob = new Blob(chunks, { type: "audio/webm" });
         const audioFile = new File([audioBlob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
         if (selectedId && onSendFile) {
@@ -137,6 +168,10 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, on
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
       setAudioChunks(chunks);
     } catch (err) {
       console.error("Microphone access denied:", err);
@@ -144,6 +179,10 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, on
   }, [selectedId, onSendFile]);
 
   const stopRecording = useCallback(() => {
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.stop();
     }
@@ -283,11 +322,16 @@ export default function AdvisorChatView({ threads, onSendMessage, onMarkRead, on
                       />
                     </label>
                   )}
-                  <button onClick={isRecording ? stopRecording : startRecording}
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${isRecording ? "bg-red-500 text-white animate-pulse" : "text-parchment-ivory/40 hover:text-parchment-ivory/70"}`}
-                    title={isRecording ? "Stop recording" : "Record voice message"}>
-                    {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={isRecording ? stopRecording : startRecording}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${isRecording ? "bg-red-500 text-white animate-pulse ring-2 ring-red-300" : "bg-ebony-deep/5 hover:bg-ebony-deep/10 text-ebony-deep/50 hover:text-ebony-deep/80"}`}
+                      title={isRecording ? "Stop recording" : "Record voice message"}>
+                      {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                    </button>
+                    {isRecording && (
+                      <span className="text-xs text-red-500 font-mono animate-pulse">● {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, "0")}</span>
+                    )}
+                  </div>
                   <input type="text" required value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder={lang === "fr" ? "Tapez votre réponse..." : "Type your reply..."} className="flex-1 bg-parchment-ivory border border-ebony-deep/10 focus:border-gold-leaf px-4 py-3 text-xs font-sans tracking-wide text-ebony-deep focus:outline-none" />
                   <button type="submit" className="bg-ebony-deep text-parchment-ivory hover:opacity-90 active:scale-95 px-6 py-3 transition-all cursor-pointer flex items-center justify-center shrink-0 border-0"><Send className="w-4 h-4" /></button>
                 </div>

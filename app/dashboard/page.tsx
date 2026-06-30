@@ -268,7 +268,7 @@ function DashboardPageContent() {
       senderId: user?.id || "collector",
       senderName: user?.name || "You",
       senderRole: (user?.role || "collector") as ChatMessage["senderRole"],
-      text: `[FILE] ${file.name}`,
+      text: `[FILE:${file.name}] sending...`,
       timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
       read: true,
     };

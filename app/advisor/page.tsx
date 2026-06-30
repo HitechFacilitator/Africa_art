@@ -155,7 +155,7 @@ function AdvisorPageContent() {
       senderId: user?.id || "advisor",
       senderName: user?.name || "Dr. Fatima Benali",
       senderRole: (user?.role || "advisor") as ChatMessage["senderRole"],
-      text: `[FILE] ${file.name}`,
+      text: `[FILE:${file.name}] sending...`,
       timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
       read: true,
     };

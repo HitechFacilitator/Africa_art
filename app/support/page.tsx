@@ -154,7 +154,7 @@ function SupportPageContent() {
       senderId: user?.id || "support",
       senderName: user?.name || "Support",
       senderRole: (user?.role || "support") as ChatMessage["senderRole"],
-      text: `[FILE] ${file.name}`,
+      text: `[FILE:${file.name}] sending...`,
       timestamp: new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC",
       read: true,
     };
